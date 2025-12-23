@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
+import { apiFetch } from "../utils/api.js";
 
 import {
   Box,
@@ -33,19 +34,10 @@ export default function Login() {
 const handleLogin = async () => {
   setLoading(true);
   try {
-    const response = await fetch("http://localhost:5000/api/auth/login", {
+    const { response, data } = await apiFetch("/api/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
-    });
-
-    const data = await response.json();
-
-    if (data.trialExpired) {
-      setErrorMsg(data.message);
-      setLoading(false);
-      return;
-    }
+    }, navigate, toast);
 
     if (!data.token) {
       toast({

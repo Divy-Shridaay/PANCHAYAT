@@ -21,6 +21,7 @@ import {
 } from "@chakra-ui/react";
 
 import { FaUniversity } from "react-icons/fa";
+import { apiFetch } from "../utils/api.js";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
@@ -45,13 +46,10 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/auth/forgot-password", {
+      const { response, data } = await apiFetch("/api/auth/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
+      }, navigate, toast);
 
       if (response.ok) {
         setMessage("Password reset email sent successfully. Please check your email.");

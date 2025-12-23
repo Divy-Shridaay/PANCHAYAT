@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
+import { apiFetch } from "../utils/api.js";
 
 import {
   Box,
@@ -100,16 +101,15 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/register/send-otp",
+      const { response, data } = await apiFetch(
+        "/api/register/send-otp",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
-        }
+        },
+        navigate,
+        toast
       );
-
-      const data = await response.json();
 
       if (response.ok) {
         toast({
@@ -162,19 +162,18 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/register/verify-otp",
+      const { response, data } = await apiFetch(
+        "/api/register/verify-otp",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: currentEmail,
             otp: otp,
           }),
-        }
+        },
+        navigate,
+        toast
       );
-
-      const data = await response.json();
 
       if (response.ok) {
         toast({

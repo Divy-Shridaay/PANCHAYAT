@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 
 import LoaderSpinner from "../components/LoaderSpinner";
 import Pagination from "../components/Pagination";
+import { apiFetch } from "../utils/api.js";
 
 import { useTranslation } from "react-i18next";
 
@@ -55,11 +56,10 @@ export default function PedhinamuList() {
   const fetchList = async (page = 1) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/pedhinamu?page=${page}&limit=10`);
-      const json = await res.json();
+      const { response, data } = await apiFetch(`/api/pedhinamu?page=${page}&limit=10`, {}, navigate, toast);
 
-      setList(json.data || []);
-      setTotalPages(json.totalPages || 1);
+      setList(data.data || []);
+      setTotalPages(data.totalPages || 1);
       setLoading(false);
 
       return json.data || [];  // 🔥 RETURN NEW LIST
@@ -82,11 +82,11 @@ export default function PedhinamuList() {
      ------------------------------------------------- */
   const deleteRecord = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/pedhinamu/${deleteId}`, {
+      const { response, data } = await apiFetch(`/api/pedhinamu/${deleteId}`, {
         method: "DELETE",
-      });
+      }, navigate, toast);
 
-      if (!res.ok) throw new Error();
+      if (!response.ok) throw new Error();
 
       toast({
         title: t("deleted"),

@@ -8,41 +8,30 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
       required: true
     },
 
-    // ------------------------ Applicant ------------------------
+    /* -------------------- Applicant -------------------- */
     applicantName: String,
     applicantSurname: String,
     applicantMobile: String,
     applicantAadhaar: String,
+    applicantPhoto: String,
     applicationDate: String,
 
-    // ------------------------ Deceased ------------------------
-    deceasedPersonName: String,
-    deceasedPersonDate: String,
-    deceasedPersonAge: String,
+    /* -------------------- Mukhya -------------------- */
+    mukhyaName: String,
+    mukhyaAge: String,
     mukhyaIsDeceased: { type: Boolean, default: false },
 
-    // ------------------------ Notary ------------------------
-    notaryName: String,
-    notaryBookNo: String,
-    notaryPageNo: String,
-    notarySerialNo: String,
-    notaryDate: String,
-
-    // ------------------------ Purpose ------------------------
-    referenceNo: String,
-    mukkamAddress: String,
-    jaminSurveyNo: String,
-    jaminKhatano: String,
-    reasonForPedhinamu: String,
-
-    // ------------------------ Panch List ------------------------
+    /* -------------------- Deceased -------------------- */
     deceasedPersons: [
-  {
-    name: String,
-    age: String,
-    date: String
-  }
-],
+      {
+        name: String,
+        age: String,
+        date: String
+      }
+    ],
+    totalDeceasedCount: { type: Number, default: 0 },
+
+    /* -------------------- Panch -------------------- */
     panch: [
       {
         name: String,
@@ -50,11 +39,14 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
         occupation: String,
         aadhaar: String,
         mobile: String,
-        photo: String // Photo path/URL
+        photo: String
       }
     ],
 
-    // ------------------------ Documents ------------------------
+    /* -------------------- Heirs (🔥 MISSING FIXED) -------------------- */
+    heirs: { type: Array, default: [] },
+
+    /* -------------------- Documents -------------------- */
     documents: {
       affidavit: { type: Boolean, default: false },
       satbara: { type: Boolean, default: false },
@@ -66,18 +58,28 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
       otherDocument: { type: String, default: "" }
     },
 
-    // ------------------------ Talati Section ------------------------
+    /* -------------------- Notary -------------------- */
+    notaryName: String,
+    notaryBookNo: String,
+    notaryPageNo: String,
+    notarySerialNo: String,
+    notaryDate: String,
+
+    /* -------------------- Purpose -------------------- */
+    referenceNo: String,
+    mukkamAddress: String,
+    jaminSurveyNo: String,
+    jaminKhatano: String,
+    reasonForPedhinamu: String,
+
+    /* -------------------- Talati -------------------- */
     talatiName: String,
-    varasdarType: String, // alive/deceased
-    totalHeirsCount: Number,
+    varasdarType: String,
+    totalHeirsCount: { type: Number, default: 0 },
     javadNo: String,
 
     heirType: { type: String, default: "alive" },
-    isDeleted: {
-      type: Boolean,
-      default: false
-    }
-
+    isDeleted: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

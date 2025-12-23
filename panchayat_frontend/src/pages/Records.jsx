@@ -27,6 +27,7 @@ import { DeleteIcon } from "@chakra-ui/icons";
 import { useToast } from "@chakra-ui/react";
 import Pagination from "../components/Pagination";
 import LoaderSpinner from "../components/LoaderSpinner";
+import { apiFetch } from "../utils/api.js";
 
 
 
@@ -50,11 +51,10 @@ export default function Records() {
 
   const fetchData = async (page) => {
     setLoading(true);
-    const res = await fetch(`http://localhost:5000/api/pedhinamu?page=${page}&limit=10`);
-    const json = await res.json();
+    const { response, data } = await apiFetch(`/api/pedhinamu?page=${page}&limit=10`, {}, navigate, toast);
 
-    setList(json.data);
-    setTotalPages(json.totalPages);
+    setList(data.data);
+    setTotalPages(data.totalPages);
     setLoading(false);
 
     return json.data;  // 🔥 RETURN UPDATED LIST
@@ -65,11 +65,11 @@ export default function Records() {
 
   const deleteRecord = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/pedhinamu/${deleteId}`, {
+      const { response, data } = await apiFetch(`/api/pedhinamu/${deleteId}`, {
         method: "DELETE",
-      });
+      }, navigate, toast);
 
-      if (!res.ok) throw new Error();
+      if (!response.ok) throw new Error();
 
       toast({
         title: t("deleted"),

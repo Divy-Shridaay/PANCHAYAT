@@ -20,9 +20,7 @@ const CashMelView = () => {
   const [entry, setEntry] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_ROOT = import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace(/\/$/, "")
-    : "http://localhost:5000/api";
+  const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000") + "/api";
   const API_BASE = `${API_ROOT}/cashmel`;
 
   useEffect(() => {

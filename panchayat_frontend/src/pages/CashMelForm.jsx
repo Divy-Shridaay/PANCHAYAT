@@ -21,7 +21,9 @@ import * as XLSX from "xlsx";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiPrinter } from "react-icons/fi";
+
 import "react-datepicker/dist/react-datepicker.css";
+
 import DateInput from "./DateInput.jsx";
 
 /* ---------------- Format DD/MM/YYYY ---------------- */
@@ -61,7 +63,7 @@ const toGujaratiDigits = (num) => {
 };
 
 const CashMelForm = () => {
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000') + '/api';
     const { t } = useTranslation();
     const toast = useToast();
     const navigate = useNavigate();

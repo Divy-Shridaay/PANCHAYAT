@@ -12,6 +12,7 @@ import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useToast } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import LoaderSpinner from "../components/LoaderSpinner";
+import { apiFetch } from "../utils/api.js";
 
 export default function Pedhinamu() {
     const { id } = useParams();
@@ -160,10 +161,10 @@ export default function Pedhinamu() {
 
         setInitialLoading(true);
 
-        fetch(`http://localhost:5000/api/pedhinamu/${id}`)
-            .then(res => res.json())
-            .then(json => {
-                const p = json.pedhinamu;
+        (async () => {
+            try {
+                const { response, data } = await apiFetch(`/api/pedhinamu/${id}`, {}, navigate, toast);
+                const p = data.pedhinamu;
 
                 if (!p) {
                     setInitialLoading(false);
@@ -183,11 +184,11 @@ export default function Pedhinamu() {
                 setStep(formatted.heirs.length > 0 ? 2 : 1);
 
                 setInitialLoading(false);
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error("Failed to load:", err);
                 setInitialLoading(false);
-            });
+            }
+        })();
     }, [id]);
 
 
@@ -487,24 +488,18 @@ export default function Pedhinamu() {
             // -----------------------------
             const isEditMode = Boolean(id);
             const url = isEditMode
-                ? `http://localhost:5000/api/pedhinamu/${id}`
-                : `http://localhost:5000/api/pedhinamu`;
+                ? `/api/pedhinamu/${id}`
+                : `/api/pedhinamu`;
 
             const method = isEditMode ? "PUT" : "POST";
             
 
-            const res = await fetch(url, {
+            const { response, data } = await apiFetch(url, {
                 method,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: localStorage.getItem("token"),
-                },
                 body: JSON.stringify(payload),
-            });
+            }, navigate, toast);
 
-            const data = await res.json();
-
-            if (!res.ok) {
+            if (!response.ok) {
                 showError(data.error || t("error"));
                 return;
             }

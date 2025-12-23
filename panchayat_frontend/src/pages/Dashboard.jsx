@@ -41,7 +41,7 @@ export default function Dashboard() {
   const fetchUsers = async () => {
     try {
       const { response, data } = await apiFetch(
-        "http://localhost:5000/api/register/admin/users"
+        "/api/register/admin/users"
       );
 
       if (response.ok) {
@@ -85,7 +85,7 @@ export default function Dashboard() {
   const fetchUserStatus = async () => {
     try {
       const { response, data } = await apiFetch(
-        "http://localhost:5000/api/register/user/status"
+        "/api/register/user/status"
       );
 
       if (response.ok) {
@@ -111,7 +111,7 @@ export default function Dashboard() {
   ======================= */
   const handleModuleClick = async (route) => {
     try {
-      const { response, data } = await apiFetch("http://localhost:5000/api/register/user/status");
+      const { response, data } = await apiFetch("/api/register/user/status");
       if (response.ok) {
         const status = data.user;
         if (!status.canAccessModules) {

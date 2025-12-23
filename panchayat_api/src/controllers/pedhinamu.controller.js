@@ -1,9 +1,6 @@
 import Pedhinamu from "../models/Pedhinamu.js";
 import PedhinamuFormDetails from "../models/PedhinamuFormDetails.js";
 
-/* ============================================================
-    1. CREATE BASIC PEDHINAMU (supports subFamily)
-   ============================================================ */
 export const createPedhinamu = async (req, res) => {
   try {
     const d = req.body;
@@ -100,11 +97,6 @@ export const createPedhinamu = async (req, res) => {
   }
 };
 
-
-
-/* ============================================================
-    2. PAGINATED LIST OF PEDHINAMU
-   ============================================================ */
 export const getPedhinamus = async (req, res) => {
   try {
     let page = parseInt(req.query.page) || 1;
@@ -138,78 +130,113 @@ export const getPedhinamus = async (req, res) => {
   }
 };
 
-
-/* ============================================================
-    3. SAVE FULL FORM (after basic pedhinamu)
-    ⚠️ HANDLES FORMDATA WITH FILE UPLOADS
-   ============================================================ */
 export const saveFullForm = async (req, res) => {
   try {
     const { id } = req.params;
     const body = req.body;
 
-    // console.log('=== FORM DATA RECEIVED ===');
-    // console.log('Raw panch:', body.panch);
-    // console.log('Files:', req.files?.length || 0);
+    console.log("🟢 SAVE FULL FORM STARTED");
+    console.log("🆔 Pedhinamu ID:", id);
+    console.log("📦 RAW BODY:", body);
+    console.log("📁 FILES:", req.files);
 
-    // Helper function to safely parse JSON strings from FormData
     const parseJson = (value) => {
       if (!value) return undefined;
-      if (typeof value === 'object') return value;
-      if (typeof value === 'string') {
+      if (typeof value === "object") return value;
+      if (typeof value === "string") {
         try {
           return JSON.parse(value);
         } catch (e) {
-          console.error('JSON parse error:', e.message);
+          console.error("❌ JSON parse error:", e.message, value);
           return undefined;
         }
       }
       return value;
     };
 
-    // Parse all JSON fields that come as strings from FormData
     const panch = parseJson(body.panch);
     const deceasedPersons = parseJson(body.deceasedPersons);
     const heirs = parseJson(body.heirs);
     const documents = parseJson(body.documents);
 
-    // Validate panch array
+    console.log("👥 Panch parsed:", panch);
+    console.log("☠️ Deceased parsed:", deceasedPersons);
+    console.log("🧬 Heirs parsed:", heirs);
+    console.log("📄 Documents parsed:", documents);
+
     if (!Array.isArray(panch)) {
-      console.error('❌ Panch is not an array:', typeof panch);
-      return res.status(400).json({ 
+      console.error("❌ Panch is not an array:", typeof panch, panch);
+      return res.status(400).json({
         error: "Invalid panch data format",
         received: typeof panch,
         value: panch
       });
     }
 
-    
+    // =====================================================
+    // ✅ FILE UPLOAD HANDLING
+    // =====================================================
 
-    // Handle panch photos - assign to corresponding panch members
-    if (req.files && req.files.length > 0) {
-      const panchPhotos = req.files.filter(f => f.fieldname === 'panchPhotos');
-      console.log(`📷 Processing ${panchPhotos.length} panch photos`);
+    let applicantPhotoPath;
 
-      panchPhotos.forEach((file, index) => {
-        if (panch[index]) {
-          panch[index].photo = `/uploads/${file.filename}`;
-          console.log(`✅ Photo assigned to panch ${index}: ${file.filename}`);
-        }
-      });
+    // ---------- APPLICANT PHOTO ----------
+    if (req.files?.applicantPhoto?.length > 0) {
+      applicantPhotoPath = `/uploads/${req.files.applicantPhoto[0].filename}`;
+      console.log("✅ Applicant photo saved:", applicantPhotoPath);
+    } else {
+      console.log("ℹ️ No new applicant photo uploaded");
+      
+      // 🔥 FIX: Keep existing photo if no new upload
+      const existingForm = await PedhinamuFormDetails.findOne({ pedhinamuId: id });
+      if (existingForm?.applicantPhoto) {
+        applicantPhotoPath = existingForm.applicantPhoto;
+        console.log("📷 Using existing applicant photo:", applicantPhotoPath);
+      }
     }
 
-    // Build the clean update object
+    // ---------- PANCH PHOTOS ----------
+    if (req.files?.panchPhotos?.length > 0) {
+      console.log(`📷 Panch photos received: ${req.files.panchPhotos.length}`);
+
+      req.files.panchPhotos.forEach((file, index) => {
+        if (panch[index]) {
+          panch[index].photo = `/uploads/${file.filename}`;
+          console.log(
+            `✅ Panch[${index}] photo assigned:`,
+            panch[index].photo
+          );
+        } else {
+          console.warn(`⚠️ Panch index ${index} not found`);
+        }
+      });
+    } else {
+      console.log("ℹ️ No new panch photos uploaded");
+      
+      // 🔥 FIX: Keep existing panch photos if no new upload
+      const existingForm = await PedhinamuFormDetails.findOne({ pedhinamuId: id });
+      if (existingForm?.panch) {
+        panch.forEach((p, index) => {
+          if (!p.photo && existingForm.panch[index]?.photo) {
+            p.photo = existingForm.panch[index].photo;
+            console.log(`📷 Using existing panch[${index}] photo:`, p.photo);
+          }
+        });
+      }
+    }
+
+    // =====================================================
+    // ✅ UPDATE DATA BUILD
+    // =====================================================
+
     const updateData = {
       pedhinamuId: id,
       heirType: "alive",
 
-      // Parsed complex fields
       panch: panch,
       deceasedPersons: deceasedPersons || [],
       heirs: heirs || [],
       documents: documents || {},
 
-      // Simple string/number fields
       applicantName: body.applicantName || "",
       applicantSurname: body.applicantSurname || "",
       applicantMobile: body.applicantMobile || "",
@@ -239,7 +266,15 @@ export const saveFullForm = async (req, res) => {
       totalDeceasedCount: parseInt(body.totalDeceasedCount) || 0,
     };
 
-    
+    // 🔥 FIX: Always include applicant photo if it exists
+    if (applicantPhotoPath) {
+      updateData.applicantPhoto = applicantPhotoPath;
+      console.log("🖼️ Applicant photo added to updateData:", applicantPhotoPath);
+    } else {
+      console.log("⚠️ No applicant photo available");
+    }
+
+    console.log("🧾 FINAL UPDATE DATA:", updateData);
 
     const saved = await PedhinamuFormDetails.findOneAndUpdate(
       { pedhinamuId: id },
@@ -247,9 +282,10 @@ export const saveFullForm = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await Pedhinamu.findByIdAndUpdate(id, { hasFullForm: true });
+    console.log("✅ FORM SAVED IN DB:", saved?._id);
 
-    
+    await Pedhinamu.findByIdAndUpdate(id, { hasFullForm: true });
+    console.log("✅ Pedhinamu marked hasFullForm = true");
 
     res.json({
       success: true,
@@ -259,17 +295,15 @@ export const saveFullForm = async (req, res) => {
 
   } catch (err) {
     console.error("❌ SAVE FULLFORM ERROR:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to save full form",
-      details: err.message 
+      details: err.message
     });
   }
 };
 
 
-/* ============================================================
-    4. GET FULL PEDHINAMU (Basic + Form)
-   ============================================================ */
+
 export const getFullPedhinamu = async (req, res) => {
   try {
     const { id } = req.params;
@@ -289,10 +323,6 @@ export const getFullPedhinamu = async (req, res) => {
   }
 };
 
-
-/* ============================================================
-    5. UPDATE PEDHINAMU TREE (mukhya + heirs)
-   ============================================================ */
 export const updatePedhinamuTree = async (req, res) => {
   try {
     const { id } = req.params;
@@ -325,11 +355,6 @@ export const updatePedhinamuTree = async (req, res) => {
   }
 };
 
-
-
-/* ============================================================
-    6. SOFT DELETE
-   ============================================================ */
 export const softDeletePedhinamu = async (req, res) => {
   try {
     const { id } = req.params;

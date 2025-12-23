@@ -10,39 +10,61 @@ import {
   softDeletePedhinamu
 } from "../controllers/pedhinamu.controller.js";
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage: storage });
-
 const router = Router();
 
 /* ------------------------------------------
-   BASIC PEDHINAMU CREATION + LIST
+   MULTER CONFIG (FIXED)
 ---------------------------------------------*/
-router.post("/", createPedhinamu);       // Create Pedhinamu (basic)
-router.get("/", getPedhinamus);   
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix =
+      Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+    cb(
+      null,
+      file.fieldname +
+        "-" +
+        uniqueSuffix +
+        path.extname(file.originalname)
+    );
+  }
+});
+
+const upload = multer({ storage });
+
+/* ------------------------------------------
+   BASIC PEDHINAMU
+---------------------------------------------*/
+router.post("/", createPedhinamu);      // create basic pedhinamu
+router.get("/", getPedhinamus);         // list with pagination
+
+/* ------------------------------------------
+   UPDATE FAMILY TREE
+---------------------------------------------*/
 router.put("/:id", updatePedhinamuTree);
-       // List all (pagination)
+router.put("/:id/tree", updatePedhinamuTree);
 
 /* ------------------------------------------
-   FULL FORM (after basic pedhinamu)
+   FULL FORM (🔥 FINAL FIX 🔥)
+   - applicantPhoto (single)
+   - panchPhotos (multiple)
 ---------------------------------------------*/
-router.post("/form/:id", upload.any(), saveFullForm);  // Save Full Form with photo uploads
-router.get("/:id", getFullPedhinamu);    // Full details (basic + form)
+router.post(
+  "/form/:id",
+  upload.fields([
+    { name: "applicantPhoto", maxCount: 1 },
+    { name: "panchPhotos", maxCount: 10 }
+  ]),
+  saveFullForm
+);
 
 /* ------------------------------------------
-   UPDATE TREE (mukhya + heirs + subFamily)
+   GET FULL PEDHINAMU (basic + form)
 ---------------------------------------------*/
-router.put("/:id/tree", updatePedhinamuTree); // <—— NEW & REQUIRED
+router.get("/:id", getFullPedhinamu);
 
 /* ------------------------------------------
    SOFT DELETE

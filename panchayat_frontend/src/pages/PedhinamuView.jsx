@@ -12,6 +12,8 @@ import { FiChevronLeft } from "react-icons/fi";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LoaderSpinner from "../components/LoaderSpinner";
+import { apiFetch } from "../utils/api.js";
+import { useToast } from "@chakra-ui/react";
 
 import * as d3 from "d3";
 
@@ -85,6 +87,7 @@ export default function PedhinamuView() {
     const { id } = useParams();
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const toast = useToast();
     const svgRef = useRef();
 
     const [data, setData] = useState(null);
@@ -103,9 +106,8 @@ export default function PedhinamuView() {
 
     const fetchData = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/pedhinamu/${id}`);
-            const json = await res.json();
-            setData(json.pedhinamu);
+            const { response, data } = await apiFetch(`/api/pedhinamu/${id}`, {}, navigate, toast);
+            setData(data.pedhinamu);
         } catch (e) {
             console.error(e);
         }

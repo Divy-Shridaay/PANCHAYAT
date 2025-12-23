@@ -35,6 +35,7 @@ import {
 } from "@chakra-ui/react";
 
 import { FaEye, FaTrash, FaDownload } from "react-icons/fa";
+import { apiFetch } from "../utils/api.js";
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -50,13 +51,7 @@ export default function AdminPanel() {
  // Fetch all users
 const fetchUsers = async () => {
   try {
-    const response = await fetch("http://localhost:5000/api/register/admin/users", {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    });
-
-    const data = await response.json();
+    const { response, data } = await apiFetch("/api/register/admin/users", {}, navigate, toast);
 
     if (response.ok) {
       setUsers(data.users);
@@ -117,14 +112,9 @@ const handleLogout = () => {
 // Activate user
 const handleActivateUser = async (userId) => {
   try {
-    const response = await fetch(`http://localhost:5000/api/register/admin/users/${userId}/activate`, {
+    const { response, data } = await apiFetch(`/api/register/admin/users/${userId}/activate`, {
       method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    });
-
-    const data = await response.json();
+    }, navigate, toast);
 
     if (response.ok) {
       toast({

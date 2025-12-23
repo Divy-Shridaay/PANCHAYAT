@@ -15,14 +15,15 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useApiFetch } from "../utils/api";
+import { useToast } from "@chakra-ui/react";
+import { apiFetch } from "../utils/api.js";
 import PaymentPopup from "../components/PaymentPopup";
 
 export default function RecordView() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const apiFetch = useApiFetch();
+    const toast = useToast();
 
     const [data, setData] = useState(null);
     const [userStatus, setUserStatus] = useState(null);
@@ -30,9 +31,8 @@ export default function RecordView() {
 
     useEffect(() => {
         (async () => {
-            const res = await fetch(`http://localhost:5000/api/pedhinamu/${id}`);
-            const json = await res.json();
-            setData(json);
+            const { response, data } = await apiFetch(`/api/pedhinamu/${id}`, {}, navigate, toast);
+            setData(data);
         })();
 
         fetchUserStatus();
@@ -40,7 +40,7 @@ export default function RecordView() {
 
     const fetchUserStatus = async () => {
         try {
-            const { response, data } = await apiFetch("http://localhost:5000/api/register/user/status");
+            const { response, data } = await apiFetch("/api/register/user/status", {}, navigate, toast);
             if (response.ok) {
                 setUserStatus(data.user);
             }
@@ -287,167 +287,139 @@ ${isDead ? `
     `;
     }
 
-  const handlePedhinamuPrint = async () => {
+const handlePedhinamuPrint = async () => {
   try {
     // 🔴 FIRST increment & check limit
-const res = await apiFetch(
-  "http://localhost:5000/api/register/user/increment-print",
-  { method: "POST" }
-);
+    const res = await apiFetch(
+      "/api/register/user/increment-print",
+      { method: "POST" },
+      navigate,
+      toast
+    );
 
-if (!res.data.canPrint) {
-  setShowPaymentPopup(true);
-  return;
-}
-
-
+    if (!res.data.canPrint) {
+      setShowPaymentPopup(true);
+      return;
+    }
 
     // ✅ Only allowed prints reach here
     const response2 = await fetch("/pedhinamu/pedhinamu.html");
     let htmlTemplate = await response2.text();
 
+    const { pedhinamu, form } = data;
 
-            const { pedhinamu, form } = data;
+    // 🔥 DEBUG: Log the applicant photo value
+    console.log('🖼️ Applicant Photo Path:', form?.applicantPhoto);
+    console.log('🖼️ Full Photo URL:', form?.applicantPhoto ? `${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}` : 'No photo');
 
-            /* -----------------------------------------
-               BASIC PLACEHOLDER REPLACEMENTS
-            ----------------------------------------- */
+    /* -----------------------------------------
+       BASIC PLACEHOLDER REPLACEMENTS
+    ----------------------------------------- */
 
-            const rawDeathDate =
-    pedhinamu?.mukhya?.dodDisplay ||
-    pedhinamu?.mukhya?.dod ||
-    pedhinamu?.mukhya?.deathDate ||
-    pedhinamu?.mukhya?.dateOfDeath ||
-    pedhinamu?.mukhya?.death_date ||
-    "";
-            const replacements = {
-                applicantName: form?.applicantName || "",
-                mukkamAddress: form?.mukkamAddress || "",
-                talatiName: form?.talatiName || "",
-                javadNo: form?.javadNo || "",
-                totalHeirsCount: form?.totalHeirsCount || "",
+    const replacements = {
+      applicantName: form?.applicantName || "",
+      mukkamAddress: form?.mukkamAddress || "",
+      talatiName: form?.talatiName || "",
+      javadNo: form?.javadNo || "",
+      totalHeirsCount: form?.totalHeirsCount || "",
 
-                 mukhyoName: pedhinamu?.mukhya?.name || "",
+      mukhyoName: pedhinamu?.mukhya?.name || "",
 
-     deathDate:
+      deathDate:
         pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
-            ? formatDateToGujarati(pedhinamu.mukhya.dodDisplay)
-            : "",
-           
+          ? formatDateToGujarati(pedhinamu.mukhya.dodDisplay)
+          : "",
 
-                //  REQUIRED FOR સંદર્ભ 
-                notarySerialNo: form?.notarySerialNo || "",
-                notaryBookNo: form?.notaryBookNo || "",
-                notaryPageNo: form?.notaryPageNo || "",
-                notaryName: form?.notaryName || "",
-                notaryDate: form?.notaryDate
-                    ? formatDateToGujarati(form.notaryDate)
-                    : "",
+      notarySerialNo: form?.notarySerialNo || "",
+      notaryBookNo: form?.notaryBookNo || "",
+      notaryPageNo: form?.notaryPageNo || "",
+      notaryName: form?.notaryName || "",
+      notaryDate: form?.notaryDate
+        ? formatDateToGujarati(form.notaryDate)
+        : "",
 
-                reasonForPedhinamu: form?.reasonForPedhinamu || "",
-                jaminSurveyNo: form?.jaminSurveyNo || "",
-                jaminKhatano: form?.jaminKhatano || "",
+      reasonForPedhinamu: form?.reasonForPedhinamu || "",
+      jaminSurveyNo: form?.jaminSurveyNo || "",
+      jaminKhatano: form?.jaminKhatano || "",
 
-                //  APPLICATION DATE (fallback to createdAt) 
-                applicationDate: form?.applicationDate
-                    ? formatDateToGujarati(form.applicationDate)
-                    : formatDateToGujarati(pedhinamu.createdAt),
+      applicationDate: form?.applicationDate
+        ? formatDateToGujarati(form.applicationDate)
+        : formatDateToGujarati(pedhinamu.createdAt),
 
-                applicantMobile: formatMobile(form?.applicantMobile),
-                applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
-                applicantPhotoHtml: form?.applicantPhoto 
-                    ? `<img src="http://localhost:5000${form.applicantPhoto}" style="width:120px; height:140px; object-fit:cover; border:1px solid #ccc;" />` 
-                    : '<div class="placeholder-photo"></div>',
+      applicantMobile: formatMobile(form?.applicantMobile),
+      applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
+      
+      talukaName: form?.talukaName?.trim() ? form.talukaName : "કાલોલ",
+      districtName: form?.districtName?.trim() ? form.districtName : "ગાંધીનગર",
+    };
 
-                //  DEFAULT TALUKA / JILLA 
-                talukaName: form?.talukaName?.trim()
-                    ? form.talukaName
-                    : "કાલોલ",
+    // 🔥 IMPORTANT: Handle applicant photo separately with proper error handling
+    let applicantPhotoHtml = '';
+    
+    if (form?.applicantPhoto) {
+      const photoPath = form.applicantPhoto.startsWith('/uploads') 
+        ? form.applicantPhoto 
+        : `/uploads/${form.applicantPhoto}`;
+      
+      applicantPhotoHtml = `<img 
+        src="${import.meta.env.VITE_API_BASE_URL}${photoPath}" 
+        style="width:120px; height:140px; object-fit:cover; border:1px solid #000;" 
+        alt="Applicant Photo" 
+        onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:140px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
+      />`;
+      
+      console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
+    } else {
+      applicantPhotoHtml = `<div style="width:120px; height:140px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
+      console.log('⚠️ No applicant photo available');
+    }
 
-                districtName: form?.districtName?.trim()
-                    ? form.districtName
-                    : "ગાંધીનગર",
-            };
+    replacements.applicantPhotoHtml = applicantPhotoHtml;
 
- 
+    // Replace all placeholders
+    const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml'];
+    Object.entries(replacements).forEach(([key, value]) => {
+      const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
+      htmlTemplate = htmlTemplate.replace(
+        new RegExp(`{{\\s*${key}\\s*}}`, "g"),
+        processedValue
+      );
+    });
 
-            Object.entries(replacements).forEach(([key, value]) => {
-                htmlTemplate = htmlTemplate.replace(
-                    new RegExp(`{{\\s*${key}\\s*}}`, "g"),
-                    toGujaratiDigits(value || "")
-                );
-            });
+    /* -----------------------------------------
+       HEIRS TABLE (SAFE + CLEAN)
+    ----------------------------------------- */
 
-            function renderChildrenRecursive(child, padding = 40) {
-                let html = `
-        <tr>
-            <td style="padding-left:${padding}px;">
-                • ${child.name}${child.isDeceased ? " (મૈયત)" : ""}
-            </td>
-            <td>${toGujaratiDigits(child.age || "-")}</td>
-            <td>${relationToGujarati(child.relation)}</td>
-        </tr>
-    `;
+    let heirsHtml = pedhinamu.heirs
+      .map((h) => {
+        let spouseRow = "";
+        let childrenRows = "";
 
-                // SPOUSE of CHILD
-                if (child.subFamily?.spouse?.name?.trim()) {
-                    html += `
+        // spouse
+        if (h.subFamily?.spouse?.name?.trim()) {
+          spouseRow = `
             <tr>
-                <td style="padding-left:${padding + 20}px;">
-                    ➤ ${child.subFamily.spouse.name}${child.subFamily.spouse.isDeceased ? " (મૈયત)" : ""}
-                </td>
-                <td>${toGujaratiDigits(child.subFamily.spouse.age || "-")}</td>
-                <td>${relationToGujarati(child.subFamily.spouse.relation)}</td>
+                <td style="padding-left:25px;">➤ ${h.subFamily.spouse.name}</td>
+                <td>${toGujaratiDigits(h.subFamily.spouse.age || "-")}</td>
+                <td>${relationToGujarati(h.subFamily.spouse.relation)}</td>
             </tr>
-        `;
-                }
+          `;
+        }
 
-                // GRANDCHILDREN (children of children)
-                if (child.subFamily?.children?.length > 0) {
-                    child.subFamily.children.forEach(gc => {
-                        html += renderChildrenRecursive(gc, padding + 40);
-                    });
-                }
+        // children
+        if (h.subFamily?.children?.length > 0) {
+          childrenRows = h.subFamily.children
+            .map((c) => `
+              <tr>
+                  <td style="padding-left:40px;">• ${c.name}</td>
+                  <td>${toGujaratiDigits(c.age)}</td>
+                  <td>${relationToGujarati(c.relation)}</td>
+              </tr>
+            `)
+            .join("");
+        }
 
-                return html;
-            }
-
-            /* -----------------------------------------
-               HEIRS TABLE (SAFE + CLEAN)
-            ----------------------------------------- */
-
-            let heirsHtml = pedhinamu.heirs
-                .map((h) => {
-                    let spouseRow = "";
-                    let childrenRows = "";
-
-                    // spouse
-                    if (h.subFamily?.spouse?.name?.trim()) {
-                        spouseRow = `
-                <tr>
-                    <td style="padding-left:25px;">➤ ${h.subFamily.spouse.name}</td>
-                    <td>${toGujaratiDigits(h.subFamily.spouse.age || "-")}</td>
-                    <td>${relationToGujarati(h.subFamily.spouse.relation)}</td>
-                </tr>
-            `;
-                    }
-
-                    // children
-                    // children
-                    if (h.subFamily?.children?.length > 0) {
-                        childrenRows = h.subFamily.children
-                            .map((c) => `
-            <tr>
-                <td style="padding-left:40px;">• ${c.name}</td>
-                <td>${toGujaratiDigits(c.age)}</td>
-                <td>${relationToGujarati(c.relation)}</td>
-            </tr>
-        `)
-                            .join("");
-                    }
-
-
-                    return `
+        return `
             <tr>
                 <td><b>${h.name}</b></td>
                 <td>${toGujaratiDigits(h.age)}</td>
@@ -456,173 +428,154 @@ if (!res.data.canPrint) {
             ${spouseRow}
             ${childrenRows}
         `;
-                })
-                .join("");
+      })
+      .join("");
 
-            htmlTemplate = htmlTemplate.replace("{{heirsTable}}", heirsHtml);
+    htmlTemplate = htmlTemplate.replace("{{heirsTable}}", heirsHtml);
 
+    /* -----------------------------------------
+       PANCH TABLE
+    ----------------------------------------- */
+    let panchHtml = form.panch
+      .map(
+        (p) => `
+          <tr>
+              <td>${p.name}</td>
+              <td>${toGujaratiDigits(p.age)}</td>
+              <td>${p.occupation}</td>
+              <td>${toGujaratiDigits(formatMobile(p.mobile))}</td>
+          </tr>`
+      )
+      .join("");
 
-            /* -----------------------------------------
-               PANCH TABLE
-            ----------------------------------------- */
-            let panchHtml = form.panch
-                .map(
-                    (p) => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${toGujaratiDigits(p.age)}</td>
-                    <td>${p.occupation}</td>
-                    <td>${toGujaratiDigits(formatMobile(p.mobile))}</td>
-                </tr>`
-                )
-                .join("");
+    htmlTemplate = htmlTemplate.replace("{{panchTable}}", panchHtml);
 
-            htmlTemplate = htmlTemplate.replace("{{panchTable}}", panchHtml);
+    /* -----------------------------------------
+       PANCH SIGNATURE BLOCKS
+    ----------------------------------------- */
+    let panchSignHtml = form.panch
+      .map(
+        (p) => `
+          <p>
+              <b>${p.name}</b><br>
+              સહી: _______________________<br>
+              અંગુઠાનો નિશાન: _____________
+          </p>`
+      )
+      .join("");
 
-            /* -----------------------------------------
-               PANCH SIGNATURE BLOCKS
-            ----------------------------------------- */
-            let panchSignHtml = form.panch
-                .map(
-                    (p) => `
-            <p>
-                <b>${p.name}</b><br>
-                સહી: _______________________<br>
-                અંગુઠાનો નિશાન: _____________
-            </p>`
-                )
-                .join("");
+    htmlTemplate = htmlTemplate.replace("{{panchSignatureBlocks}}", panchSignHtml);
 
-            htmlTemplate = htmlTemplate.replace("{{panchSignatureBlocks}}", panchSignHtml);
+    /* -----------------------------------------
+       PANCH PHOTO BLOCKS
+    ----------------------------------------- */
+    let panchPhotoHtml = form.panch
+      .map((p) => {
+        let photoHtml = '';
+        
+        if (p.photo) {
+          const panchPhotoPath = p.photo.startsWith('/uploads') 
+            ? p.photo 
+            : `/uploads/${p.photo}`;
+          
+          photoHtml = `<img 
+            src="${import.meta.env.VITE_API_BASE_URL}${panchPhotoPath}" 
+            style="width:120px; height:120px; object-fit:cover; border:1px solid #ccc;" 
+            alt="Panch Photo"
+            onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;background:#f5f5f5;\\'>No Photo</div>';"
+          />`;
+        } else {
+          photoHtml = '<div style="width:120px; height:120px; border:1px solid #ccc; background:#f5f5f5;"></div>';
+        }
+        
+        return `
+          <table style="margin-bottom: 40px;">
+              <tr>
+                  <td rowspan="5" style="width:130px;">
+                      ${photoHtml}
+                  </td>
+                  <td><b>પંચનું નામ :</b> ${p.name}</td>
+              </tr>
+              <tr><td><b>આધાર નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))}</td></tr>
+              <tr><td><b>અંગુઠાનુ નિશાન :</b> __________________</td></tr>
+              <tr><td><b>સહી :</b> _____________________________</td></tr>
+              <tr><td><b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}</td></tr>
+          </table>
+        `;
+      })
+      .join("");
 
-            /* -----------------------------------------
-               PANCH PHOTO BLOCKS
-            ----------------------------------------- */
-            let panchPhotoHtml = form.panch
-                .map(
-                    (p) => `
-            <table style="margin-bottom: 40px;">
-                <tr>
-                    <td rowspan="5" style="width:130px;">
-                        ${p.photo ? `<img src="http://localhost:5000${p.photo}" style="width:120px; height:120px; object-fit:cover; border:1px solid #ccc;" />` : '<div class="placeholder-photo"></div>'}
-                    </td>
-                    <td><b>પંચનું નામ :</b> ${p.name}</td>
-                </tr>
-                <tr><td><b>આધાર નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))}</td></tr>
-                <tr><td><b>અંગુઠાનુ નિશાન :</b> __________________</td></tr>
-                <tr><td><b>સહી :</b> _____________________________</td></tr>
-                <tr><td><b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}</td></tr>
-            </table>
-        `
-                )
-                .join("");
+    htmlTemplate = htmlTemplate.replace("{{panchPhotoBlocks}}", panchPhotoHtml);
 
+    /* -----------------------------------------
+        FAMILY TREE BUILDER (Dynamic)
+    ----------------------------------------- */
 
-            htmlTemplate = htmlTemplate.replace("{{panchPhotoBlocks}}", panchPhotoHtml);
+    function buildNode(person) {
+      if (!person) return null;
 
-            /* -----------------------------------------
-                FAMILY TREE BUILDER (Dynamic)
-                ----------------------------------------- */
+      const node = {
+        name: person.name,
+        age: person.age || "",
+        dodDisplay: person.dodDisplay || "",
+        relation: relationToGujarati(person.relation),
+        isDeceased: person.isDeceased || false,
+        isRoot: person.isRoot || false,
+        children: []
+      };
 
-            function buildNode(person) {
-                if (!person) return null;
+      const spouse = person.spouse || person.subFamily?.spouse;
 
-                // Build this node
-                const node = {
-                    name: person.name,
-                    age: person.age || "",
-                    dodDisplay: person.dodDisplay || "",
-                    relation: relationToGujarati(person.relation),
-                    isDeceased: person.isDeceased || false,
-                    isRoot: person.isRoot || false,
-                    children: []
-                };
+      if (spouse?.name?.trim()) {
+        node.children.push({
+          name: spouse.name,
+          age: spouse.age || "",
+          relation: relationToGujarati(spouse.relation),
+          isDeceased: spouse.isDeceased || false,
+          children: []
+        });
+      }
 
-                /* --------------------------------------
-                   1️⃣ ADD SPOUSE (works for ALL levels)
-                -------------------------------------- */
-                const spouse =
-                    person.spouse ||          // child.spouse OR grandchild spouse
-                    person.subFamily?.spouse; // heir spouse
+      const personChildren = person.subFamily?.children || person.children || [];
 
-                if (spouse?.name?.trim()) {
-                    node.children.push({
-                        name: spouse.name,
-                        age: spouse.age || "",
-                        relation: relationToGujarati(spouse.relation),
-                        isDeceased: spouse.isDeceased || false,
-                        children: []
-                    });
-                }
+      personChildren.forEach(c => {
+        node.children.push(buildNode(c));
+      });
 
-                /* --------------------------------------
-                   2️⃣ ADD CHILDREN (correct handling)
-                -------------------------------------- */
-                const personChildren =
-                    person.subFamily?.children ||   // heirs → children
-                    person.children ||              // children → grandchildren
-                    [];
+      return node;
+    }
 
-                personChildren.forEach(c => {
-                    node.children.push(buildNode(c));
-                });
+    const rootPerson = buildNode({
+      ...pedhinamu.mukhya,
+      relation: "",
+      isRoot: true,
+      spouse: pedhinamu.mukhya.spouse || null,
+      children: pedhinamu.heirs
+    });
 
-                return node;
-            }
+    const svgTree = generateSvgTree(rootPerson);
 
-            const rootPerson = buildNode({
-                ...pedhinamu.mukhya,
-                relation: "",
-                isRoot: true,
-                spouse: pedhinamu.mukhya.spouse || null,  // if stored
-                children: pedhinamu.heirs                 // main heirs become children of root
-            });
+    htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, svgTree);
 
-
-
-
-            const renderTree = (nodes, isRoot = false) => {
-                if (!nodes || nodes.length === 0) return "";
-
-                let html = "<ul>";
-
-                nodes.forEach((node) => {
-                    const deceasedClass = node.isDeceased ? "node-deceased" : "";
-
-                    html += `
-<li>
-    <div class="node-box ${isRoot ? "tree-root" : ""} ${deceasedClass}">
-        <b>${node.name}</b><br>
-        <span>${node.relation}</span>
-    </div>
-`;
-
-                    if (node.children?.length) {
-                        html += renderTree(node.children, false);
-                    }
-
-                    html += `</li>`;
-                });
-
-                html += "</ul>";
-                return html;
-            };
-
-            const svgTree = generateSvgTree(rootPerson);
-
-            htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, svgTree);
-
-
-            /* -----------------------------------------
-               PRINT WINDOW
-            ----------------------------------------- */
-             const printWindow = window.open("", "_blank", "width=1000,height=1200");
+    /* -----------------------------------------
+       PRINT WINDOW
+    ----------------------------------------- */
+    const printWindow = window.open("", "_blank", "width=1000,height=1200");
     printWindow.document.write(htmlTemplate);
     await printWindow.document.fonts.ready;
     printWindow.document.close();
 
+    console.log('✅ PDF generation completed successfully');
+
   } catch (err) {
-    console.error("PRINT ERROR:", err);
+    console.error("❌ PRINT ERROR:", err);
+    toast({
+      title: "Print Error",
+      description: "Failed to generate PDF. Please try again.",
+      status: "error",
+      duration: 3000,
+      position: "top",
+    });
   }
 };
     return (
@@ -852,7 +805,7 @@ if (!res.data.canPrint) {
                                         {p.photo && (
                                             <Box>
                                                 <img 
-                                                    src={`http://localhost:5000${p.photo}`} 
+                                                    src={`${import.meta.env.VITE_API_BASE_URL}${p.photo}`} 
                                                     alt={`Panch ${p.name}`}
                                                     style={{ 
                                                         width: '80px', 
@@ -875,6 +828,36 @@ if (!res.data.canPrint) {
                                 </Box>
                             ))}
                         </SimpleGrid>
+
+                        {/* APPLICANT */}
+                        <Heading size="md" mt={8}>{t("applicantDetails")}</Heading>
+                        <Divider my={3} />
+
+                        <Box p={4} borderWidth="1px" rounded="lg" shadow="sm" bg="#FFFDF5">
+                            <HStack spacing={4} align="start">
+                                {form.applicantPhoto && (
+                                    <Box>
+                                        <img 
+                                            src={`${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}`} 
+                                            alt="Applicant Photo"
+                                            style={{ 
+                                                width: '80px', 
+                                                height: '80px', 
+                                                objectFit: 'cover', 
+                                                borderRadius: '8px',
+                                                border: '1px solid #ccc'
+                                            }} 
+                                        />
+                                    </Box>
+                                )}
+                                <Box flex="1">
+                                    <Text fontSize="lg" fontWeight="600">{form.applicantName}</Text>
+                                    <Divider my={2} />
+                                    <Text><b>{t("mobile")}:</b> {displayMobile(form.applicantMobile)}</Text>
+                                    <Text><b>{t("aadhaarShort")}:</b> {formatAadhaar(form.applicantAadhaar)}</Text>
+                                </Box>
+                            </HStack>
+                        </Box>
                     </>
                 ) : (
                     <Text color="red.500" mt={5}>
