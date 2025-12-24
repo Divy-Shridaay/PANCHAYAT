@@ -188,17 +188,21 @@ const handleActivateUser = async (userId) => {
 // };
 
 // Filter users
-const filteredUsers = users.filter(user => {
-  const matchesSearch = 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone.includes(searchTerm);
+const filteredUsers = (users || []).filter(user => {
+  const search = (searchTerm || "").toLowerCase();
 
-  const matchesRole = filterRole === "all" || user.role === filterRole;
+  const matchesSearch =
+    (user.name || "").toLowerCase().includes(search) ||
+    (user.email || "").toLowerCase().includes(search) ||
+    (user.username || "").toLowerCase().includes(search) ||
+    (user.phone || "").includes(searchTerm);
+
+  const matchesRole =
+    filterRole === "all" || user.role === filterRole;
 
   return matchesSearch && matchesRole;
 });
+
 
   return (
     <Box minH="100vh" bg="#f8fafc" p={6}>

@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import path from "path";
 import { 
   createEntry, 
   uploadExcel, 
@@ -26,6 +27,17 @@ router.post("/", upload.none(), createEntry);
 
 // Upload Excel
 router.post("/upload-excel", upload.single("file"), uploadExcel);
+
+// Sample Excel Download
+router.get("/sample-excel", (req, res) => {
+  const filePath = path.join(process.cwd(), "uploads", "sample pdf.xlsx");
+  res.download(filePath, "sample_cashmel.xlsx", (err) => {
+    if (err) {
+      console.error("Download error:", err);
+      res.status(404).send("File not found");
+    }
+  });
+});
 
 // JSON Report
 router.get("/report", getReport);

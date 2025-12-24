@@ -18,9 +18,12 @@ import {
 } from "@chakra-ui/react";
 import CashMelReport from "./CashMelReport.jsx";
 import * as XLSX from "xlsx";
+import { FiArrowLeft } from "react-icons/fi";
+
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiPrinter } from "react-icons/fi";
+
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -231,6 +234,26 @@ const CashMelForm = () => {
         toast({ title: "Excel ફાઇલ વાંચાઈ ગઈ", status: "info", duration: 2000 });
     };
 
+    const downloadSampleExcel = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/cashmel/sample-excel`);
+            if (!response.ok) throw new Error("Download failed");
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "sample_cashmel.xlsx";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            toast({ title: "Sample Excel ડાઉનલોડ થયું!", status: "success" });
+        } catch (err) {
+            console.error(err);
+            toast({ title: "ડાઉનલોડમાં ભૂલ", status: "error" });
+        }
+    };
+
     const uploadExcelToServer = async () => {
         if (!form.excelFile) {
             toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
@@ -303,14 +326,42 @@ const CashMelForm = () => {
     /* ==================== UI ==================== */
     return (
         <Box p={8} maxW="900px" mx="auto" bg="#F8FAF9" minH="100vh">
-            <Flex justify="space-between" align="center" mb={6}>
-                <Heading color="#1E4D2B" fontWeight="700">
-                    {t("cashMelForm")}
-                </Heading>
-                <Button colorScheme="green" rounded="lg" size="md" onClick={() => navigate("/cashmel/details")}>
-                    ક્રિયાઓ
-                </Button>
-            </Flex>
+        <Flex align="center" mb={6}>
+    {/* 🔙 LEFT */}
+    <Box width="180px">
+        <Button
+            leftIcon={<FiArrowLeft />}
+            colorScheme="green"
+            variant="outline"
+            onClick={() => navigate("/dashboard")}
+        >
+            પાછા જાવ
+        </Button>
+    </Box>
+
+    {/* 🟢 CENTER */}
+    <Heading
+        flex="1"
+        textAlign="center"
+        color="#1E4D2B"
+        fontWeight="700"
+    >
+        {t("cashMelForm")}
+    </Heading>
+
+    {/* 👉 RIGHT */}
+    <Box width="180px" textAlign="right">
+        <Button
+            colorScheme="green"
+            rounded="lg"
+            size="md"
+            onClick={() => navigate("/cashmel/details")}
+        >
+            ક્રિયાઓ
+        </Button>
+    </Box>
+</Flex>
+
 
             <Box p={6} bg="white" rounded="2xl" shadow="md" borderWidth="1px">
                 <Heading size="md" mb={4} color="green.700" borderLeft="4px solid #2A7F62" pl={3}>
@@ -686,7 +737,9 @@ const CashMelForm = () => {
                     <Collapse in={showBulkUpload} animateOpacity>
                         <Box mt={4} p={1} bg="gray.50" rounded="md">
                             <HStack mb={3}>
-                                
+                                <Button colorScheme="blue" onClick={downloadSampleExcel}>
+                                    સેમ્પલ એક્સેલ ડાઉનલોડ
+                                </Button>
                                 <Input type="file" accept=".xlsx,.xls" onChange={handleExcelFileChange} />
                                 <Button colorScheme="green" onClick={uploadExcelToServer} isLoading={loading}>
                                     Upload to File

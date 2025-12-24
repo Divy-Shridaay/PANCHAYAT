@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
+import { apiFetch } from "../utils/api.js";
 
 import {
   Box,
@@ -77,13 +78,10 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/auth/reset-password", {
+      const { response, data } = await apiFetch("/api/auth/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),
-      });
-
-      const data = await response.json();
+      }, navigate, toast);
 
       if (response.ok) {
         setMessage("Password reset successfully. You can now login with your new password.");

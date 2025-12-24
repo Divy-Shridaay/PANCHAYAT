@@ -200,7 +200,7 @@ export default function Dashboard() {
         </Box>
 
         {/* Settings */}
-        <Box
+        {/* <Box
           bg="white"
           p={8}
           rounded="2xl"
@@ -218,7 +218,7 @@ export default function Dashboard() {
           <Text mt={2} color="gray.600">
             {t("cardSettingsText")}
           </Text>
-        </Box>
+        </Box> */}
 
         {/* Cashmel */}
         <Box
