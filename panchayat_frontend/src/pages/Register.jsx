@@ -47,6 +47,8 @@ export default function Register() {
     phone: "",
     pinCode: "",
     taluko: "",
+    gam: "",
+    jillo: "",
   });
 
   // Step 2: OTP verification
@@ -72,7 +74,9 @@ export default function Register() {
       !formData.email ||
       !formData.phone ||
       !formData.pinCode ||
-      !formData.taluko
+      !formData.taluko ||
+      !formData.gam ||
+      !formData.jillo
     ) {
       toast({
         title: "ત્રુટિ",
@@ -205,6 +209,8 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
           phone: "",
           pinCode: "",
           taluko: "",
+          gam: "",
+          jillo: "",
         });
         setOtp("");
         setStep(1);
@@ -281,7 +287,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                 />
               </FormControl>
 
-              <FormControl>
+              {/* <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
                   મધ્ય નામ
                 </FormLabel>
@@ -296,7 +302,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   _focus={{ borderColor: "#2563eb", bg: "white" }}
                   fontSize="sm"
                 />
-              </FormControl>
+              </FormControl> */}
             </HStack>
 
             {/* Row 2: Last Name */}
@@ -382,21 +388,52 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                 મોબાઇલ નંબર *
               </FormLabel>
 
-              <Input
-                placeholder="9876543210"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                bg="#f8fafc"
-                border="1px solid #cbd5e1"
-                _focus={{ borderColor: "#2563eb", bg: "white" }}
-                fontSize="sm"
-              />
+            <Input
+  type="tel"
+  placeholder="9876543210"
+  name="phone"
+  value={formData.phone}
+  maxLength={10}
+  inputMode="numeric"
+  pattern="[0-9]*"
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, ""); // sirf digits
+    if (value.length <= 10) {
+      setFormData((prev) => ({
+        ...prev,
+        phone: value,
+      }));
+    }
+  }}
+  bg="#f8fafc"
+  border="1px solid #cbd5e1"
+  _focus={{ borderColor: "#2563eb", bg: "white" }}
+  fontSize="sm"
+/>
+
             </FormControl>
 
             {/* Row 6: Pin Code & Taluko */}
             <HStack spacing={3} width="100%">
+
               <FormControl>
+                <FormLabel color="#475569" fontSize="sm" fontWeight="600">
+                  જિલ્લો *
+                </FormLabel>
+
+                <Input
+                  placeholder="જિલ્લાનું નામ"
+                  name="jillo"
+                  value={formData.jillo}
+                  onChange={handleInputChange}
+                  bg="#f8fafc"
+                  border="1px solid #cbd5e1"
+                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  fontSize="sm"
+                />
+              </FormControl>
+
+              {/* <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
                   પિન કોડ *
                 </FormLabel>
@@ -411,7 +448,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   _focus={{ borderColor: "#2563eb", bg: "white" }}
                   fontSize="sm"
                 />
-              </FormControl>
+              </FormControl> */}
 
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
@@ -431,6 +468,61 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
               </FormControl>
             </HStack>
 
+            {/* Row 7: Gam & Jillo */}
+            <HStack spacing={3} width="100%">
+              <FormControl>
+                <FormLabel color="#475569" fontSize="sm" fontWeight="600">
+                  ગામ *
+                </FormLabel>
+
+                <Input
+                  placeholder="ગામનું નામ"
+                  name="gam"
+                  value={formData.gam}
+                  onChange={handleInputChange}
+                  bg="#f8fafc"
+                  border="1px solid #cbd5e1"
+                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  fontSize="sm"
+                />
+              </FormControl>
+
+              {/* <FormControl>
+                <FormLabel color="#475569" fontSize="sm" fontWeight="600">
+                  જિલ્લો *
+                </FormLabel>
+
+                <Input
+                  placeholder="જિલ્લાનું નામ"
+                  name="jillo"
+                  value={formData.jillo}
+                  onChange={handleInputChange}
+                  bg="#f8fafc"
+                  border="1px solid #cbd5e1"
+                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  fontSize="sm"
+                />
+              </FormControl> */}
+
+               <FormControl>
+                <FormLabel color="#475569" fontSize="sm" fontWeight="600">
+                  પિન કોડ *
+                </FormLabel>
+
+                <Input
+                  placeholder="380001"
+                  name="pinCode"
+                  value={formData.pinCode}
+                  onChange={handleInputChange}
+                  bg="#f8fafc"
+                  border="1px solid #cbd5e1"
+                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  fontSize="sm"
+                />
+              </FormControl>
+
+            </HStack>
+
             <Divider my={2} />
 
             {/* Submit Button */}
@@ -445,7 +537,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
               isLoading={loading}
               onClick={handleSendOTP}
             >
-              OTP ભેજો
+            Register
             </Button>
 
             {/* Login Link */}

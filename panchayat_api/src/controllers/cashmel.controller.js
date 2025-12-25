@@ -10,7 +10,7 @@ export const createEntry = async (req, res, next) => {
   try {
     
     const { date, name, receiptPaymentNo, vyavharType, category, amount, paymentMethod, bank, ddCheckNum, remarks } = req.body;
-    const panchayatId = req.params.id || req.body.panchayatId || null;
+    const panchayatId = req.user.gam;
 
     const entry = await CashMel.create({
       panchayatId,
@@ -36,7 +36,7 @@ export const getEntry = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
-    const entry = await CashMel.findById(id).lean();
+    const entry = await CashMel.findOne({ _id: id, panchayatId: req.user.gam }).lean();
     if (!entry) return res.status(404).json({ success: false, message: 'Not found' });
     return res.json({ success: true, data: entry });
   } catch (err) {
@@ -50,7 +50,7 @@ export const getEntry = async (req, res, next) => {
 // Get all entries
 export const getAllEntries = async (req, res, next) => {
   try {
-    const entries = await CashMel.find({}).sort({ date: -1 }).lean();
+    const entries = await CashMel.find({ panchayatId: req.user.gam, isDeleted: false }).sort({ date: -1 }).lean();
     return res.json({ success: true, data: entries });
   } catch (err) {
     next(err);
@@ -65,7 +65,7 @@ export const updateEntry = async (req, res, next) => {
     const update = { date, name, receiptPaymentNo, vyavharType, category, paymentMethod, bank, ddCheckNum, remarks };
     if (typeof amount !== 'undefined') update.amount = Number(amount);
 
-    const updated = await CashMel.findByIdAndUpdate(id, update, { new: true }).lean();
+    const updated = await CashMel.findOneAndUpdate({ _id: id, panchayatId: req.user.gam }, update, { new: true }).lean();
     if (!updated) return res.status(404).json({ success: false, message: 'Not found' });
     return res.json({ success: true, data: updated });
   } catch (err) {
@@ -138,6 +138,7 @@ export const uploadExcel = async (req, res, next) => {
       }
 
       await CashMel.create({
+        panchayatId: req.user.gam,
         date: dateISO,
         name,
         receiptPaymentNo,
@@ -167,7 +168,7 @@ export const uploadExcel = async (req, res, next) => {
 export const generatePDFReport = async (req, res, next) => {
   try {
     const { type, from, to } = req.query;
-    const q = { isDeleted: false };
+    const q = { isDeleted: false, panchayatId: req.user.gam };
     if (type) q.vyavharType = type;
     if (from) q.date = { $gte: from };
     if (to) q.date = q.date ? { ...q.date, $lte: to } : { $lte: to };
@@ -222,7 +223,7 @@ export const getReport = async (req, res, next) => {
   try {
     const { type, from, to } = req.query;
     // naive filter by date string inclusion or ISO comparison if provided
-    const q = { isDeleted: false };
+    const q = { isDeleted: false, panchayatId: req.user.gam };
     if (type) q.vyavharType = type;
     if (from) q.date = { $gte: from };
     if (to) q.date = q.date ? { ...q.date, $lte: to } : { $lte: to };
@@ -243,7 +244,9 @@ export const softDeleteCashMel = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await CashMel.findByIdAndUpdate(id, { isDeleted: true });
+    const entry = await CashMel.findOneAndUpdate({ _id: id, panchayatId: req.user.gam }, { isDeleted: true });
+
+    if (!entry) return res.status(404).json({ success: false, message: 'Not found' });
 
     return res.json({
       success: true,

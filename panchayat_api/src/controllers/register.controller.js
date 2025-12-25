@@ -71,11 +71,13 @@ export const sendOTP = async (req, res) => {
       email,
       phone,
       pinCode,
-      taluko
+      taluko,
+      gam,
+      jillo
     } = req.body;
 
     // Validate required fields
-    if (!firstName || !lastName || !gender || !email || !phone || !pinCode || !taluko) {
+    if (!firstName || !lastName || !gender || !email || !phone || !pinCode || !taluko || !gam || !jillo) {
       return res.status(400).json({
         message: "બધા જરૂરી ફીલ્ડ ભરો (All required fields needed)"
       });
@@ -106,6 +108,8 @@ export const sendOTP = async (req, res) => {
         phone,
         pinCode,
         taluko,
+        gam,
+        jillo,
         otp,
         otpExpiry,
         isVerified: false

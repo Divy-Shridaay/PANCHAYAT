@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import auth from "../middleware/auth.js";
 import { 
   createEntry, 
   uploadExcel, 
@@ -20,13 +21,13 @@ const upload = multer(); // memory storage
 // -------------------------
 
 // Get all entries
-router.get("/", getAllEntries);
+router.get("/", auth, getAllEntries);
 
 // Create new entry
-router.post("/", upload.none(), createEntry);
+router.post("/", auth, upload.none(), createEntry);
 
 // Upload Excel
-router.post("/upload-excel", upload.single("file"), uploadExcel);
+router.post("/upload-excel", auth, upload.single("file"), uploadExcel);
 
 // Sample Excel Download
 router.get("/sample-excel", (req, res) => {
@@ -40,21 +41,21 @@ router.get("/sample-excel", (req, res) => {
 });
 
 // JSON Report
-router.get("/report", getReport);
+router.get("/report", auth, getReport);
 
 // PDF Report
-router.get("/report/pdf", generatePDFReport);
+router.get("/report/pdf", auth, generatePDFReport);
 
 // Soft delete (must be BEFORE get by ID)
 // router.delete("/:id", softDeleteCashMel);
 
-router.delete("/delete/:id", softDeleteCashMel);
+router.delete("/delete/:id", auth, softDeleteCashMel);
 
 
 // Update entry
-router.post("/:id", upload.none(), updateEntry);
+router.post("/:id", auth, upload.none(), updateEntry);
 
 // Get single entry by ID (must be LAST)
-router.get("/:id", getEntry);
+router.get("/:id", auth, getEntry);
 
 export default router;

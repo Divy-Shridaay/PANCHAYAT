@@ -1,4 +1,5 @@
 import express from "express";
+import auth from "../middleware/auth.js";
 import {
   createCategory,
   getCategories,
@@ -8,9 +9,9 @@ import {
 
 const router = express.Router();
 
-router.get("/", getCategories);
-router.post("/", createCategory);
-router.put("/:id", updateCategory);
-router.delete("/:id", softDeleteCategory);
+router.get("/", auth, getCategories);
+router.post("/", auth, createCategory);
+router.put("/:id", auth, updateCategory);
+router.delete("/:id", auth, softDeleteCategory);
 
 export default router;

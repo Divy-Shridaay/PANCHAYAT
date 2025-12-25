@@ -14,6 +14,8 @@ const UserSchema = new mongoose.Schema({
   // New fields for registration
   pinCode: { type: String, required: true },
   taluko: { type: String, required: true },
+  gam: { type: String, required: true },
+  jillo: { type: String, required: true },
 
   // Auto-generated fields
   name: { type: String },                            // Full Gujarati name

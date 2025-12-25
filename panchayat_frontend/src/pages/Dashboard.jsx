@@ -29,6 +29,8 @@ export default function Dashboard() {
   const apiFetch = useApiFetch();
 
   const [user, setUser] = useState(null);
+    // console.log("User object:", user);
+  // console.log("Gam:", user?.gam);
   const [userStatus, setUserStatus] = useState({
     canAccessModules: true,
   });
@@ -53,6 +55,7 @@ export default function Dashboard() {
 
         if (loggedInUser) {
           setUser(loggedInUser);
+          localStorage.setItem("user", JSON.stringify(loggedInUser));
         } else {
           toast({
             title: "ભૂલ",
@@ -144,8 +147,10 @@ export default function Dashboard() {
       {/* HEADER */}
       <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700">
-          🏛️ {user ? user.taluko : t("appName")} ગ્રામ પંચાયત
+          🏛️ {user ? user.gam : t("appName")} ગ્રામ પંચાયત
+        
         </Heading>
+        
 
         <Button
           leftIcon={<FiLogOut />}
@@ -172,7 +177,7 @@ export default function Dashboard() {
 
         <Text fontSize="md" color="gray.600">
           {t("dashboard")} —{" "}
-          {user ? user.taluko : t("appName")} ગ્રામ પંચાયત
+          {user ? user.gam : t("appName")} ગ્રામ પંચાયત
         </Text>
       </Box>
 

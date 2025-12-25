@@ -35,11 +35,11 @@ const DateInput = ({ label, name, value, onDateChange, formatDisplayDate, conver
     );
 };
 
-const CashMelReport = ({ apiBase, customCategories, banks }) => {
+const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [report, setReport] = useState({ from: "", to: "", type: "aavak" });
-
+// console.log("user object in CashMelReport:", user); 
     const handleReportChange = (key, value) => {
         setReport((p) => ({ ...p, [key]: value }));
     };
@@ -97,6 +97,9 @@ const handlePrintReport = async () => {
 
         const fromDate = convertToISO(report.from);
         const toDate = convertToISO(report.to);
+        
+        // Get gam name from user object
+        const talukoName = user?.gam || "ગ્રામ પંચાયત";
 
         // ======================================================
         // ✅ CHECK ISSUE REPORT
@@ -104,7 +107,12 @@ const handlePrintReport = async () => {
         if (report.type === "checkIssue") {
             const qs = `?from=${fromDate}&to=${toDate}`;
             const url = `${apiBase}/cashmel/report${qs}`;
-            const recordsRes = await fetch(url);
+            const token = localStorage.getItem("token");
+            const recordsRes = await fetch(url, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
 
@@ -143,6 +151,10 @@ const handlePrintReport = async () => {
             const fyGujarati = getGujaratiFinancialYear(fromDate);
 
             htmlTemplate = htmlTemplate
+                .replace("{{taluko}}", talukoName)
+                // console.log("user:", user)
+                .replace("{{userTaluko}}", user?.taluko || "")
+                .replace("{{userJillo}}", user?.jillo || "")
                 .replace("{{yearRange}}", fyGujarati)
                 .replace(
                     "{{dateRange}}",
@@ -165,7 +177,12 @@ const handlePrintReport = async () => {
         if (report.type === "rojmel") {
             const qs = `?from=${fromDate}&to=${toDate}`;
             const url = `${apiBase}/cashmel/report${qs}`;
-            const recordsRes = await fetch(url);
+            const token = localStorage.getItem("token");
+            const recordsRes = await fetch(url, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
 
@@ -193,7 +210,12 @@ const handlePrintReport = async () => {
 
                 if (prevTo >= prevFrom) {
                     const prevQs = `?from=${prevFrom}&to=${prevTo}`;
-                    const prevRes = await fetch(`${apiBase}/cashmel/report${prevQs}`);
+                    const token = localStorage.getItem("token");
+                    const prevRes = await fetch(`${apiBase}/cashmel/report${prevQs}`, {
+                        headers: {
+                            ...(token && { Authorization: `Bearer ${token}` }),
+                        }
+                    });
                     const prevJson = await prevRes.json();
 
                     const prevRecords = Array.isArray(prevJson.rows) ? prevJson.rows : [];
@@ -350,7 +372,12 @@ const handlePrintReport = async () => {
                 if (prevTo < fyStart) return 0;
 
                 const prevQs = `?from=${fyStart}&to=${prevTo}`;
-                const prevRes = await fetch(`${apiBase}/cashmel/report${prevQs}`);
+                const token = localStorage.getItem("token");
+                const prevRes = await fetch(`${apiBase}/cashmel/report${prevQs}`, {
+                    headers: {
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    }
+                });
                 const prevJson = await prevRes.json();
                 const records = Array.isArray(prevJson.rows) ? prevJson.rows : [];
 
@@ -423,6 +450,7 @@ const handlePrintReport = async () => {
             const fyGujarati = getGujaratiFinancialYear(fromDate);
 
             htmlTemplate = htmlTemplate
+                .replace("{{taluko}}", talukoName)
                 .replace("{{yearRange}}", fyGujarati)
                 .replace(
                     "{{dateRange}}",
@@ -458,7 +486,12 @@ const handlePrintReport = async () => {
 
         const historicalQs = `?vyavharType=${report.type}&from=${historicalFromDate}&to=${toDate}`;
         const historicalUrl = `${apiBase}/cashmel/report${historicalQs}`;
-        const recordsRes = await fetch(historicalUrl);
+        const token = localStorage.getItem("token");
+        const recordsRes = await fetch(historicalUrl, {
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` }),
+            }
+        });
         const resJson = await recordsRes.json();
         const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
 
@@ -528,7 +561,12 @@ const handlePrintReport = async () => {
                 prevTo.setFullYear(prevTo.getFullYear() - 1);
 
                 const prevQs = `?from=${prevFrom.toISOString().slice(0,10)}&to=${prevTo.toISOString().slice(0,10)}`;
-                const prevRes = await fetch(`${apiBase}/cashmel/report${prevQs}`);
+                const token = localStorage.getItem("token");
+                const prevRes = await fetch(`${apiBase}/cashmel/report${prevQs}`, {
+                    headers: {
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    }
+                });
                 const prevJson = await prevRes.json();
                 const prevRows = Array.isArray(prevJson.rows) ? prevJson.rows : [];
 
@@ -545,7 +583,11 @@ const handlePrintReport = async () => {
                 const prevPrevTo = new Date(prevTo);
                 prevPrevTo.setFullYear(prevPrevTo.getFullYear() - 1);
 
-                const prevPrevRes = await fetch(`${apiBase}/cashmel/report?from=${prevPrevFrom.toISOString().slice(0,10)}&to=${prevPrevTo.toISOString().slice(0,10)}`);
+                const prevPrevRes = await fetch(`${apiBase}/cashmel/report?from=${prevPrevFrom.toISOString().slice(0,10)}&to=${prevPrevTo.toISOString().slice(0,10)}`, {
+                    headers: {
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    }
+                });
                 const prevPrevJson = await prevPrevRes.json();
                 const prevPrevRows = Array.isArray(prevPrevJson.rows) ? prevPrevJson.rows : [];
 
@@ -565,7 +607,13 @@ const handlePrintReport = async () => {
             const totalWithOpening = openingBalance + totalA;
             const closingBalance = totalWithOpening - totalJ;
 
+            const fyGujarati = getGujaratiFinancialYear(fromDate);
+
             htmlTemplate = htmlTemplate
+                .replace("{{taluko}}", talukoName)
+                .replace("{{userTaluko}}", user?.taluko || "")
+                .replace("{{userJillo}}", user?.jillo || "")
+                .replace("{{yearRange}}", fyGujarati)
                 .replace("{{dateRange}}",
                     `${formatDateToGujarati(report.from)} થી ${formatDateToGujarati(report.to)}`
                 )
@@ -660,7 +708,11 @@ const handlePrintReport = async () => {
             const mg = monthGroups[monthKey];
             const [year, m] = monthKey.split("-");
             const fyGujarati = getGujaratiFinancialYear(`${year}-01-01`);
-            let pageHTML = htmlTemplate.replace(/{{yearRange}}/g, fyGujarati);
+            let pageHTML = htmlTemplate
+                .replace(/{{yearRange}}/g, fyGujarati)
+                .replace(/{{taluko}}/g, talukoName)
+                .replace(/{{userTaluko}}/g, user?.taluko || "")
+                .replace(/{{userJillo}}/g, user?.jillo || "");
 
             const monthName = monthNameGuj[parseInt(m) - 1];
             let tableRows = "";
@@ -737,9 +789,6 @@ const handlePrintReport = async () => {
     setLoading(false);
 };
 
-
-
-
     return (
         <Box mt={4} p={3} bg="gray.50" rounded="md">
             <HStack spacing={3} mb={3} flexWrap="wrap">
@@ -761,18 +810,17 @@ const handlePrintReport = async () => {
                     convertToISO={convertToISO}
                 />
 
-               <Select
-    width="180px"
-    value={report.type}
-    onChange={(e) => handleReportChange("type", e.target.value)}
->
-    <option value="aavak">આવક</option>
-    <option value="javak">જાવક</option>
-    <option value="checkIssue">ચેક ઈશ્યૂ</option>
-    <option value="tarij">તરીજ પત્રક</option>
-    <option value="rojmel">રોજમેલ</option>
-</Select>
-
+                <Select
+                    width="180px"
+                    value={report.type}
+                    onChange={(e) => handleReportChange("type", e.target.value)}
+                >
+                    <option value="aavak">આવક</option>
+                    <option value="javak">જાવક</option>
+                    <option value="checkIssue">ચેક ઈશ્યૂ</option>
+                    <option value="tarij">તરીજ પત્રક</option>
+                    <option value="rojmel">રોજમેલ</option>
+                </Select>
 
                 <Button
                     colorScheme="green"

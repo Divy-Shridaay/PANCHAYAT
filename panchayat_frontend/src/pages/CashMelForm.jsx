@@ -71,6 +71,7 @@ const CashMelForm = () => {
     const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
+    const user = JSON.parse(localStorage.getItem("user") || "null");
 
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
@@ -107,7 +108,12 @@ const CashMelForm = () => {
 
     const fetchCategories = useCallback(async () => {
         try {
-            const res = await fetch(`${API_BASE}/categories`);
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/categories`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
             if (!res.ok) throw new Error("Failed to fetch");
             const data = await res.json();
             const grouped = { aavak: [], javak: [] };
@@ -123,7 +129,12 @@ const CashMelForm = () => {
 
     const fetchBanks = useCallback(async () => {
         try {
-            const res = await fetch(`${API_BASE}/banks`);
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/banks`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
             if (!res.ok) throw new Error("Failed to fetch banks");
             const data = await res.json();
             setBanks(data);
@@ -139,9 +150,13 @@ const CashMelForm = () => {
 
     const createCategoryApi = async (name, type) => {
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE}/categories`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                },
                 body: JSON.stringify({ name, type }),
             });
             if (!res.ok) {
@@ -160,9 +175,13 @@ const CashMelForm = () => {
 
     const createBankApi = async (name) => {
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE}/banks`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                },
                 body: JSON.stringify({ name }),
             });
             if (!res.ok) {
@@ -181,9 +200,13 @@ const CashMelForm = () => {
 
     const updateCategoryApi = async (id, name) => {
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE}/categories/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                },
                 body: JSON.stringify({ name }),
             });
             if (!res.ok) throw new Error('Update failed');
@@ -199,7 +222,13 @@ const CashMelForm = () => {
 
     const deleteCategoryApi = async (id) => {
         try {
-            const res = await fetch(`${API_BASE}/categories/${id}`, { method: 'DELETE' });
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/categories/${id}`, { 
+                method: 'DELETE',
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
             if (!res.ok) throw new Error('Delete failed');
             await fetchCategories();
             toast({ title: 'કેટેગરી હટાવી દીધી', status: 'info', duration: 2000 });
@@ -236,7 +265,12 @@ const CashMelForm = () => {
 
     const downloadSampleExcel = async () => {
         try {
-            const response = await fetch(`${API_BASE}/cashmel/sample-excel`);
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_BASE}/cashmel/sample-excel`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
             if (!response.ok) throw new Error("Download failed");
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -301,7 +335,14 @@ const CashMelForm = () => {
             if (form.excelFile) fd.append("excel", form.excelFile);
 
             const url = `${API_BASE}/cashmel${id ? '/' + id : ''}`;
-            const res = await fetch(url, { method: id ? "PUT" : "POST", body: fd });
+            const token = localStorage.getItem("token");
+            const res = await fetch(url, { 
+                method: id ? "PUT" : "POST", 
+                body: fd,
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
 
             if (!res.ok) {
                 const text = await res.text();
@@ -779,6 +820,7 @@ const CashMelForm = () => {
                             customCategories={customCategories}
                             banks={banks}
                             toGujaratiDigits={toGujaratiDigits}
+                            user={user}
                         />
                     </Collapse>
 
