@@ -565,7 +565,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader color="#1e293b">OTP सत्यापन</ModalHeader>
+          <ModalHeader color="#1e293b">OTP ચકાસણી</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
             <VStack spacing={4}>
