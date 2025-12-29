@@ -4,6 +4,7 @@ import { Box, Heading, SimpleGrid, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { FiPlusCircle, FiList } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import { FiArrowLeft } from "react-icons/fi";
 import {
   FiUserCheck,
   FiFileText,
@@ -12,17 +13,56 @@ import {
   FiTrendingUp,
 } from "react-icons/fi";
 
+import {
+  
+  
+  Button,
+  Flex        
+} from "@chakra-ui/react";
+
+
 export default function PedhinamuHome() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
-      <Heading size="lg" mb={8} color="green.700">
-        {t("pedhinamu")}
-      </Heading>
+    
+       {/* 🔙 LEFT */}
+ <Flex align="center" mb={6}>
+  {/* 🔙 LEFT : Back Button */}
+  <Box width="180px">
+    <Button
+      leftIcon={<FiArrowLeft />}
+      colorScheme="green"
+      variant="outline"
+      onClick={() => navigate("/dashboard")}
+    >
+      પાછા જાવ
+    </Button>
+  </Box>
 
-      <SimpleGrid columns={[1, 2]} spacing={8} maxW="800px">
+  {/* 🟢 CENTER : Heading */}
+  <Heading
+    flex="1"
+    textAlign="center"
+    size="lg"
+    color="green.700"
+  >
+    {t("pedhinamu")}
+  </Heading>
+
+  {/* 👉 RIGHT : Empty space (for perfect centering) */}
+  <Box width="180px" />
+</Flex>
+
+
+      <SimpleGrid
+  columns={{ base: 1, md: 3 }}
+  spacing={8}
+  maxW="1200px"
+>
+
 
         {/* CREATE NEW */}
         <Box

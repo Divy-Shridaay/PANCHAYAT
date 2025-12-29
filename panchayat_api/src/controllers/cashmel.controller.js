@@ -36,7 +36,11 @@ export const getEntry = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
-    const entry = await CashMel.findOne({ _id: id, panchayatId: req.user.gam }).lean();
+    let query = { _id: id, isDeleted: false };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+    const entry = await CashMel.findOne(query).lean();
     if (!entry) return res.status(404).json({ success: false, message: 'Not found' });
     return res.json({ success: true, data: entry });
   } catch (err) {
@@ -50,7 +54,11 @@ export const getEntry = async (req, res, next) => {
 // Get all entries
 export const getAllEntries = async (req, res, next) => {
   try {
-    const entries = await CashMel.find({ panchayatId: req.user.gam, isDeleted: false }).sort({ date: -1 }).lean();
+    let query = { isDeleted: false };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+    const entries = await CashMel.find(query).sort({ date: -1 }).lean();
     return res.json({ success: true, data: entries });
   } catch (err) {
     next(err);
@@ -65,7 +73,11 @@ export const updateEntry = async (req, res, next) => {
     const update = { date, name, receiptPaymentNo, vyavharType, category, paymentMethod, bank, ddCheckNum, remarks };
     if (typeof amount !== 'undefined') update.amount = Number(amount);
 
-    const updated = await CashMel.findOneAndUpdate({ _id: id, panchayatId: req.user.gam }, update, { new: true }).lean();
+    let query = { _id: id, isDeleted: false };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+    const updated = await CashMel.findOneAndUpdate(query, update, { new: true }).lean();
     if (!updated) return res.status(404).json({ success: false, message: 'Not found' });
     return res.json({ success: true, data: updated });
   } catch (err) {
@@ -244,7 +256,11 @@ export const softDeleteCashMel = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const entry = await CashMel.findOneAndUpdate({ _id: id, panchayatId: req.user.gam }, { isDeleted: true });
+    let query = { _id: id };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+    const entry = await CashMel.findOneAndUpdate(query, { isDeleted: true });
 
     if (!entry) return res.status(404).json({ success: false, message: 'Not found' });
 

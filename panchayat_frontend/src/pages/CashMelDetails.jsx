@@ -26,8 +26,14 @@ import {
   InputLeftElement,
   Select,
   Badge,
-   Modal, ModalOverlay, ModalContent, ModalHeader,
-  ModalBody, ModalFooter, ModalCloseButton,useDisclosure
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { EditIcon, CheckIcon, CloseIcon, SearchIcon } from "@chakra-ui/icons";
@@ -37,11 +43,9 @@ import Pagination from "../components/Pagination";
 import { ViewIcon } from "@chakra-ui/icons";
 import { useTranslation } from "react-i18next";
 
-
-
 const CashMelDetails = () => {
-    const { t } = useTranslation();
-  
+  const { t } = useTranslation();
+
   const { id } = useParams();
   const toast = useToast();
 
@@ -61,35 +65,52 @@ const CashMelDetails = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-
-
-
-
-
-  const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000") + "/api";
+  const API_ROOT =
+    (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000") + "/api";
   const API_BASE = `${API_ROOT}/cashmel`;
 
+  // ✅ HELPER FUNCTION FOR AUTHENTICATED FETCH
+  const authFetch = (url, options = {}) => {
+    const token = localStorage.getItem("token");
+    
+    // Debug: Log token (remove in production)
+    if (!token) {
+      console.warn("⚠️ No token found in localStorage");
+    }
+
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
 
   const deleteRecord = async () => {
     try {
-      
       const url = `${API_BASE}/delete/${deleteId}`;
-      
+
       setDeleting(true);
 
-      const res = await fetch(url, {
+      // ✅ FIXED: Added Authorization header
+      const res = await authFetch(url, {
         method: "DELETE",
       });
 
       if (!res.ok) {
         let body = null;
-        try { body = await res.json(); } catch { body = await res.text(); }
+        try {
+          body = await res.json();
+        } catch {
+          body = await res.text();
+        }
         console.error("Delete failed", res.status, body);
         throw new Error(body?.message || `Delete failed: ${res.status}`);
       }
 
       toast({
-       title: t("deleteSuccess"),
+        title: t("deleteSuccess"),
         status: "success",
         duration: 2000,
         position: "top",
@@ -100,7 +121,7 @@ const CashMelDetails = () => {
     } catch (err) {
       console.error("Delete error", err);
       toast({
-      title: t("deleteError"),
+        title: t("deleteError"),
         status: "error",
         duration: 2000,
         position: "top",
@@ -110,93 +131,101 @@ const CashMelDetails = () => {
     }
   };
 
-  // const itemsPerPage = 10;
-
-  // report rows state (used when fetching report endpoints)
   const [rows, setRows] = useState([]);
-  // simple placeholder for any custom categories (if you later add UI to manage these)
   const customCategories = { aavak: [], javak: [] };
 
-  // Fetch all entries when ID is not provided
+  // ✅ FIXED: Fetch all entries with Authorization
   useEffect(() => {
     if (!id) {
       setLoading(true);
-      fetch(API_BASE)
-        .then((res) => res.json())
+      authFetch(API_BASE)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data) => {
           setAllEntries(data.data || []);
           setFilteredEntries(data.data || []);
         })
-        .catch(() =>
+        .catch((err) => {
+          console.error("Failed to load entries:", err);
           toast({
             title: "Failed to load entries",
             status: "error",
             duration: 3000,
             position: "top",
-          })
-        )
+          });
+        })
         .finally(() => setLoading(false));
     }
-  }, [id, API_BASE, toast]);
+  }, [id]);
 
   // Filter entries based on search and type
   useEffect(() => {
     if (!id) {
       let filtered = allEntries;
 
-      // Filter by vyavhar type
       if (filterType !== "all") {
         filtered = filtered.filter(
           (entry) => entry.vyavharType?.toLowerCase() === filterType
         );
       }
 
-      // Filter by search term
       if (searchTerm) {
         filtered = filtered.filter(
           (entry) =>
             entry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             entry.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            entry.receiptPaymentNo?.toLowerCase().includes(searchTerm.toLowerCase())
+            entry.receiptPaymentNo
+              ?.toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            entry.ddCheckNum?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
       setFilteredEntries(filtered);
       setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-      setCurrentPage(1); // Reset to first page when filter changes
+      setCurrentPage(1);
     }
-  }, [searchTerm, filterType, allEntries, id]);
+  }, [searchTerm, filterType, allEntries, id, itemsPerPage]);
 
-  // Get paginated data
   const getPaginatedData = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return filteredEntries.slice(startIndex, endIndex);
   };
 
-  // Fetch single entry
+  // ✅ FIXED: Fetch single entry with Authorization
   useEffect(() => {
     if (id) {
       setLoading(true);
-      fetch(`${API_BASE}/${id}`)
-        .then((res) => res.json())
+      authFetch(`${API_BASE}/${id}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data) => {
           setEntry(data.data);
           setOriginalEntry(data.data);
         })
-        .catch(() =>
+        .catch((err) => {
+          console.error("Failed to load entry:", err);
           toast({
-        title: t("loadEntryError"),
+            title: t("loadEntryError"),
             status: "error",
             duration: 3000,
             position: "top",
-          })
-        )
+          });
+        })
         .finally(() => setLoading(false));
     }
-  }, [id, API_BASE, toast]);
+  }, [id]);
 
-  // Save/Update
+  // ✅ FIXED: Save/Update with Authorization
   const handleSave = async () => {
     if (!entry) return;
 
@@ -210,12 +239,15 @@ const CashMelDetails = () => {
       fd.append("category", entry.category);
       fd.append("amount", entry.amount);
 
-      const res = await fetch(`${API_BASE}/${id}`, {
+      const res = await authFetch(`${API_BASE}/${id}`, {
         method: "POST",
         body: fd,
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Update failed");
+      }
 
       toast({
         title: t("updateCashmel"),
@@ -223,9 +255,10 @@ const CashMelDetails = () => {
         duration: 2000,
         position: "top",
       });
-    } catch {
+    } catch (err) {
+      console.error("Update error:", err);
       toast({
-       title: t("updateError"),
+        title: t("updateError"),
         status: "error",
         duration: 2000,
         position: "top",
@@ -235,47 +268,41 @@ const CashMelDetails = () => {
     }
   };
 
-  /* --------- Helpers & Print functions for Aavak/Javak reports --------- */
   const toGujaratiDigits = (num) => {
     if (!num && num !== 0) return "";
     const guj = ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"];
-    return String(num).split("").map((d) => guj[d] || d).join("");
+    return String(num)
+      .split("")
+      .map((d) => guj[d] || d)
+      .join("");
   };
 
   const formatDateToGujarati = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
-    return `${toGujaratiDigits(day)}/${toGujaratiDigits(month)}/${toGujaratiDigits(year)}`;
+    return `${toGujaratiDigits(day)}/${toGujaratiDigits(
+      month
+    )}/${toGujaratiDigits(year)}`;
   };
 
- 
-
-  // ------------------------------
-  //     DESIGN FOR LIST PAGE
-  // ------------------------------
-
+  // LIST PAGE
   if (!id) {
     return (
       <Box bg="#F8FAF9" minH="100vh" p={10}>
-        {/* HEADER */}
-       
+        <Flex justify="space-between" align="center" mb={10}>
+          <Heading size="lg" color="#1E4D2B" fontWeight="700">
+            💰 {t("cashmelDetails")}
+          </Heading>
 
-
-         <Flex justify="space-between" align="center" mb={10}>
-       <Heading size="lg" color="#1E4D2B" fontWeight="700">
-  💰 {t("cashmelDetails")}
-</Heading>
-
-
-        <Button
-          leftIcon={<FiArrowLeft />}
-          colorScheme="green"
-          variant="outline"
-          onClick={() => navigate("/cashmelform")}
-        >
-         {t("goBack")}
-        </Button>
-      </Flex>
+          <Button
+            leftIcon={<FiArrowLeft />}
+            colorScheme="green"
+            variant="outline"
+            onClick={() => navigate("/cashmelform")}
+          >
+            {t("goBack")}
+          </Button>
+        </Flex>
 
         <Box
           bg="white"
@@ -286,11 +313,9 @@ const CashMelDetails = () => {
           mb={6}
         >
           <Heading size="md" color="green.700" mb={4}>
-            {/* કુલ એન્ટ્રીઓ: */}
-            {t("totalEntries")} :  {filteredEntries.length}
+            {t("totalEntries")}: {filteredEntries.length}
           </Heading>
-          
-          {/* Search and Filter */}
+
           <Flex gap={4} flexWrap="wrap">
             <InputGroup maxW="400px">
               <InputLeftElement pointerEvents="none">
@@ -332,219 +357,209 @@ const CashMelDetails = () => {
             >
               <Table>
                 <Thead bg="green.50">
-                 <Tr>
-  <Th>{t("fieldDate")}</Th>
-  <Th>{t("fieldName")}</Th>
-  <Th>{t("fieldReceiptPaymentNo")}</Th>
-  <Th>{t("fieldVyavharType")}</Th>
-  <Th>{t("category")}</Th>
-  <Th isNumeric>{t("fieldAmount")}</Th>
-  <Th>{t("actions")}</Th>
-</Tr>
-
+                  <Tr>
+                    <Th>{t("fieldDate")}</Th>
+                    <Th>{t("fieldName")}</Th>
+                    <Th>{t("fieldReceiptPaymentNo")}</Th>
+                    <Th>{t("fieldVyavharType")}</Th>
+                    <Th>{t("category")}</Th>
+                    <Th>{t("paymentMethod")}</Th>
+                    <Th>{t("ddCheckNum")}</Th>
+                    <Th isNumeric>{t("fieldAmount")}</Th>
+                    <Th>{t("actions")}</Th>
+                  </Tr>
                 </Thead>
 
-              <Tbody>
-  {getPaginatedData().map((row) => (
-    <Tr
-      key={row._id}
-      _hover={{ bg: "gray.50" }}
-      cursor="pointer"
-      onClick={() => navigate(`/cashmel/details/${row._id}`)}
-    >
-      <Td>{formatDateToGujarati(row.date)}</Td>
-      <Td>{row.name}</Td>
-      <Td>{toGujaratiDigits(row.receiptPaymentNo)}</Td>
-      <Td>
-        <Badge
-  colorScheme={row.vyavharType?.toLowerCase() === "aavak" ? "green" : "red"}
-  rounded="full"
-  px={3}
-  py={1}
->
-  {row.vyavharType?.toLowerCase() === "aavak"
-    ? t("aavak")
-    : t("javak")}
-</Badge>
+                <Tbody>
+                  {getPaginatedData().map((row) => (
+                    <Tr
+                      key={row._id}
+                      _hover={{ bg: "gray.50" }}
+                      cursor="pointer"
+                      onClick={() => navigate(`/cashmel/details/${row._id}`)}
+                    >
+                      <Td>{formatDateToGujarati(row.date)}</Td>
+                      <Td>{row.name}</Td>
+                      <Td>{toGujaratiDigits(row.receiptPaymentNo)}</Td>
+                      <Td>
+                        <Badge
+                          colorScheme={
+                            row.vyavharType?.toLowerCase() === "aavak"
+                              ? "green"
+                              : "red"
+                          }
+                          rounded="full"
+                          px={3}
+                          py={1}
+                        >
+                          {row.vyavharType?.toLowerCase() === "aavak"
+                            ? t("aavak")
+                            : t("javak")}
+                        </Badge>
+                      </Td>
+                      <Td>{row.category}</Td>
+                      <Td>{row.paymentMethod}</Td>
+                      <Td>{row.ddCheckNum}</Td>
+                      <Td isNumeric>₹{toGujaratiDigits(row.amount)}</Td>
 
-      </Td>
-      <Td>{row.category}</Td>
+                      <Td>
+                        <HStack spacing={2}>
+                          <IconButton
+                            size="sm"
+                            icon={<ViewIcon />}
+                            variant="ghost"
+                            colorScheme="green"
+                            rounded="full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cashmel/view/${row._id}`);
+                            }}
+                          />
 
-      {/* Gujarati amount */}
-      <Td isNumeric>₹{toGujaratiDigits(row.amount)}</Td>
+                          <IconButton
+                            size="sm"
+                            icon={<EditIcon />}
+                            variant="ghost"
+                            colorScheme="blue"
+                            rounded="full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cashmel/details/${row._id}`);
+                            }}
+                          />
 
-   <Td>
-  <HStack spacing={2}>
-    {/* 👁️ VIEW BUTTON (same as your other component) */}
-  <IconButton
-  size="sm"
-  icon={<ViewIcon />}
-  variant="ghost"
-  colorScheme="green"
-  rounded="full"
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/cashmel/view/${row._id}`);
-  }}
-/>
-
-
-    {/* ✏️ EDIT BUTTON */}
-    <IconButton
-      size="sm"
-      icon={<EditIcon />}
-      variant="ghost"
-      colorScheme="blue"
-      rounded="full"
-      onClick={(e) => {
-        e.stopPropagation();
-        navigate(`/cashmel/details/${row._id}`);
-      }}
-    />
-
-    <IconButton
-  size="sm"
-  icon={<DeleteIcon />}
-  variant="ghost"
-  colorScheme="red"
-  rounded="full"
-  onClick={(e) => {
-    e.stopPropagation();
-    setDeleteId(row._id);
-    onOpen();
-  }}
-/>
-
-  </HStack>
-</Td>
-
-    </Tr>
-  ))}
-</Tbody>
-
+                          <IconButton
+                            size="sm"
+                            icon={<DeleteIcon />}
+                            variant="ghost"
+                            colorScheme="red"
+                            rounded="full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(row._id);
+                              onOpen();
+                            }}
+                          />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
               </Table>
             </TableContainer>
 
             {totalPages > 1 && (
-            <Pagination
-  currentPage={currentPage}
-  totalPages={totalPages}
-  onPageChange={(page) => setCurrentPage(page)}
-  itemsPerPage={itemsPerPage}
-  setItemsPerPage={setItemsPerPage}
-/>
-
-
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
+              />
             )}
           </>
         )}
-          {/* Delete Confirmation Modal (also used in single-entry view) */}
-          <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
-            <ModalOverlay bg="rgba(0,0,0,0.45)" />
 
-            <ModalContent
-              rounded="2xl"
-              p={2}
-              bg="white"
-              shadow="2xl"
-              border="1px solid #f2dede"
-            >
-              <ModalCloseButton />
+        <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+          isCentered
+          motionPreset="scale"
+        >
+          <ModalOverlay bg="rgba(0,0,0,0.45)" />
+          <ModalContent
+            rounded="2xl"
+            p={2}
+            bg="white"
+            shadow="2xl"
+            border="1px solid #f2dede"
+          >
+            <ModalCloseButton />
 
-              {/* Warning Icon */}
-              <Flex justify="center" mt={6}>
-                <Flex
-                  bg="red.100"
-                  w="70px"
-                  h="70px"
-                  rounded="full"
-                  align="center"
-                  justify="center"
-                  border="2px solid #fc8181"
-                >
-                  <Text fontSize="4xl" color="red.600">⚠️</Text>
-                </Flex>
-              </Flex>
-
-              {/* Header */}
-              <ModalHeader
-                textAlign="center"
-                mt={4}
-                fontSize="2xl"
-                fontWeight="800"
-                color="red.600"
+            <Flex justify="center" mt={6}>
+              <Flex
+                bg="red.100"
+                w="70px"
+                h="70px"
+                rounded="full"
+                align="center"
+                justify="center"
+                border="2px solid #fc8181"
               >
-                {t("deleteTitle")}
-              </ModalHeader>
-
-              {/* Main Text */}
-              <ModalBody pb={6}>
-                <Text
-                  fontSize="lg"
-                  textAlign="center"
-                  color="gray.700"
-                  px={4}
-                  lineHeight="1.7"
-                >
-                  {t("deleteConfirmFull")}
+                <Text fontSize="4xl" color="red.600">
+                  ⚠️
                 </Text>
-              </ModalBody>
+              </Flex>
+            </Flex>
 
-              {/* Action Buttons */}
-              <ModalFooter justifyContent="center" gap={4} pb={6}>
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  rounded="full"
-                  px={8}
-                  size="lg"
-                >
-                  {t("cancel")}
-                </Button>
+            <ModalHeader
+              textAlign="center"
+              mt={4}
+              fontSize="2xl"
+              fontWeight="800"
+              color="red.600"
+            >
+              {t("deleteTitle")}
+            </ModalHeader>
 
-                <Button
-                  colorScheme="red"
-                  rounded="full"
-                  px={8}
-                  size="lg"
-                  onClick={deleteRecord}
-                  isLoading={deleting}
-                  loadingText="Deleting"
-                >
-                  {t("delete")}
-                </Button>
-              </ModalFooter>
+            <ModalBody pb={6}>
+              <Text
+                fontSize="lg"
+                textAlign="center"
+                color="gray.700"
+                px={4}
+                lineHeight="1.7"
+              >
+                {t("deleteConfirmFull")}
+              </Text>
+            </ModalBody>
 
-            </ModalContent>
-          </Modal>
+            <ModalFooter justifyContent="center" gap={4} pb={6}>
+              <Button
+                variant="outline"
+                onClick={onClose}
+                rounded="full"
+                px={8}
+                size="lg"
+              >
+                {t("cancel")}
+              </Button>
 
-        </Box>
+              <Button
+                colorScheme="red"
+                rounded="full"
+                px={8}
+                size="lg"
+                onClick={deleteRecord}
+                isLoading={deleting}
+                loadingText="Deleting"
+              >
+                {t("delete")}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </Box>
     );
   }
 
-  // ------------------------------
-  //     DESIGN FOR SINGLE ENTRY PAGE
-  // ------------------------------
-
+  // SINGLE ENTRY PAGE
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
-      {/* HEADER */}
       <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700" mr={2}>
-    ✏️ {t("updateCashmel")}
-  </Heading>
+          ✏️ {t("updateCashmel")}
+        </Heading>
 
-       <Button
-  leftIcon={<FiArrowLeft />}
-  colorScheme="green"
-  variant="outline"
-  onClick={() => navigate("/cashmel/details")}
->
-  {t("goBack")}
-</Button>
-
+        <Button
+          leftIcon={<FiArrowLeft />}
+          colorScheme="green"
+          variant="outline"
+          onClick={() => navigate("/cashmel/details")}
+        >
+          {t("goBack")}
+        </Button>
       </Flex>
-
 
       <Box
         bg="white"
@@ -561,17 +576,13 @@ const CashMelDetails = () => {
           </Flex>
         ) : entry ? (
           <VStack spacing={5} align="stretch">
-            {/* --- Reusable Input Row --- */}
             {[
-            
-  { label: t("fieldDate"), key: "date" },
-  { label: t("fieldName"), key: "name" },
-  { label: t("fieldReceiptPaymentNo"), key: "receiptPaymentNo" },
-  { label: t("fieldVyavharType"), key: "vyavharType" },
-  { label: t("category"), key: "category" },
-  { label: t("fieldAmount"), key: "amount" },
-
-
+              { label: t("fieldDate"), key: "date" },
+              { label: t("fieldName"), key: "name" },
+              { label: t("fieldReceiptPaymentNo"), key: "receiptPaymentNo" },
+              { label: t("fieldVyavharType"), key: "vyavharType" },
+              { label: t("category"), key: "category" },
+              { label: t("fieldAmount"), key: "amount" },
             ].map(({ label, key }) => (
               <FormControl key={key}>
                 <FormLabel fontWeight="600" color="green.800">
@@ -624,24 +635,23 @@ const CashMelDetails = () => {
               </FormControl>
             ))}
 
-          <Button
-  colorScheme="green"
-  size="lg"
-  rounded="lg"
-  onClick={handleSave}
-  isLoading={loading}
->
-  {t("saveChanges")}
-</Button>
-
+            <Button
+              colorScheme="green"
+              size="lg"
+              rounded="lg"
+              onClick={handleSave}
+              isLoading={loading}
+            >
+              {t("saveChanges")}
+            </Button>
           </VStack>
         ) : (
           <Text>No data found</Text>
         )}
       </Box>
-         <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
-        <ModalOverlay bg="rgba(0,0,0,0.45)" />
 
+      <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
+        <ModalOverlay bg="rgba(0,0,0,0.45)" />
         <ModalContent
           rounded="2xl"
           p={2}
@@ -651,7 +661,6 @@ const CashMelDetails = () => {
         >
           <ModalCloseButton />
 
-          {/* Warning Icon */}
           <Flex justify="center" mt={6}>
             <Flex
               bg="red.100"
@@ -662,11 +671,12 @@ const CashMelDetails = () => {
               justify="center"
               border="2px solid #fc8181"
             >
-              <Text fontSize="4xl" color="red.600">⚠️</Text>
+              <Text fontSize="4xl" color="red.600">
+                ⚠️
+              </Text>
             </Flex>
           </Flex>
 
-          {/* Header */}
           <ModalHeader
             textAlign="center"
             mt={4}
@@ -677,7 +687,6 @@ const CashMelDetails = () => {
             {t("deleteTitle")}
           </ModalHeader>
 
-          {/* Main Text */}
           <ModalBody pb={6}>
             <Text
               fontSize="lg"
@@ -690,7 +699,6 @@ const CashMelDetails = () => {
             </Text>
           </ModalBody>
 
-          {/* Action Buttons */}
           <ModalFooter justifyContent="center" gap={4} pb={6}>
             <Button
               variant="outline"
@@ -714,13 +722,9 @@ const CashMelDetails = () => {
               {t("delete")}
             </Button>
           </ModalFooter>
-
         </ModalContent>
       </Modal>
     </Box>
-
- 
-
   );
 };
 

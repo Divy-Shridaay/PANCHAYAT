@@ -818,8 +818,8 @@ const handlePrintReport = async () => {
                     <option value="aavak">આવક</option>
                     <option value="javak">જાવક</option>
                     <option value="checkIssue">ચેક ઈશ્યૂ</option>
-                    <option value="tarij">તરીજ પત્રક</option>
-                    <option value="rojmel">રોજમેલ</option>
+                    <option value="tarij">તારીજ પત્રક</option>
+                    <option value="rojmel">રોજમેળ</option>
                 </Select>
 
                 <Button

@@ -46,8 +46,10 @@ const generateOTP = () => {
 
 // Generate random username
 const generateUsername = (firstName) => {
-  return `${firstName.toLowerCase()}_${Date.now()}`;
+  const randomTwoDigit = Math.floor(10 + Math.random() * 90); // 10–99
+  return `${firstName.toLowerCase()}_${randomTwoDigit}`;
 };
+
 
 // Generate random password
 const generatePassword = () => {
@@ -118,14 +120,62 @@ export const sendOTP = async (req, res) => {
     );
 
     // Send OTP via email
-    const htmlContent = `
-      <h2>OTP ચકાસણી (Verification)</h2>
-      <p>નમસ્તે ${firstName},</p>
-      <p>તમારો OTP નીચે મુજબ છે:</p>
-      <h1 style="color: #2563eb; font-size: 32px;">${otp}</h1>
-      <p>આ OTP 10 મિનિટમાં સમાપ્ત થઈ જશે.</p>
-      <p>જો તમે આ વિનંતી ન કરી હોય તો આ ઇમેઇલને અવગણો.</p>
-    `;
+  const htmlContent = `
+<!-- Header -->
+
+
+<h3>OTP Verification | OTP ચકાસણી</h3>
+
+<p><strong>નમસ્તે ${firstName},</strong></p>
+
+<p>
+Please use the OTP below to verify your email address.<br/>
+નીચે આપેલ OTP નો ઉપયોગ કરીને તમારું ઇમેઇલ ચકાસો.
+</p>
+
+<div style="text-align:center;margin:30px 0;">
+  <span style="
+    font-size:32px;
+    letter-spacing:6px;
+    background:#e0f2fe;
+    padding:15px 25px;
+    border-radius:10px;
+    color:#0369a1;
+    font-weight:bold;
+    display:inline-block;
+  ">
+    ${otp}
+  </span>
+</div>
+
+<p>
+⏱ This OTP is valid for <strong>10 minutes</strong> only.<br/>
+⏱ આ OTP માત્ર <strong>10 મિનિટ</strong> માટે માન્ય છે.
+</p>
+
+<p style="color:#b91c1c;font-weight:bold;">
+⚠ Do NOT share this OTP with anyone.<br/>
+⚠ આ OTP કોઈને પણ શેર કરશો નહીં.
+</p>
+
+<hr>
+
+<p style="font-size:13px;color:#666;">
+If you did not request this, please ignore this email.
+</p>
+
+<p>
+Regards,<br/>
+<strong>Panchayat System</strong><br/>
+<a href="https://panchayat.shridaay.com">
+panchayat.shridaay.com
+</a>
+</p>
+`;
+
+
+
+
 
     await sendMail(email, "Panchayat Dashboard - OTP Verification", htmlContent);
 
@@ -195,16 +245,75 @@ export const verifyOTP = async (req, res) => {
     await user.save();
 
     // Send credentials via email
-    const htmlContent = `
-      <h2>તમારું એકાઉન્ટ સફળતાપૂર્વક બનાવાયું!</h2>
-      <p>નમસ્તે ${user.firstName},</p>
-      <p>તમારું એકાઉન્ટ રજીસ્ટર થઈ ગયું છે. અહીં ваши login credentials છે:</p>
-      <p><strong>Username:</strong> ${username}</p>
-      <p><strong>Password:</strong> ${rawPassword}</p>
-      <p><strong>Login URL:</strong> http://localhost:5173/login</p>
-      <br/>
-      <p style="color: #dc2626;"><strong>મહત્વપૂર્ણ:</strong> પહેલી વખત login પછી તમારું password બદલશો.</p>
-    `;
+  
+
+const htmlContent = `
+<!-- Header -->
+<div style="text-align:center;">
+  
+  <h2 style="margin:10px 0 0;">${user.gam} Gram Panchayat</h2>
+  <p style="margin:4px;color:#555;">Taluka: ${user.taluko}</p>
+</div>
+
+<hr style="margin:25px 0" />
+
+<h3>Account Created Successfully | એકાઉન્ટ સફળતાપૂર્વક બનાવાયું</h3>
+
+<p><strong>Hello ${user.firstName} ${user.lastName},</strong></p>
+
+<p>
+Your account has been successfully created.<br/>
+તમારું એકાઉન્ટ સફળતાપૂર્વક બનાવવામાં આવ્યું છે.
+</p>
+
+<div style="margin:25px 0;padding:20px;
+            background:#f0fdf4;
+            border:1px solid #86efac;
+            border-radius:10px;">
+  <p style="margin:6px 0;">
+    <strong>Username:</strong> ${username}
+  </p>
+  <p style="margin:6px 0;">
+    <strong>Password:</strong> ${rawPassword}
+  </p>
+</div>
+
+
+
+
+<p style="margin-top:20px;">
+<strong>🔐 Login URL:</strong><br/>
+<a href="https://panchayat.shridaay.com/login">
+  https://panchayat.shridaay.com/login
+</a>
+</p>
+
+<p style="color:#dc2626;font-weight:bold;margin-top:20px;">
+⚠ Important: Please change your password after first login.<br/>
+ પહેલી વખત Login કર્યા પછી Password બદલશો. <br/> 
+
+Do NOT share your password with anyone  <br/> 
+કોઈ સાથે તમારો પાસવર્ડ શેર ન કરો <br/> 
+
+પ્રથમ login પછી password બદલો
+</p>
+
+
+ 
+
+
+<hr>
+
+
+
+<p>
+Regards,<br/>
+<strong>Panchayat System</strong><br/>
+
+</p>
+`;
+
+    
 
     await sendMail(email, "Panchayat Dashboard - Login Credentials", htmlContent);
 
@@ -305,6 +414,36 @@ export const activateUser = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       message: "ઉપયોગકર્તાને સક્રિય કરવામાં નિષ્ફળ (Failed to activate user)",
+      error: err.message
+    });
+  }
+};
+
+export const deactivateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isPaid: false },
+      { new: true }
+    ).select("-password -otp -otpExpiry");
+    
+    if (!user) {
+      return res.status(404).json({
+        message: "ઉપયોગકર્તા મળ્યો નથી (User not found)"
+      });
+    }
+
+    return res.json({
+      message: "ઉપયોગકર્તા નિષ્ક્રિય કર્યો (User deactivated)",
+      user
+    });
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      message: "ઉપયોગકર્તાને નિષ્ક્રિય કરવામાં નિષ્ફળ (Failed to deactivate user)",
       error: err.message
     });
   }

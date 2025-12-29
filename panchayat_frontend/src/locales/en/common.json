@@ -227,5 +227,7 @@
   "waterWorksMaintenance": "Water Works Maintenance",
   "sadbhaavnaFundCCRoad": "Sadbhaavna Fund C.C. Road",
   "safaiKharch": "Cleaning Expense",
-  "stationaryKharch": "Stationery Expense"
+  "stationaryKharch": "Stationery Expense",
+  "paymentMethod": "Payment Method",
+  "ddCheckNum": "DD/Check Number"
 }

@@ -150,6 +150,47 @@ const handleActivateUser = async (userId) => {
   }
 };
 
+// Deactivate user
+const handleDeactivateUser = async (userId) => {
+  try {
+    const { response, data } = await apiFetch(`/api/register/admin/users/${userId}/deactivate`, {
+      method: "PUT",
+    }, navigate, toast);
+
+    if (response.ok) {
+      toast({
+        title: "સફળ",
+        description: "યુઝર નિષ્ક્રિય કર્યો",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top"
+      });
+      // Refresh users list
+      fetchUsers();
+      onClose();
+    } else {
+      toast({
+        title: "ભૂલ",
+        description: data.message || "યુઝરને નિષ્ક્રિય કરવામાં નિષ્ફળ",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top"
+      });
+    }
+  } catch (err) {
+    toast({
+      title: "ભૂલ",
+      description: "સર્વર સાથે કનેક્ટ થવામાં નિષ્ફળ",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "top"
+    });
+  }
+};
+
 // Export to CSV
 // const handleExportCSV = () => {
 //   const headers = [
@@ -408,12 +449,20 @@ const filteredUsers = (users || []).filter(user => {
             </Td>
 
             <Td>
-              <Badge
-                fontSize="xs"
-                colorScheme={user.isVerified ? "green" : "yellow"}
-              >
-                {user.isVerified ? "ચકાસેલ" : "બાકી"}
-              </Badge>
+              <VStack spacing={1} align="start">
+                {/* <Badge
+                  fontSize="xs"
+                  colorScheme={user.isVerified ? "green" : "yellow"}
+                >
+                  {user.isVerified ? "ચકાસેલ" : "બાકી"}
+                </Badge> */}
+                <Badge
+                  fontSize="xs"
+                  colorScheme={user.isPaid ? "blue" : "gray"}
+                >
+                  {user.isPaid ? "એક્ટિવ" : "ઇનએક્ટિવ"}
+                </Badge>
+              </VStack>
             </Td>
 
             <Td fontSize="xs" color="#64748b">
@@ -552,16 +601,25 @@ const filteredUsers = (users || []).filter(user => {
             </Badge>
           </HStack>
 
-          {!selectedUser.isPaid && (
-            <Button
-              colorScheme="green"
-              onClick={() => handleActivateUser(selectedUser._id)}
-              width="100%"
-              mt={4}
-            >
-              યુઝરને એક્ટિવેટ કરો
-            </Button>
-          )}
+          <HStack spacing={2} width="100%" mt={4}>
+            {!selectedUser.isPaid ? (
+              <Button
+                colorScheme="green"
+                onClick={() => handleActivateUser(selectedUser._id)}
+                flex={1}
+              >
+                યુઝરને એક્ટિવેટ કરો
+              </Button>
+            ) : (
+              <Button
+                colorScheme="red"
+                onClick={() => handleDeactivateUser(selectedUser._id)}
+                flex={1}
+              >
+                યુઝરને ડીએક્ટિવેટ કરો
+              </Button>
+            )}
+          </HStack>
         </VStack>
       )}
     </ModalBody>

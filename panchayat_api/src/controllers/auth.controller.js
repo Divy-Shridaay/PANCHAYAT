@@ -40,7 +40,7 @@ export const login = async (req, res) => {
  
 
     const token = jwt.sign(
-      { _id: user._id, role: user.role },
+      { _id: user._id, role: user.role, gam: user.gam },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -88,17 +88,71 @@ export const forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    await transporter.sendMail({
-      from: `"Panchayat System" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Password Reset Request",
-      html: `
-        <h2>Password Reset Request</h2>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetUrl}">Reset Password</a>
-        <p>This link will expire in 15 minutes.</p>
-      `,
-    });
+  await transporter.sendMail({
+  from: `"Panchayat System" <${process.env.EMAIL_USER}>`,
+  to: email,
+  subject: "Password Reset Request",
+  html: `
+<!-- Header -->
+<div style="text-align:center;">
+  <h2 style="margin:10px 0 0;">
+    ${user.gam} Gram Panchayat
+  </h2>
+  <p style="margin:4px;color:#555;">
+    Taluka: ${user.taluko}
+  </p>
+</div>
+
+<hr style="margin:25px 0" />
+
+<h3>Password Reset Request</h3>
+
+<p>
+  <strong>Hello ${user.firstName} ${user.lastName},</strong>
+</p>
+
+<p>
+We received a request to reset your password.<br/>
+તમારા password reset માટે વિનંતી પ્રાપ્ત થઈ છે.
+</p>
+
+<div style="text-align:center;margin:30px 0;">
+  <a href="${resetUrl}"
+     style="
+       background:#0f766e;
+       color:#ffffff;
+       padding:14px 26px;
+       border-radius:8px;
+       text-decoration:none;
+       font-weight:bold;
+       display:inline-block;
+     ">
+    Reset Password
+  </a>
+</div>
+
+<p>
+⏳ This link is valid for a limited time only.<br/>
+⏳ આ લિંક મર્યાદિત સમય માટે જ માન્ય છે.
+</p>
+
+<p style="color:#b91c1c;font-weight:bold;">
+⚠ Do NOT share this link with anyone.<br/>
+⚠ આ લિંક કોઈને પણ શેર ન કરો.
+</p>
+
+<hr>
+
+<p>
+Regards,<br/>
+<strong>Panchayat System</strong><br/>
+<a href="https://panchayat.shridaay.com">
+panchayat.shridaay.com
+</a>
+</p>
+`,
+});
+
 
     res.json({ message: "Password reset email sent successfully" });
 

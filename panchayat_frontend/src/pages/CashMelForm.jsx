@@ -99,8 +99,13 @@ const CashMelForm = () => {
     const [newBankName, setNewBankName] = useState("");
     const [editingCatId, setEditingCatId] = useState(null);
     const [editingCatName, setEditingCatName] = useState("");
-    const [showBulkUpload, setShowBulkUpload] = useState(false);
-    const [showReports, setShowReports] = useState(false);
+    // const [showBulkUpload, setShowBulkUpload] = useState(false);
+    // const [showReports, setShowReports] = useState(false);
+
+ const [activeSection, setActiveSection] = useState(null);
+// values: "bulk" | "report" | null
+
+
 
     const handleChange = (key, value) => {
         setForm((prev) => ({ ...prev, [key]: value }));
@@ -731,15 +736,20 @@ const CashMelForm = () => {
                     )}
 
                     {/* DD/CHECK NUM */}
-                    <FormControl>
-                        <FormLabel fontWeight="600">DD/ચેક નં.</FormLabel>
-                        <Input
-                            size="lg"
-                            bg="gray.100"
-                            value={form.ddCheckNum}
-                            onChange={(e) => handleChange("ddCheckNum", e.target.value)}
-                        />
-                    </FormControl>
+                   {/* DD / CHECK NUMBER - ONLY IF BANK */}
+{form.paymentMethod === "bank" && (
+    <FormControl>
+        <FormLabel fontWeight="600">DD/ચેક નં.</FormLabel>
+        <Input
+            size="lg"
+            bg="gray.100"
+            value={form.ddCheckNum}
+            onChange={(e) => handleChange("ddCheckNum", e.target.value)}
+            placeholder="DD અથવા ચેક નંબર"
+        />
+    </FormControl>
+)}
+
 
                     {/* REMARKS */}
                     <FormControl>
@@ -764,65 +774,117 @@ const CashMelForm = () => {
                         {t("submit")}
                     </Button>
 
-                    {/* Bulk Upload & Reports */}
-                    <HStack spacing={4} width="100%" pt={2}>
-                        <Button size="md" colorScheme="teal" onClick={() => setShowBulkUpload(s => !s)}>
-                            Bulk Upload (Excel)
-                        </Button>
-                        <Button size="md" colorScheme="purple" onClick={() => setShowReports(s => !s)}>
-                            રિપોર્ટ્સ
-                        </Button>
-                    </HStack>
+                   {/* Bulk Upload & Reports Buttons */}
+<HStack spacing={4} width="100%" pt={2}>
+  <Button
+    size="md"
+    colorScheme="teal"
+    onClick={() =>
+      setActiveSection(activeSection === "bulk" ? null : "bulk")
+    }
+  >
+    Bulk Upload (Excel)
+  </Button>
 
-                    {/* Bulk Upload Section */}
-                    <Collapse in={showBulkUpload} animateOpacity>
-                        <Box mt={4} p={1} bg="gray.50" rounded="md">
-                            <HStack mb={3}>
-                                <Button colorScheme="blue" onClick={downloadSampleExcel}>
-                                    સેમ્પલ એક્સેલ ડાઉનલોડ
-                                </Button>
-                                <Input type="file" accept=".xlsx,.xls" onChange={handleExcelFileChange} />
-                                <Button colorScheme="green" onClick={uploadExcelToServer} isLoading={loading}>
-                                    Upload to File
-                                </Button>
-                            </HStack>
-                            {form.excelData.length > 0 && (
-                                <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
-                                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                        <thead>
-                                            <tr>
-                                                {Object.keys(form.excelData[0]).map(h => (
-                                                    <th key={h} style={{ border: "1px solid #ddd", padding: 6 }}>{h}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {form.excelData.map((r, i) => (
-                                                <tr key={i}>
-                                                    {Object.values(r).map((v, j) => (
-                                                        <td key={j} style={{ border: "1px solid #eee", padding: 6 }}>
-                                                            {String(v)}
-                                                        </td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </Box>
-                            )}
-                        </Box>
-                    </Collapse>
+  <Button
+    size="md"
+    colorScheme="purple"
+    onClick={() =>
+      setActiveSection(activeSection === "report" ? null : "report")
+    }
+  >
+    રિપોર્ટ્સ
+  </Button>
+</HStack>
 
-                    {/* Reports */}
-                    <Collapse in={showReports} animateOpacity>
-                        <CashMelReport
-                            apiBase={API_BASE}
-                            customCategories={customCategories}
-                            banks={banks}
-                            toGujaratiDigits={toGujaratiDigits}
-                            user={user}
-                        />
-                    </Collapse>
+{/* ================= BULK UPLOAD SECTION ================= */}
+<Collapse in={activeSection === "bulk"} animateOpacity>
+  <Box mt={4} p={4} bg="gray.50" rounded="md">
+
+    <HStack mb={3} spacing={3} align="stretch">
+     <Button
+  colorScheme="blue"
+  onClick={downloadSampleExcel}
+  width="70%"
+  whiteSpace="normal"
+>
+  સેમ્પલ એક્સેલ ડાઉનલોડ
+</Button>
+
+
+      <Input
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={handleExcelFileChange}
+      />
+
+      <Button
+        colorScheme="green"
+        onClick={uploadExcelToServer}
+        isLoading={loading}
+        whiteSpace="normal"
+        textAlign="center"
+        px={4}
+  width="50%"
+
+      >
+        Upload to File
+      </Button>
+    </HStack>
+
+    {form.excelData.length > 0 && (
+      <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              {Object.keys(form.excelData[0]).map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: 6,
+                    background: "#f1f1f1",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {form.excelData.map((r, i) => (
+              <tr key={i}>
+                {Object.values(r).map((v, j) => (
+                  <td
+                    key={j}
+                    style={{
+                      border: "1px solid #eee",
+                      padding: 6,
+                    }}
+                  >
+                    {String(v)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Box>
+    )}
+  </Box>
+</Collapse>
+
+{/* ================= REPORTS SECTION ================= */}
+<Collapse in={activeSection === "report"} animateOpacity>
+  <CashMelReport
+    apiBase={API_BASE}
+    customCategories={customCategories}
+    banks={banks}
+    toGujaratiDigits={toGujaratiDigits}
+    user={user}
+  />
+</Collapse>
+
 
                 </VStack>
             </Box>
