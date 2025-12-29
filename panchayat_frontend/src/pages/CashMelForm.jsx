@@ -216,7 +216,7 @@ const CashMelForm = () => {
             });
             if (!res.ok) throw new Error('Update failed');
             await fetchCategories();
-            toast({ title: 'સુધારાશે', status: 'success', duration: 2000 });
+            toast({ title: 'સુધારો સફળતાપૂર્વક થયો', status: 'success', duration: 2000 });
             return true;
         } catch (err) {
             console.error(err);
@@ -628,7 +628,8 @@ const CashMelForm = () => {
                                     size="sm"
                                     colorScheme="red"
                                     onClick={async () => {
-                                        if (!window.confirm("Delete category?")) return;
+                                           if (!window.confirm("શું તમે આ કેટેગરી કાઢી નાખવા માંગો છો?")) return;
+
                                         await deleteCategoryApi(c._id);
                                     }}
                                 >

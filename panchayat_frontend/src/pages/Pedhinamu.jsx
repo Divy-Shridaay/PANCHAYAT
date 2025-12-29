@@ -223,7 +223,7 @@ export default function Pedhinamu() {
             }
 
             if (form.mukhyaAge && !validateAge(form.mukhyaAge)) {
-                showError(t("invalidAge"));
+                // showError(t("invalidAge"));
                 return;
             }
 
@@ -261,7 +261,7 @@ export default function Pedhinamu() {
                 }
 
                 if (h.age && !validateAge(h.age)) {
-                    showError(`${h.name}: ${t("invalidAge")}`);
+                    // showError(`${h.name}: ${t("invalidAge")}`);
                     return;
                 }
 
@@ -292,7 +292,7 @@ export default function Pedhinamu() {
                     }
 
                     if (s.age && !validateAge(s.age)) {
-                        showError(`${s.name}: ${t("invalidAge")}`);
+                        // showError(`${s.name}: ${t("invalidAge")}`);
                         return;
                     }
 
@@ -325,7 +325,7 @@ export default function Pedhinamu() {
                     }
 
                     if (c.age && !validateAge(c.age)) {
-                        showError(`${c.name}: ${t("invalidAge")}`);
+                        // showError(`${c.name}: ${t("invalidAge")}`);
                         return;
                     }
 
@@ -357,7 +357,7 @@ export default function Pedhinamu() {
                         }
 
                         if (cs.age && !validateAge(cs.age)) {
-                            showError(`${cs.name}: ${t("invalidAge")}`);
+                            // showError(`${cs.name}: ${t("invalidAge")}`);
                             return;
                         }
 
@@ -390,7 +390,7 @@ export default function Pedhinamu() {
                         }
 
                         if (gc.age && !validateAge(gc.age)) {
-                            showError(`${gc.name}: ${t("invalidAge")}`);
+                            // showError(`${gc.name}: ${t("invalidAge")}`);
                             return;
                         }
 
@@ -710,7 +710,7 @@ export default function Pedhinamu() {
                                         const value = e.target.value;
 
                                         if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                            showError(t("invalidAge"));
+                                            // showError(t("invalidAge"));
                                             return;
                                         }
 
@@ -945,7 +945,7 @@ export default function Pedhinamu() {
                                                 const value = e.target.value;
 
                                                 if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                    showError(t("invalidAge"));
+                                                    // showError(t("invalidAge"));
                                                     return;
                                                 }
 
@@ -1105,7 +1105,7 @@ export default function Pedhinamu() {
 
                                                                     // Age must be numbers only
                                                                     if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                        showError(t("invalidAge"));
+                                                                        // showError(t("invalidAge"));
                                                                         return;
                                                                     }
 
@@ -1360,7 +1360,7 @@ export default function Pedhinamu() {
 
                                                                                             // Age numeric validation
                                                                                             if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                                                showError(t("invalidAge"));
+                                                                                                // showError(t("invalidAge"));
                                                                                                 return;
                                                                                             }
 
@@ -1626,7 +1626,7 @@ export default function Pedhinamu() {
 
                                                                                                         // Age validation (numbers only)
                                                                                                         if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                                                            showError(t("invalidAge"));
+                                                                                                            // showError(t("invalidAge"));
                                                                                                             return;
                                                                                                         }
 
@@ -1808,7 +1808,7 @@ export default function Pedhinamu() {
 
                                                                             // AGE VALIDATION
                                                                             if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                                showError(t("invalidAge"));
+                                                                                // showError(t("invalidAge"));
                                                                                 return;
                                                                             }
 

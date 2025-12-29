@@ -66,7 +66,7 @@ export const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email, isDeleted: false });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "કૃપા કરીને માન્ય ઇમેઇલ દાખલ કરો" });
     }
 
     // Generate reset token
@@ -178,6 +178,12 @@ export const resetPassword = async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    // Check if new password is the same as current password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({ message: "નવો પાસવર્ડ તમારા હાલના પાસવર્ડ જેવો હોવો ન જોઈએ" });
     }
 
     // Hash new password

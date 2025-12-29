@@ -308,6 +308,9 @@ const handlePedhinamuPrint = async () => {
 
     const { pedhinamu, form } = data;
 
+    // Get logged-in user data
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+
     // 🔥 DEBUG: Log the applicant photo value
     console.log('🖼️ Applicant Photo Path:', form?.applicantPhoto);
     console.log('🖼️ Full Photo URL:', form?.applicantPhoto ? `${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}` : 'No photo');
@@ -349,9 +352,17 @@ const handlePedhinamuPrint = async () => {
       applicantMobile: formatMobile(form?.applicantMobile),
       applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
       
-      talukaName: form?.talukaName?.trim() ? form.talukaName : "કાલોલ",
-      districtName: form?.districtName?.trim() ? form.districtName : "ગાંધીનગર",
+    //   talukaName: form?.talukaName?.trim() ? form.talukaName : "કાલોલ",
+    //   districtName: form?.districtName?.trim() ? form.districtName : "ગાંધીનગર",
+
+      // User data
+      taluko: user?.gam || "",
+      userTaluko: user?.taluko || "",
+      userJillo: user?.jillo || "",
     };
+    console.log('userTaluko:', replacements.userTaluko);
+    console.log('userJillo:', replacements.userJillo);
+    console.log('taluko:', replacements.taluko);
 
     // 🔥 IMPORTANT: Handle applicant photo separately with proper error handling
     let applicantPhotoHtml = '';
@@ -443,7 +454,7 @@ const handlePedhinamuPrint = async () => {
               <td>${p.name}</td>
               <td>${toGujaratiDigits(p.age)}</td>
               <td>${p.occupation}</td>
-              <td>${toGujaratiDigits(formatMobile(p.mobile))}</td>
+             <td>${replacements.taluko || "-"}</td>
           </tr>`
       )
       .join("");
@@ -489,18 +500,35 @@ const handlePedhinamuPrint = async () => {
         }
         
         return `
-          <table style="margin-bottom: 40px;">
-              <tr>
-                  <td rowspan="5" style="width:130px;">
-                      ${photoHtml}
-                  </td>
-                  <td><b>પંચનું નામ :</b> ${p.name}</td>
-              </tr>
-              <tr><td><b>આધાર નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))}</td></tr>
-              <tr><td><b>અંગુઠાનુ નિશાન :</b> __________________</td></tr>
-              <tr><td><b>સહી :</b> _____________________________</td></tr>
-              <tr><td><b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}</td></tr>
-          </table>
+        <table style="margin-bottom:40px; width:100%;">
+    <tr>
+        <!-- Photo -->
+        <td style="width:160px; text-align:center; vertical-align:top;">
+            ${photoHtml}
+        </td>
+
+        <!-- Details -->
+        <td>
+            <p>
+                <b>પંચનું નામ :</b> ${p.name} <br>
+                <b>આધાર નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
+                <b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}
+            </p>
+        </td>
+
+        <!-- Thumb -->
+        <td style="width:160px; text-align:center; vertical-align:middle;">
+    <b>અંગુઠાનુ નિશાન</b>
+</td>
+
+<!-- Signature -->
+<td style="width:160px; text-align:center; vertical-align:middle;">
+    <b>સહી</b>
+</td>
+
+    </tr>
+</table>
+
         `;
       })
       .join("");

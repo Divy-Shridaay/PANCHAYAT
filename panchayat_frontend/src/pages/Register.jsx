@@ -272,7 +272,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  નામ (First Name) **
+                  નામ (First Name)  <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
                 <Input
@@ -308,7 +308,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             {/* Row 2: Last Name */}
             <FormControl>
               <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                અંતિમ નામ (Last Name) *
+                અંતિમ નામ (Last Name) <Text as="span" color="red.500">*</Text>
               </FormLabel>
 
               <Input
@@ -327,7 +327,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  લિંગ (Gender) *
+                  લિંગ (Gender) <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
                 <Select
@@ -366,7 +366,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             {/* Row 4: Email */}
             <FormControl>
               <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                ઈમેલ *
+                ઈમેલ <Text as="span" color="red.500">*</Text>
               </FormLabel>
 
               <Input
@@ -385,7 +385,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             {/* Row 5: Phone */}
             <FormControl>
               <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                મોબાઇલ નંબર *
+                મોબાઇલ નંબર <Text as="span" color="red.500">*</Text>
               </FormLabel>
 
             <Input
@@ -418,7 +418,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
 
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  જિલ્લો *
+                  જિલ્લો <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
                 <Input
@@ -452,7 +452,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
 
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  તાલુકો *
+                  તાલુકો <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
                 <Input
@@ -472,7 +472,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  ગામ *
+                  ગામ <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
                 <Input
@@ -506,7 +506,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
 
                <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  પિન કોડ *
+                  પિન કોડ <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
                 <Input

@@ -340,16 +340,16 @@ useEffect(() => {
     const applicantA = form.applicantAadhaar.replace(/\D/g, "");
     const panchAadhaars = form.panch.map((p) => p.aadhaar.replace(/\D/g, ""));
 
-    if (panchAadhaars.includes(applicantA)) {
-      toast({
-        title: t("error"),
-        description: t("aadhaarDuplicateApplicant"),
-        status: "error",
-        duration: 3000,
-        position: "top",
-      });
-      return;
-    }
+    // if (panchAadhaars.includes(applicantA)) {
+    //   toast({
+    //     title: t("error"),
+    //     description: t("aadhaarDuplicateApplicant"),
+    //     status: "error",
+    //     duration: 3000,
+    //     position: "top",
+    //   });
+    //   return;
+    // }
 
     const duplicatePanchAadhar = panchAadhaars.find(
       (a, i) => a && panchAadhaars.indexOf(a) !== i
@@ -655,199 +655,245 @@ useEffect(() => {
         </HStack>
 
         {/* APPLICANT PHOTO UPLOAD */}
-        <FormControl mt={4}>
-          <FormLabel fontWeight="600">અરજદારની ફોટો</FormLabel>
-          <Input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                handleChange("applicantPhotoFile", file);
-                handleChange("applicantPhotoPreview", URL.createObjectURL(file));
-              }
-            }}
-            sx={{
-              "::file-selector-button": {
-                height: 10,
-                padding: "0 10px",
-                borderRadius: "6px",
-                backgroundColor: "#2A7F62",
-                color: "white",
-                border: "none",
-                cursor: "pointer",
-                marginRight: "10px",
-              },
-            }}
-          />
+       {/* APPLICANT PHOTO UPLOAD / CAMERA */}
+<FormControl mt={4}>
+  <FormLabel fontWeight="600">અરજદારની ફોટો</FormLabel>
 
-          {form.applicantPhotoPreview && (
-            <Box mt={3}>
-              <img
-                src={form.applicantPhotoPreview}
-                alt="Applicant Photo"
-                style={{
-                  width: "120px",
-                  height: "120px",
-                  objectFit: "cover",
-                  borderRadius: "8px",
-                  border: "1px solid #ccc",
-                }}
-              />
-            </Box>
-          )}
+  {/* File Upload */}
+ <Input
+  type="file"
+  accept="image/*"
+  disabled={!!form.applicantPhotoFile}
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // 🔥 Clear camera photo first
+      handleChange("applicantPhotoFile", null);
+      handleChange("applicantPhotoPreview", null);
 
-          <CameraCapture
-            onCapture={(file) => {
-              handleChange("applicantPhotoFile", file);
-              handleChange("applicantPhotoPreview", URL.createObjectURL(file));
-            }}
-          />
-        </FormControl>
+      // 🔥 Set file upload photo
+      handleChange("applicantPhotoFile", file);
+      handleChange("applicantPhotoPreview", URL.createObjectURL(file));
+    }
+  }}
+/>
+
+
+  {/* Camera Capture */}
+  {!form.applicantPhotoFile && (
+  <Box mt={2}>
+   <CameraCapture
+  onCapture={(file) => {
+    // 🔥 Clear file upload photo first
+    handleChange("applicantPhotoFile", null);
+    handleChange("applicantPhotoPreview", null);
+
+    // 🔥 Set camera photo
+    handleChange("applicantPhotoFile", file);
+    handleChange("applicantPhotoPreview", URL.createObjectURL(file));
+  }}
+/>
+
+  </Box>
+  )}
+
+  {/* Preview + Remove */}
+  {form.applicantPhotoPreview && (
+    <Box mt={3}>
+      <img
+        src={form.applicantPhotoPreview}
+        alt="Applicant Photo"
+        style={{
+          width: "120px",
+          height: "120px",
+          objectFit: "cover",
+          borderRadius: "8px",
+          border: "1px solid #ccc",
+        }}
+      />
+
+      <Button
+        mt={2}
+        size="sm"
+        colorScheme="red"
+        variant="outline"
+        onClick={() => {
+          handleChange("applicantPhotoFile", null);
+          handleChange("applicantPhotoPreview", null);
+        }}
+      >
+        ફોટો દૂર કરો
+      </Button>
+    </Box>
+  )}
+</FormControl>
+
       </Box>
 
       {/* PANCH */}
       <Heading {...sectionTitle}>{t("panchDetails")}</Heading>
-      <Box {...boxStyle}>
-        {form.panch.map((p, i) => (
-          <Box
-            key={i}
-            p={4}
-            borderWidth="1px"
-            rounded="md"
-            borderColor="#DDEDE2"
-            bg="#F8FBF9"
-            mb={4}
-          >
-            <Text fontWeight="700" color="#1E4D2B" mb={3}>
-              Panch #{i + 1}
-            </Text>
+    <Box {...boxStyle}>
+  {form.panch.map((p, i) => (
+    <Box
+      key={i}
+      p={4}
+      borderWidth="1px"
+      rounded="md"
+      borderColor="#DDEDE2"
+      bg="#F8FBF9"
+      mb={4}
+    >
+      <Text fontWeight="700" color="#1E4D2B" mb={3}>
+        Panch #{i + 1}
+      </Text>
 
-            <HStack spacing={6}>
-              <FormControl isRequired>
-                <FormLabel fontWeight="600">{t("name")}</FormLabel>
-                <Input
-                  {...inputStyle}
-                  borderColor={
-                    invalidFields[`panch_${i}_name`] ? "red.500" : "#CBD5E0"
-                  }
-                  value={p.name}
-                  onChange={(e) => updatePanch(i, "name", e.target.value)}
-                />
-              </FormControl>
+      <HStack spacing={6}>
+        <FormControl isRequired>
+          <FormLabel fontWeight="600">{t("name")}</FormLabel>
+          <Input
+            {...inputStyle}
+            borderColor={
+              invalidFields[`panch_${i}_name`] ? "red.500" : "#CBD5E0"
+            }
+            value={p.name}
+            onChange={(e) => updatePanch(i, "name", e.target.value)}
+          />
+        </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel fontWeight="600">{t("age")}</FormLabel>
-                <Input
-                  {...inputStyle}
-                  borderColor={
-                    invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
-                  }
-                  value={p.age}
-                  onChange={(e) => updatePanch(i, "age", e.target.value)}
-                />
-              </FormControl>
-            </HStack>
+        <FormControl isRequired>
+          <FormLabel fontWeight="600">{t("age")}</FormLabel>
+          <Input
+            {...inputStyle}
+            type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            borderColor={
+              invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
+            }
+            value={p.age}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              updatePanch(i, "age", value);
+            }}
+          />
+        </FormControl>
+      </HStack>
 
-            <HStack spacing={6} mt={4}>
-              <FormControl isRequired>
-                <FormLabel fontWeight="600">{t("occupation")}</FormLabel>
-                <Input
-                  {...inputStyle}
-                  borderColor={
-                    invalidFields[`panch_${i}_occupation`]
-                      ? "red.500"
-                      : "#CBD5E0"
-                  }
-                  value={p.occupation}
-                  onChange={(e) => updatePanch(i, "occupation", e.target.value)}
-                />
-              </FormControl>
+      <HStack spacing={6} mt={4}>
+        <FormControl isRequired>
+          <FormLabel fontWeight="600">{t("occupation")}</FormLabel>
+          <Input
+            {...inputStyle}
+            borderColor={
+              invalidFields[`panch_${i}_occupation`]
+                ? "red.500"
+                : "#CBD5E0"
+            }
+            value={p.occupation}
+            onChange={(e) => updatePanch(i, "occupation", e.target.value)}
+          />
+        </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel fontWeight="600">{t("aadhaarShort")}</FormLabel>
-                <Input
-                  {...inputStyle}
-                  borderColor={
-                    invalidFields[`panch_${i}_aadhaar`] ? "red.500" : "#CBD5E0"
-                  }
-                  value={p.aadhaar}
-                  onChange={(e) =>
-                    updatePanch(i, "aadhaar", formatAadhaar(e.target.value))
-                  }
-                />
-              </FormControl>
+        <FormControl isRequired>
+          <FormLabel fontWeight="600">{t("aadhaarShort")}</FormLabel>
+          <Input
+            {...inputStyle}
+            borderColor={
+              invalidFields[`panch_${i}_aadhaar`] ? "red.500" : "#CBD5E0"
+            }
+            value={p.aadhaar}
+            onChange={(e) =>
+              updatePanch(i, "aadhaar", formatAadhaar(e.target.value))
+            }
+          />
+        </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel fontWeight="600">{t("mobile")}</FormLabel>
-                <Input
-                  {...inputStyle}
-                  borderColor={
-                    invalidFields[`panch_${i}_mobile`] ? "red.500" : "#CBD5E0"
-                  }
-                  value={p.mobile}
-                  onChange={(e) =>
-                    updatePanch(i, "mobile", formatMobile(e.target.value))
-                  }
-                />
-              </FormControl>
-            </HStack>
+        <FormControl isRequired>
+          <FormLabel fontWeight="600">{t("mobile")}</FormLabel>
+          <Input
+            {...inputStyle}
+            borderColor={
+              invalidFields[`panch_${i}_mobile`] ? "red.500" : "#CBD5E0"
+            }
+            value={p.mobile}
+            onChange={(e) =>
+              updatePanch(i, "mobile", formatMobile(e.target.value))
+            }
+          />
+        </FormControl>
+      </HStack>
 
-            {/* PHOTO UPLOAD */}
-            <FormControl mt={4}>
-              <FormLabel fontWeight="600">પંચની ફોટો</FormLabel>
-              <Input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    updatePanch(i, "photoFile", file);
-                    updatePanch(i, "photoPreview", URL.createObjectURL(file));
-                  }
-                }}
-                sx={{
-                  "::file-selector-button": {
-                    height: 10,
-                    padding: "0 10px",
-                    borderRadius: "6px",
-                    backgroundColor: "#2A7F62",
-                    color: "white",
-                    border: "none",
-                    cursor: "pointer",
-                    marginRight: "10px",
-                  },
-                }}
-              />
+      {/* ✅ PHOTO UPLOAD / CAMERA (FIXED) */}
+      <FormControl mt={4}>
+        <FormLabel fontWeight="600">પંચની ફોટો</FormLabel>
 
-              {p.photoPreview && (
-                <Box mt={3}>
-                  <img
-                    src={p.photoPreview}
-                    alt="Panch Photo"
-                    style={{
-                      width: "120px",
-                      height: "120px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                </Box>
-              )}
+        {/* File Upload */}
+      <Input
+  type="file"
+  accept="image/*"
+  disabled={!!p.photoFile}
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      updatePanch(i, "photoFile", null);
+      updatePanch(i, "photoPreview", null);
 
-              <CameraCapture
-                onCapture={(file) => {
-                  updatePanch(i, "photoFile", file);
-                  updatePanch(i, "photoPreview", URL.createObjectURL(file));
-                }}
-              />
-            </FormControl>
+      updatePanch(i, "photoFile", file);
+      updatePanch(i, "photoPreview", URL.createObjectURL(file));
+    }
+  }}
+/>
+
+
+        {/* Camera Capture */}
+        {!p.photoFile && (
+        <Box mt={2}>
+          <CameraCapture
+            onCapture={(file) => {
+              updatePanch(i, "photoFile", null);
+              updatePanch(i, "photoPreview", null);
+
+              updatePanch(i, "photoFile", file);
+              updatePanch(i, "photoPreview", URL.createObjectURL(file));
+            }}
+          />
+        </Box>
+        )}
+
+        {/* Preview + Remove */}
+        {p.photoPreview && (
+          <Box mt={3}>
+            <img
+              src={p.photoPreview}
+              alt="Panch Photo"
+              style={{
+                width: "120px",
+                height: "120px",
+                objectFit: "cover",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+              }}
+            />
+
+            <Button
+              mt={2}
+              size="sm"
+              colorScheme="red"
+              variant="outline"
+              onClick={() => {
+                updatePanch(i, "photoFile", null);
+                updatePanch(i, "photoPreview", null);
+              }}
+            >
+              ફોટો દૂર કરો
+            </Button>
           </Box>
-        ))}
-      </Box>
+        )}
+      </FormControl>
+    </Box>
+  ))}
+</Box>
+
 
       {/* DECEASED — NO STAR, NO REQUIRED MARKS */}
       <Heading {...sectionTitle}>{t("deceasedDetails")}</Heading>
@@ -920,62 +966,64 @@ useEffect(() => {
 
       {/* NOTARY */}
       <Heading {...sectionTitle}>{t("notaryDetails")}</Heading>
-      <Box {...boxStyle}>
-        <HStack spacing={6}>
-          <FormControl isRequired>
-            <FormLabel fontWeight="600">{t("notaryName")}</FormLabel>
-            <Input
-              {...inputStyle}
-              borderColor={invalidFields.notaryName ? "red.500" : "#CBD5E0"}
-              value={form.notaryName}
-              onChange={(e) => handleChange("notaryName", e.target.value)}
-            />
-          </FormControl>
+     <Box {...boxStyle}>
+  <HStack spacing={6}>
+    <FormControl isRequired>
+      <FormLabel fontWeight="600">{t("notaryName")}</FormLabel>
+      <Input
+        {...inputStyle}
+        borderColor={invalidFields.notaryName ? "red.500" : "#CBD5E0"}
+        value={form.notaryName}
+        onChange={(e) => handleChange("notaryName", e.target.value)}
+      />
+    </FormControl>
 
-          <FormControl isRequired>
-            <FormLabel fontWeight="600">{t("notaryBookNo")}</FormLabel>
-            <Input
-              {...inputStyle}
-              borderColor={invalidFields.notaryBookNo ? "red.500" : "#CBD5E0"}
-              value={form.notaryBookNo}
-              onChange={(e) => handleChange("notaryBookNo", e.target.value)}
-            />
-          </FormControl>
-        </HStack>
+    <FormControl isRequired>
+      <FormLabel fontWeight="600">{t("notaryBookNo")}</FormLabel>
+      <Input
+        {...inputStyle}
+        borderColor={invalidFields.notaryBookNo ? "red.500" : "#CBD5E0"}
+        value={form.notaryBookNo}
+        onChange={(e) => handleChange("notaryBookNo", e.target.value)}
+      />
+    </FormControl>
+  </HStack>
 
-        <HStack spacing={6} mt={4}>
-          <FormControl isRequired>
-            <FormLabel fontWeight="600">{t("notaryPageNo")}</FormLabel>
-            <Input
-              {...inputStyle}
-              borderColor={invalidFields.notaryPageNo ? "red.500" : "#CBD5E0"}
-              value={form.notaryPageNo}
-              onChange={(e) => handleChange("notaryPageNo", e.target.value)}
-            />
-          </FormControl>
+  <HStack spacing={6} mt={4}>
+    <FormControl isRequired>
+      <FormLabel fontWeight="600">{t("notaryPageNo")}</FormLabel>
+      <Input
+        {...inputStyle}
+        borderColor={invalidFields.notaryPageNo ? "red.500" : "#CBD5E0"}
+        value={form.notaryPageNo}
+        onChange={(e) => handleChange("notaryPageNo", e.target.value)}
+      />
+    </FormControl>
 
-          <FormControl isRequired>
-            <FormLabel fontWeight="600">{t("notarySerialNo")}</FormLabel>
-            <Input
-              {...inputStyle}
-              borderColor={invalidFields.notarySerialNo ? "red.500" : "#CBD5E0"}
-              value={form.notarySerialNo}
-              onChange={(e) => handleChange("notarySerialNo", e.target.value)}
-            />
-          </FormControl>
+    <FormControl isRequired>
+      <FormLabel fontWeight="600">{t("notarySerialNo")}</FormLabel>
+      <Input
+        {...inputStyle}
+        borderColor={invalidFields.notarySerialNo ? "red.500" : "#CBD5E0"}
+        value={form.notarySerialNo}
+        onChange={(e) => handleChange("notarySerialNo", e.target.value)}
+      />
+    </FormControl>
 
-          <FormControl isRequired>
-            <FormLabel fontWeight="600">{t("notaryDate")}</FormLabel>
-            <Input
-              {...inputStyle}
-              type="date"
-              borderColor={invalidFields.notaryDate ? "red.500" : "#CBD5E0"}
-              value={form.notaryDate}
-              onChange={(e) => handleChange("notaryDate", e.target.value)}
-            />
-          </FormControl>
-        </HStack>
-      </Box>
+    {/* ✅ UPDATED DATE FIELD */}
+    <FormControl isRequired>
+      <FormLabel fontWeight="600">{t("notaryDate")}</FormLabel>
+      <Input
+        {...inputStyle}
+        type="date"
+        max={new Date().toISOString().split("T")[0]}   // ✅ today & past only
+        borderColor={invalidFields.notaryDate ? "red.500" : "#CBD5E0"}
+        value={form.notaryDate}
+        onChange={(e) => handleChange("notaryDate", e.target.value)}
+      />
+    </FormControl>
+  </HStack>
+</Box>
 
       {/* PURPOSE */}
       <Heading {...sectionTitle}>{t("useDetails")}</Heading>

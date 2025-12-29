@@ -162,7 +162,7 @@ export default function Pagination({
     </Select>
 
     <Text fontSize="sm" color="gray.600">
-      per page
+      per page 
     </Text>
   </Flex>
 

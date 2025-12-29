@@ -42,22 +42,29 @@ export default function Records() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Added state for items per page
   const [refresh, setRefresh] = useState(0);
 
 
   useEffect(() => {
     fetchData(currentPage);
-  }, [currentPage, refresh]);
+  }, [currentPage, refresh, itemsPerPage]); // Added itemsPerPage to dependencies
 
   const fetchData = async (page) => {
     setLoading(true);
-    const { response, data } = await apiFetch(`/api/pedhinamu?page=${page}&limit=10`, {}, navigate, toast);
+    // Use itemsPerPage instead of hardcoded 10
+    const { response, data } = await apiFetch(
+      `/api/pedhinamu?page=${page}&limit=${itemsPerPage}`, 
+      {}, 
+      navigate, 
+      toast
+    );
 
     setList(data.data);
     setTotalPages(data.totalPages);
     setLoading(false);
 
-    return json.data;  // 🔥 RETURN UPDATED LIST
+    return data.data;  // Fixed: Return updated list
   };
 
 
@@ -80,7 +87,7 @@ export default function Records() {
 
       const updatedList = await fetchData(currentPage);
 
-      // 🔥 CHECK NEW LIST instead of old "list" state
+      // Check if current page is now empty and go back one page if needed
       if (updatedList.length === 0 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
@@ -210,10 +217,17 @@ export default function Records() {
 
         )}
       </Box>
+      
+      {/* Updated Pagination with itemsPerPage props */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={(page) => setCurrentPage(page)}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1); // Reset to page 1 when changing items per page
+        }}
       />
 
       <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">

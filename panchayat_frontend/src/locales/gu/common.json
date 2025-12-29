@@ -36,7 +36,7 @@
     "deceasedPersonAge": "મૃત્યુ સમયે ઉંમર",
     "heirs-1": "વારસદારની વિગત",
     "panchDetails": "પંચો ની વિગત",
-    "occupation": "ધંધો",
+    "occupation": "વ્યસાય/નોકરી",
     "aadhaarShort": "આધાર નંબર",
     "notaryDetails": "નોટરી ની વિગત",
     "notaryName": "નોટરી શ્રીનું નામ",
@@ -54,10 +54,10 @@
     "affidavit": "શપથનામાની નકલ",
     "satbara": "૭/૧૨ અને ૮-અ ની નકલ",
     "aadhaarCopy": "આધાર કાર્ડ નકલ",
-    "govtForm": "સરકારી અરજીનો આંગો",
+    "govtForm": "સરકારી અરજીના અંગો",
     "deathCertificate": "મૃત્યુ દામપત્ર",
     "panchResolution": "પંચોની પંચાયતી",
-    "panchWitness": "પંચોની આંગો પત્રક",
+    "panchWitness": "પંચોની અંગો પત્રક",
     "otherDocument": "અન્ય દસ્તાવેજ",
     "talatiSection": "તલાટી વિભાગ",
     "talatiName": "તલાટીનું નામ",
@@ -265,6 +265,6 @@
     "spouseRelationRequired": "પત્ની/પતિ માટે સંબંધી પસંદ કરો",
     "grandchildRelationRequired": "પૌત્ર/પૌત્રી માટે સંબંધી પસંદ કરો",
     "updateSuccess": "માહિતી સફળતાપૂર્વક સુધારાઈ",
-    "noDeceasedFound": "કુટુંબમાં કોઈ મૃત્યુ પામેલ સભ્ય મળ્યો નથી"
+    "noDeceasedFound": "મૃત વ્યક્તિની વિગત અહીં દાખલ કરો"
 }
 

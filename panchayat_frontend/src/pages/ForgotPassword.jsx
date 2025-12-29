@@ -30,12 +30,14 @@ export default function ForgotPassword() {
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(""); // success message
 
   const handleForgotPassword = async () => {
+    // 🔹 EMPTY EMAIL CHECK
     if (!email) {
+      setMessage(""); // 🔥 clear old success message
       toast({
-        title: "Please enter your email",
+        title: "કૃપા કરીને તમારું ઇમેઇલ દાખલ કરો",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -45,14 +47,24 @@ export default function ForgotPassword() {
     }
 
     setLoading(true);
+    setMessage(""); // 🔥 clear previous success message before API call
+
     try {
-      const { response, data } = await apiFetch("/api/auth/forgot-password", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      }, navigate, toast);
+      const { response, data } = await apiFetch(
+        "/api/auth/forgot-password",
+        {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        },
+        navigate,
+        toast
+      );
 
       if (response.ok) {
-        setMessage("Password reset email sent successfully. Please check your email.");
+        setMessage(
+          "Password reset email sent successfully. Please check your email."
+        );
+
         toast({
           title: "Email sent successfully",
           status: "success",
@@ -61,8 +73,9 @@ export default function ForgotPassword() {
           position: "top",
         });
       } else {
+        setMessage(""); // 🔥 remove success message on error
         toast({
-          title: data.message || "Failed to send reset email",
+          title: data?.message || "Failed to send reset email",
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -71,6 +84,7 @@ export default function ForgotPassword() {
       }
     } catch (err) {
       console.error(err);
+      setMessage(""); // 🔥 clear success message
       toast({
         title: "Network error",
         status: "error",
@@ -79,17 +93,12 @@ export default function ForgotPassword() {
         position: "top",
       });
     }
+
     setLoading(false);
   };
 
   return (
-    <Flex
-      bg="#F8FAF9"
-      minH="100vh"
-      align="center"
-      justify="center"
-      p={4}
-    >
+    <Flex bg="#F8FAF9" minH="100vh" align="center" justify="center" p={4}>
       <Box
         bg="white"
         p={10}
@@ -100,32 +109,29 @@ export default function ForgotPassword() {
         maxW="450px"
       >
         <VStack spacing={6}>
-          {/* Panchayat Logo */}
+          {/* Logo */}
           <Icon as={FaUniversity} w={16} h={16} color="#2A7F62" />
 
-          {/* Panchayat Title */}
+          {/* Title */}
           <Heading
             size="lg"
             textAlign="center"
-            mb={1}
             color="#1E4D2B"
             fontWeight="700"
           >
             ગ્રામ પંચાયત
           </Heading>
 
-          {/* Forgot Password Title */}
           <Text
             textAlign="center"
             color="green.700"
             fontSize="lg"
             fontWeight="500"
-            mb={4}
           >
             પાસવર્ડ ભૂલી ગયા છો
           </Text>
 
-          {/* EMAIL */}
+          {/* EMAIL INPUT */}
           <FormControl>
             <FormLabel fontWeight="600">ઇમેઇલ</FormLabel>
             <Input
@@ -135,19 +141,22 @@ export default function ForgotPassword() {
               rounded="xl"
               placeholder="તમારું ઇમેઇલ દાખલ કરો"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setMessage(""); // 🔥 clear success message on typing
+              }}
             />
           </FormControl>
 
           {/* SUCCESS MESSAGE */}
           {message && (
-            <Alert status="success">
+            <Alert status="success" rounded="md">
               <AlertIcon />
               {message}
             </Alert>
           )}
 
-          {/* SEND RESET EMAIL BUTTON */}
+          {/* BUTTON */}
           <Button
             width="100%"
             colorScheme="green"
@@ -156,7 +165,6 @@ export default function ForgotPassword() {
             fontWeight="bold"
             onClick={handleForgotPassword}
             isLoading={loading}
-            mt={4}
           >
             રીસેટ ઇમેઇલ મોકલો
           </Button>
@@ -165,10 +173,8 @@ export default function ForgotPassword() {
           <Text
             color="blue.500"
             fontSize="sm"
-            textAlign="center"
             cursor="pointer"
             onClick={() => navigate("/login")}
-            mt={2}
           >
             લોગિન પર પાછા જાઓ
           </Text>
