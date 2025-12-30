@@ -202,321 +202,343 @@ export default function Pedhinamu() {
         }
     };
 
-    const handleSave = async () => {
-        try {
-            // -----------------------------
-            // VALIDATION HELPERS
-            // -----------------------------
-            const validateAge = (age) => !age || /^[0-9]{1,3}$/.test(age);
+  const handleSave = async () => {
+    try {
+        // -----------------------------
+        // VALIDATION HELPERS
+        // -----------------------------
+        const validateAge = (age) => !age || /^[0-9]{1,3}$/.test(age);
 
-            // -----------------------------
-            // MAIN PERSON VALIDATION
-            // -----------------------------
-            if (!form.mukhyaDobDisplay && !form.mukhyaAge) {
-                showError(t("dobOrAgeRequired"));
-                return;
-            }
-
-            if (form.mukhyaDobDisplay && !validateDob(form.mukhyaDobDisplay)) {
-                showError(t("invalidDate"));
-                return;
-            }
-
-            if (form.mukhyaAge && !validateAge(form.mukhyaAge)) {
-                // showError(t("invalidAge"));
-                return;
-            }
-
-            if (
-                form.mukhyaIsDeceased &&
-                form.mukhyaDodDisplay &&
-                !validateDob(form.mukhyaDodDisplay)
-            ) {
-                showError(t("invalidDate"));
-                return;
-            }
-
-            // -----------------------------
-            // VALIDATE HEIRS
-            // -----------------------------
-            for (let h of form.heirs) {
-
-                if (!h.name?.trim()) continue;
-
-                // ⭐ RELATION REQUIRED
-                if (!h.relation?.trim()) {
-                    showError(`${h.name}: ${t("heirRelationRequired")}`);
-                    return;
-                }
-
-                // DOB or Age required
-                if (!h.dobDisplay && !h.age) {
-                    showError(`${h.name}: ${t("dobOrAgeRequired")}`);
-                    return;
-                }
-
-                if (h.dobDisplay && !validateDob(h.dobDisplay)) {
-                    showError(`${h.name}: ${t("invalidDate")}`);
-                    return;
-                }
-
-                if (h.age && !validateAge(h.age)) {
-                    // showError(`${h.name}: ${t("invalidAge")}`);
-                    return;
-                }
-
-                if (h.isDeceased && h.dodDisplay && !validateDob(h.dodDisplay)) {
-                    showError(`${h.name}: ${t("invalidDate")}`);
-                    return;
-                }
-
-                // -----------------------------
-                // SPOUSE VALIDATION
-                // -----------------------------
-                if (h.subFamily?.spouse?.name?.trim()) {
-                    const s = h.subFamily.spouse;
-
-                    if (!s.relation?.trim()) {
-                        showError(`${s.name}: ${t("spouseRelationRequired")}`);
-                        return;
-                    }
-
-                    if (!s.dobDisplay && !s.age) {
-                        showError(`${s.name}: ${t("dobOrAgeRequired")}`);
-                        return;
-                    }
-
-                    if (s.dobDisplay && !validateDob(s.dobDisplay)) {
-                        showError(`${s.name}: ${t("invalidDate")}`);
-                        return;
-                    }
-
-                    if (s.age && !validateAge(s.age)) {
-                        // showError(`${s.name}: ${t("invalidAge")}`);
-                        return;
-                    }
-
-                    if (s.isDeceased && s.dodDisplay && !validateDob(s.dodDisplay)) {
-                        showError(`${s.name}: ${t("invalidDate")}`);
-                        return;
-                    }
-                }
-
-                // -----------------------------
-                // CHILDREN VALIDATION
-                // -----------------------------
-                for (let c of h.subFamily.children || []) {
-
-                    if (!c.name?.trim()) continue;
-
-                    if (!c.relation?.trim()) {
-                        showError(`${c.name}: ${t("childRelationRequired")}`);
-                        return;
-                    }
-
-                    if (!c.dobDisplay && !c.age) {
-                        showError(`${c.name}: ${t("dobOrAgeRequired")}`);
-                        return;
-                    }
-
-                    if (c.dobDisplay && !validateDob(c.dobDisplay)) {
-                        showError(`${c.name}: ${t("invalidDate")}`);
-                        return;
-                    }
-
-                    if (c.age && !validateAge(c.age)) {
-                        // showError(`${c.name}: ${t("invalidAge")}`);
-                        return;
-                    }
-
-                    if (c.isDeceased && c.dodDisplay && !validateDob(c.dodDisplay)) {
-                        showError(`${c.name}: ${t("invalidDate")}`);
-                        return;
-                    }
-
-                    // -----------------------------
-                    // CHILD SPOUSE VALIDATION
-                    // -----------------------------
-                    const cs = c.spouse;
-
-                    if (cs?.name?.trim()) {
-
-                        if (!cs.relation?.trim()) {
-                            showError(`${cs.name}: ${t("spouseRelationRequired")}`);
-                            return;
-                        }
-
-                        if (!cs.dobDisplay && !cs.age) {
-                            showError(`${cs.name}: ${t("dobOrAgeRequired")}`);
-                            return;
-                        }
-
-                        if (cs.dobDisplay && !validateDob(cs.dobDisplay)) {
-                            showError(`${cs.name}: ${t("invalidDate")}`);
-                            return;
-                        }
-
-                        if (cs.age && !validateAge(cs.age)) {
-                            // showError(`${cs.name}: ${t("invalidAge")}`);
-                            return;
-                        }
-
-                        if (cs.isDeceased && cs.dodDisplay && !validateDob(cs.dodDisplay)) {
-                            showError(`${cs.name}: ${t("invalidDate")}`);
-                            return;
-                        }
-                    }
-
-                    // -----------------------------
-                    // GRANDCHILDREN VALIDATION
-                    // -----------------------------
-                    for (let gc of c.children || []) {
-
-                        if (!gc.name?.trim()) continue;
-
-                        if (!gc.relation?.trim()) {
-                            showError(`${gc.name}: ${t("grandchildRelationRequired")}`);
-                            return;
-                        }
-
-                        if (!gc.dobDisplay && !gc.age) {
-                            showError(`${gc.name}: ${t("dobOrAgeRequired")}`);
-                            return;
-                        }
-
-                        if (gc.dobDisplay && !validateDob(gc.dobDisplay)) {
-                            showError(`${gc.name}: ${t("invalidDate")}`);
-                            return;
-                        }
-
-                        if (gc.age && !validateAge(gc.age)) {
-                            // showError(`${gc.name}: ${t("invalidAge")}`);
-                            return;
-                        }
-
-                        if (gc.isDeceased && gc.dodDisplay && !validateDob(gc.dodDisplay)) {
-                            showError(`${gc.name}: ${t("invalidDate")}`);
-                            return;
-                        }
-                    }
-                }
-            }
-            // -----------------------------
-            // BUILD PAYLOAD AFTER VALIDATION
-            // -----------------------------
-            const payload = {
-                mukhya: {
-                    name: form.mukhyaName,
-                    age: form.mukhyaAge,
-                    dob: form.mukhyaDob || "",
-                    dobDisplay: form.mukhyaDobDisplay || "",
-                    isDeceased: form.mukhyaIsDeceased || false,
-                    dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
-                    dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
-                },
-
-                heirs: form.heirs.map((h) => ({
-                    name: h.name,
-                    relation: h.relation,
-                    age: h.age,
-                    dob: h.dob || "",
-                    dobDisplay: h.dobDisplay || "",
-                    mobile: h.mobile || "",
-                    isDeceased: h.isDeceased || false,
-                    dod: h.isDeceased ? (h.dod || "") : "",
-                    dodDisplay: h.isDeceased ? (h.dodDisplay || "") : "",
-
-                    subFamily: {
-                        spouse: {
-                            name: h.subFamily.spouse.name,
-                            age: h.subFamily.spouse.age,
-                            relation: h.subFamily.spouse.relation,
-                            // relation2: h.subFamily.spouse.relation2 || "",
-                            dob: h.subFamily.spouse.dob || "",
-                            dobDisplay: h.subFamily.spouse.dobDisplay || "",
-                            isDeceased: h.subFamily.spouse.isDeceased,
-                            dod: h.subFamily.spouse.isDeceased
-                                ? (h.subFamily.spouse.dod || "")
-                                : "",
-                            dodDisplay: h.subFamily.spouse.isDeceased
-                                ? (h.subFamily.spouse.dodDisplay || "")
-                                : ""
-                        },
-
-                        children: h.subFamily.children.map((c) => ({
-                            name: c.name,
-                            age: c.age,
-                            relation: c.relation,
-                            dob: c.dob || "",
-                            dobDisplay: c.dobDisplay || "",
-                            isDeceased: c.isDeceased || false,
-                            dod: c.isDeceased ? (c.dod || "") : "",
-                            dodDisplay: c.isDeceased ? (c.dodDisplay || "") : "",
-
-                            spouse: c.spouse
-                                ? {
-                                    name: c.spouse.name || "",
-                                    age: c.spouse.age || "",
-                                    relation: c.spouse.relation || "",
-                                    dob: c.spouse.dob || "",
-                                    dobDisplay: c.spouse.dobDisplay || "",
-                                    isDeceased: c.spouse.isDeceased || false,
-                                    dod: c.spouse.isDeceased ? (c.spouse.dod || "") : "",
-                                    dodDisplay: c.spouse.isDeceased
-                                        ? (c.spouse.dodDisplay || "")
-                                        : ""
-                                }
-                                : null,
-
-                            children: (c.children || []).map((gc) => ({
-                                name: gc.name,
-                                age: gc.age,
-                                relation: gc.relation,
-                                dob: gc.dob || "",
-                                dobDisplay: gc.dobDisplay || "",
-                                isDeceased: gc.isDeceased || false,
-                                dod: gc.isDeceased ? (gc.dod || "") : "",
-                                dodDisplay: gc.isDeceased ? (gc.dodDisplay || "") : ""
-                            }))
-                        }))
-                    }
-                }))
-            };
-
-            // -----------------------------
-            // DECIDE API METHOD (CREATE vs UPDATE)
-            // -----------------------------
-            const isEditMode = Boolean(id);
-            const url = isEditMode
-                ? `/api/pedhinamu/${id}`
-                : `/api/pedhinamu`;
-
-            const method = isEditMode ? "PUT" : "POST";
-            
-
-            const { response, data } = await apiFetch(url, {
-                method,
-                body: JSON.stringify(payload),
-            }, navigate, toast);
-
-            if (!response.ok) {
-                showError(data.error || t("error"));
-                return;
-            }
-
-            // SUCCESS
-            showSuccess(isEditMode ? t("updateSuccess") : t("success"));
-
-            setTimeout(() => {
-                const redirectId = isEditMode ? id : data.data._id;
-                navigate(`/pedhinamu/form/${redirectId}`);
-            }, 500);
-
-        } catch (err) {
-            console.error("SAVE ERROR:", err);
-            showError(t("error"));
+        // -----------------------------
+        // MAIN PERSON VALIDATION
+        // -----------------------------
+        if (!form.mukhyaDobDisplay && !form.mukhyaAge) {
+            showError(t("dobOrAgeRequired"));
+            return;
         }
-    };
+
+        if (form.mukhyaDobDisplay && !validateDob(form.mukhyaDobDisplay)) {
+            showError(t("invalidDate"));
+            return;
+        }
+
+        if (form.mukhyaAge && !validateAge(form.mukhyaAge)) {
+            // showError(t("invalidAge"));
+            return;
+        }
+
+        if (
+            form.mukhyaIsDeceased &&
+            form.mukhyaDodDisplay &&
+            !validateDob(form.mukhyaDodDisplay)
+        ) {
+            showError(t("invalidDate"));
+            return;
+        }
+
+        // -----------------------------
+        // VALIDATE HEIRS (UPDATED LOGIC)
+        // -----------------------------
+
+        // First, check if at least ONE heir has any data filled
+        const hasAnyHeirData = form.heirs.some(h => 
+            h.name?.trim() || 
+            h.relation?.trim() || 
+            h.age || 
+            h.dobDisplay
+        );
+
+        if (!hasAnyHeirData) {
+            showError(t("કૃપા કરીને  વારસદારની માહિતી ભરો")); // Add translation: "કૃપા કરીને ઓછામાં ઓછા એક વારસદારની માહિતી ભરો"
+            return;
+        }
+
+        for (let h of form.heirs) {
+            // Skip completely empty heirs (no name, relation, age, or dob)
+            if (!h.name?.trim() && !h.relation?.trim() && !h.age && !h.dobDisplay) {
+                continue;
+            }
+
+            // ⭐ NAME REQUIRED (if any other field is filled)
+            if (!h.name?.trim()) {
+                showError(t("વારસદારનું નામ જરૂરી છે")); // "વારસદારનું નામ જરૂરી છે"
+                return;
+            }
+
+            // ⭐ RELATION REQUIRED
+            if (!h.relation?.trim()) {
+                showError(`${h.name}: ${t("સંબંધ પસંદ કરવો જરૂરી છે")}`);
+                return;
+            }
+
+            // DOB or Age required
+            if (!h.dobDisplay && !h.age) {
+                showError(`${h.name}: ${t("dobOrAgeRequired")}`);
+                return;
+            }
+
+            if (h.dobDisplay && !validateDob(h.dobDisplay)) {
+                showError(`${h.name}: ${t("invalidDate")}`);
+                return;
+            }
+
+            if (h.age && !validateAge(h.age)) {
+                // showError(`${h.name}: ${t("invalidAge")}`);
+                return;
+            }
+
+            if (h.isDeceased && h.dodDisplay && !validateDob(h.dodDisplay)) {
+                showError(`${h.name}: ${t("invalidDate")}`);
+                return;
+            }
+
+            // -----------------------------
+            // SPOUSE VALIDATION
+            // -----------------------------
+            if (h.subFamily?.spouse?.name?.trim()) {
+                const s = h.subFamily.spouse;
+
+                if (!s.relation?.trim()) {
+                    showError(`${s.name}: ${t("spouseRelationRequired")}`);
+                    return;
+                }
+
+                if (!s.dobDisplay && !s.age) {
+                    showError(`${s.name}: ${t("dobOrAgeRequired")}`);
+                    return;
+                }
+
+                if (s.dobDisplay && !validateDob(s.dobDisplay)) {
+                    showError(`${s.name}: ${t("invalidDate")}`);
+                    return;
+                }
+
+                if (s.age && !validateAge(s.age)) {
+                    // showError(`${s.name}: ${t("invalidAge")}`);
+                    return;
+                }
+
+                if (s.isDeceased && s.dodDisplay && !validateDob(s.dodDisplay)) {
+                    showError(`${s.name}: ${t("invalidDate")}`);
+                    return;
+                }
+            }
+
+            // -----------------------------
+            // CHILDREN VALIDATION
+            // -----------------------------
+            for (let c of h.subFamily.children || []) {
+
+                if (!c.name?.trim()) continue;
+
+                if (!c.relation?.trim()) {
+                    showError(`${c.name}: ${t("childRelationRequired")}`);
+                    return;
+                }
+
+                if (!c.dobDisplay && !c.age) {
+                    showError(`${c.name}: ${t("dobOrAgeRequired")}`);
+                    return;
+                }
+
+                if (c.dobDisplay && !validateDob(c.dobDisplay)) {
+                    showError(`${c.name}: ${t("invalidDate")}`);
+                    return;
+                }
+
+                if (c.age && !validateAge(c.age)) {
+                    // showError(`${c.name}: ${t("invalidAge")}`);
+                    return;
+                }
+
+                if (c.isDeceased && c.dodDisplay && !validateDob(c.dodDisplay)) {
+                    showError(`${c.name}: ${t("invalidDate")}`);
+                    return;
+                }
+
+                // -----------------------------
+                // CHILD SPOUSE VALIDATION
+                // -----------------------------
+                const cs = c.spouse;
+
+                if (cs?.name?.trim()) {
+
+                    if (!cs.relation?.trim()) {
+                        showError(`${cs.name}: ${t("spouseRelationRequired")}`);
+                        return;
+                    }
+
+                    if (!cs.dobDisplay && !cs.age) {
+                        showError(`${cs.name}: ${t("dobOrAgeRequired")}`);
+                        return;
+                    }
+
+                    if (cs.dobDisplay && !validateDob(cs.dobDisplay)) {
+                        showError(`${cs.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+
+                    if (cs.age && !validateAge(cs.age)) {
+                        // showError(`${cs.name}: ${t("invalidAge")}`);
+                        return;
+                    }
+
+                    if (cs.isDeceased && cs.dodDisplay && !validateDob(cs.dodDisplay)) {
+                        showError(`${cs.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+                }
+
+                // -----------------------------
+                // GRANDCHILDREN VALIDATION
+                // -----------------------------
+                for (let gc of c.children || []) {
+
+                    if (!gc.name?.trim()) continue;
+
+                    if (!gc.relation?.trim()) {
+                        showError(`${gc.name}: ${t("grandchildRelationRequired")}`);
+                        return;
+                    }
+
+                    if (!gc.dobDisplay && !gc.age) {
+                        showError(`${gc.name}: ${t("dobOrAgeRequired")}`);
+                        return;
+                    }
+
+                    if (gc.dobDisplay && !validateDob(gc.dobDisplay)) {
+                        showError(`${gc.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+
+                    if (gc.age && !validateAge(gc.age)) {
+                        // showError(`${gc.name}: ${t("invalidAge")}`);
+                        return;
+                    }
+
+                    if (gc.isDeceased && gc.dodDisplay && !validateDob(gc.dodDisplay)) {
+                        showError(`${gc.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // -----------------------------
+        // BUILD PAYLOAD AFTER VALIDATION
+        // -----------------------------
+        const payload = {
+            mukhya: {
+                name: form.mukhyaName,
+                age: form.mukhyaAge,
+                dob: form.mukhyaDob || "",
+                dobDisplay: form.mukhyaDobDisplay || "",
+                isDeceased: form.mukhyaIsDeceased || false,
+                dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
+                dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
+            },
+
+            heirs: form.heirs.map((h) => ({
+                name: h.name,
+                relation: h.relation,
+                age: h.age,
+                dob: h.dob || "",
+                dobDisplay: h.dobDisplay || "",
+                mobile: h.mobile || "",
+                isDeceased: h.isDeceased || false,
+                dod: h.isDeceased ? (h.dod || "") : "",
+                dodDisplay: h.isDeceased ? (h.dodDisplay || "") : "",
+
+                subFamily: {
+                    spouse: {
+                        name: h.subFamily.spouse.name,
+                        age: h.subFamily.spouse.age,
+                        relation: h.subFamily.spouse.relation,
+                        dob: h.subFamily.spouse.dob || "",
+                        dobDisplay: h.subFamily.spouse.dobDisplay || "",
+                        isDeceased: h.subFamily.spouse.isDeceased,
+                        dod: h.subFamily.spouse.isDeceased
+                            ? (h.subFamily.spouse.dod || "")
+                            : "",
+                        dodDisplay: h.subFamily.spouse.isDeceased
+                            ? (h.subFamily.spouse.dodDisplay || "")
+                            : ""
+                    },
+
+                    children: h.subFamily.children.map((c) => ({
+                        name: c.name,
+                        age: c.age,
+                        relation: c.relation,
+                        dob: c.dob || "",
+                        dobDisplay: c.dobDisplay || "",
+                        isDeceased: c.isDeceased || false,
+                        dod: c.isDeceased ? (c.dod || "") : "",
+                        dodDisplay: c.isDeceased ? (c.dodDisplay || "") : "",
+
+                        spouse: c.spouse
+                            ? {
+                                  name: c.spouse.name || "",
+                                  age: c.spouse.age || "",
+                                  relation: c.spouse.relation || "",
+                                  dob: c.spouse.dob || "",
+                                  dobDisplay: c.spouse.dobDisplay || "",
+                                  isDeceased: c.spouse.isDeceased || false,
+                                  dod: c.spouse.isDeceased ? (c.spouse.dod || "") : "",
+                                  dodDisplay: c.spouse.isDeceased
+                                      ? (c.spouse.dodDisplay || "")
+                                      : ""
+                              }
+                            : null,
+
+                        children: (c.children || []).map((gc) => ({
+                            name: gc.name,
+                            age: gc.age,
+                            relation: gc.relation,
+                            dob: gc.dob || "",
+                            dobDisplay: gc.dobDisplay || "",
+                            isDeceased: gc.isDeceased || false,
+                            dod: gc.isDeceased ? (gc.dod || "") : "",
+                            dodDisplay: gc.isDeceased ? (gc.dodDisplay || "") : ""
+                        }))
+                    }))
+                }
+            }))
+        };
+
+        // -----------------------------
+        // DECIDE API METHOD (CREATE vs UPDATE)
+        // -----------------------------
+        const isEditMode = Boolean(id);
+        const url = isEditMode
+            ? `/api/pedhinamu/${id}`
+            : `/api/pedhinamu`;
+
+        const method = isEditMode ? "PUT" : "POST";
+        
+
+        const { response, data } = await apiFetch(url, {
+            method,
+            body: JSON.stringify(payload),
+        }, navigate, toast);
+
+        if (!response.ok) {
+            showError(data.error || t("error"));
+            return;
+        }
+
+        // SUCCESS
+        showSuccess(isEditMode ? t("updateSuccess") : t("success"));
+
+        setTimeout(() => {
+            const redirectId = isEditMode ? id : data.data._id;
+            navigate(`/pedhinamu/form/${redirectId}`);
+        }, 500);
+
+    } catch (err) {
+        console.error("SAVE ERROR:", err);
+        showError(t("error"));
+    }
+};
 
 
     const normalizeForm = (p) => {

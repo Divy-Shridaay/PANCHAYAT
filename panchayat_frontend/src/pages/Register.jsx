@@ -350,16 +350,18 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   જન્મતારીખ
                 </FormLabel>
 
-                <Input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleInputChange}
-                  bg="#f8fafc"
-                  border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
-                  fontSize="sm"
-                />
+            <Input
+  type="date"
+  name="dob"
+  value={formData.dob}
+  max={new Date().toISOString().split("T")[0]} // 🔒 future date block
+  onChange={handleInputChange}
+  bg="#f8fafc"
+  border="1px solid #cbd5e1"
+  _focus={{ borderColor: "#2563eb", bg: "white" }}
+  fontSize="sm"
+/>
+
               </FormControl>
             </HStack>
 

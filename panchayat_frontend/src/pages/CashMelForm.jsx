@@ -19,6 +19,7 @@ import {
 import CashMelReport from "./CashMelReport.jsx";
 import * as XLSX from "xlsx";
 import { FiArrowLeft } from "react-icons/fi";
+import { useRef } from "react";
 
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -72,6 +73,9 @@ const CashMelForm = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const user = JSON.parse(localStorage.getItem("user") || "null");
+    const [excelFile, setExcelFile] = useState(null);
+const fileInputRef = useRef(null);
+
 
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
@@ -256,17 +260,47 @@ const CashMelForm = () => {
 
  
 
-    const handleExcelFileChange = async (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        setForm((p) => ({ ...p, excelFile: f }));
-        const data = await f.arrayBuffer();
-        const wb = XLSX.read(data);
-        const first = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(first, { header: 0 });
-        setForm((p) => ({ ...p, excelData: json }));
-        toast({ title: "Excel ફાઇલ વાંચાઈ ગઈ", status: "info", duration: 2000 });
-    };
+  const handleExcelFileChange = async (e) => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+
+  // 🔹 store file in form
+  setForm((p) => ({ ...p, excelFile: f }));
+
+  const data = await f.arrayBuffer();
+  const wb = XLSX.read(data);
+  const first = wb.Sheets[wb.SheetNames[0]];
+  const json = XLSX.utils.sheet_to_json(first, { header: 0 });
+
+  setForm((p) => ({ ...p, excelData: json }));
+
+  toast({
+    title: "Excel ફાઇલ વાંચાઈ ગઈ",
+    status: "info",
+    duration: 2000,
+  });
+};
+
+const cancelExcelUpload = () => {
+  setForm((prev) => ({
+    ...prev,
+    excelFile: null,
+    excelData: [],
+  }));
+
+  // 🔥 reset file input
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
+
+  toast({
+    title: "Excel અપલોડ રદ કરવામાં આવ્યો",
+    status: "warning",
+    duration: 2000,
+  });
+};
+
+
 
     const downloadSampleExcel = async () => {
         try {
@@ -293,24 +327,45 @@ const CashMelForm = () => {
         }
     };
 
-    const uploadExcelToServer = async () => {
-        if (!form.excelFile) {
-            toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
-            return;
+ const uploadExcelToServer = async () => {
+    if (!form.excelFile) {
+        toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append("file", form.excelFile);
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+        toast({ title: "લૉગિન જરૂરી છે", status: "error" });
+        return;
+    }
+
+    setLoading(true);
+    try {
+        const res = await fetch(`${API_BASE}/cashmel/upload-excel`, {
+            method: "POST",
+            body: fd,
+            headers: {
+                Authorization: `Bearer ${token}`, // ✅ IMPORTANT
+            },
+        });
+
+        if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt || "Upload failed");
         }
-        const fd = new FormData();
-        fd.append("file", form.excelFile);
-        setLoading(true);
-        try {
-            const res = await fetch(`${API_BASE}/cashmel/upload-excel`, { method: "POST", body: fd });
-            if (!res.ok) throw new Error("Upload failed");
-            toast({ title: "Excel અપલોડ થઈ ગયું!", status: "success" });
-        } catch (err) {
-            console.error(err);
-            toast({ title: "અપલોડમાં ભૂલ", status: "error" });
-        }
-        setLoading(false);
-    };
+
+        toast({ title: "Excel સફળતાપૂર્વક અપલોડ થઈ ગયું!", status: "success" });
+    } catch (err) {
+        console.error(err);
+        toast({ title: "અપલોડમાં ભૂલ", description: err.message, status: "error" });
+    }
+
+    setLoading(false);
+};
+
 
     /* ------------------ Submit --------------------- */
     const handleSubmit = async () => {
@@ -654,18 +709,24 @@ const CashMelForm = () => {
                     {/* AMOUNT */}
                     <FormControl isRequired>
                         <FormLabel fontWeight="600">{t("amount")}</FormLabel>
-                        <Input
-                            type="text"  
-                            size="lg"
-                            bg="gray.100"
-                            value={toGujaratiDigits(form.amount)}  
-                            onChange={(e) => {
-                                const englishValue = gujaratiToEnglishDigits(e.target.value);
-                                const onlyNumbers = englishValue.replace(/\D/g, ""); 
-                                handleChange("amount", onlyNumbers);
-                            }}
-                            placeholder=""
-                        />
+                       <Input
+    type="text"
+    size="lg"
+    bg="gray.100"
+    value={toGujaratiDigits(form.amount)}
+    onChange={(e) => {
+        let englishValue = gujaratiToEnglishDigits(e.target.value);
+
+        // ✅ Allow numbers + only ONE decimal
+        englishValue = englishValue
+            .replace(/[^0-9.]/g, "")     // numbers + dot allowed
+            .replace(/(\..*)\./g, "$2"); // only two dot
+
+        handleChange("amount", englishValue);
+    }}
+    placeholder=""
+/>
+
                     </FormControl>
 
                     {/* PAYMENT METHOD */}
@@ -802,36 +863,56 @@ const CashMelForm = () => {
 <Collapse in={activeSection === "bulk"} animateOpacity>
   <Box mt={4} p={4} bg="gray.50" rounded="md">
 
-    <HStack mb={3} spacing={3} align="stretch">
-     <Button
-  colorScheme="blue"
-  onClick={downloadSampleExcel}
-  width="70%"
-  whiteSpace="normal"
->
-  સેમ્પલ એક્સેલ ડાઉનલોડ
-</Button>
+<VStack spacing={4} align="stretch">
 
+  {/* 🔹 Row 1 : Sample + File + Cancel */}
+  <HStack spacing={3} align="center">
+    <Button
+      colorScheme="blue"
+      onClick={downloadSampleExcel}
+      flex="1"
+      whiteSpace="normal"
+    >
+      સેમ્પલ એક્સેલ ડાઉનલોડ
+    </Button>
 
-      <Input
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleExcelFileChange}
-      />
+    <Input
+      ref={fileInputRef}
+      type="file"
+      accept=".xlsx,.xls"
+      onChange={handleExcelFileChange}
+      isDisabled={!!form.excelFile}
+      flex="1"
+    />
 
+    {form.excelFile && (
       <Button
-        colorScheme="green"
-        onClick={uploadExcelToServer}
-        isLoading={loading}
-        whiteSpace="normal"
-        textAlign="center"
-        px={4}
-  width="50%"
-
+        colorScheme="red"
+        variant="outline"
+        onClick={cancelExcelUpload}
       >
-        Upload to File
+        Cancel
       </Button>
-    </HStack>
+    )}
+  </HStack>
+
+  {/* 🔹 Row 2 : Upload Button (center) */}
+  <HStack justify="center">
+    <Button
+      colorScheme="green"
+      onClick={uploadExcelToServer}
+      isLoading={loading}
+      isDisabled={!form.excelFile}
+      width="50%"
+    >
+      Upload to File
+    </Button>
+  </HStack>
+
+</VStack>
+
+
+
 
     {form.excelData.length > 0 && (
       <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>

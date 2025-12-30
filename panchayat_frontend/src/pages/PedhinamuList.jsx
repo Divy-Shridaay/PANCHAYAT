@@ -46,6 +46,7 @@ export default function PedhinamuList() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // ✅ ADD THIS
   const [refresh, setRefresh] = useState(0);
 
 
@@ -53,16 +54,16 @@ export default function PedhinamuList() {
   /* -------------------------------------------------
         FETCH PAGINATED PEDHINAMU LIST
      ------------------------------------------------- */
-  const fetchList = async (page = 1) => {
+  const fetchList = async (page = 1, limit = 10) => {  // ✅ ADD limit parameter
     try {
       setLoading(true);
-      const { response, data } = await apiFetch(`/api/pedhinamu?page=${page}&limit=10`, {}, navigate, toast);
+      const { response, data } = await apiFetch(`/api/pedhinamu?page=${page}&limit=${limit}`, {}, navigate, toast);
 
       setList(data.data || []);
       setTotalPages(data.totalPages || 1);
       setLoading(false);
 
-      return json.data || [];  // 🔥 RETURN NEW LIST
+      return data.data || [];  // ✅ FIX: json -> data
     } catch (err) {
       console.error(err);
       setLoading(false);
@@ -72,8 +73,8 @@ export default function PedhinamuList() {
 
 
   useEffect(() => {
-    fetchList(currentPage);
-  }, [currentPage, refresh]);
+    fetchList(currentPage, itemsPerPage);  // ✅ PASS itemsPerPage
+  }, [currentPage, itemsPerPage, refresh]);  // ✅ ADD itemsPerPage to dependencies
 
 
 
@@ -97,7 +98,7 @@ export default function PedhinamuList() {
 
       onClose();
 
-      const updatedList = await fetchList(currentPage);
+      const updatedList = await fetchList(currentPage, itemsPerPage);  // ✅ PASS itemsPerPage
 
       // 🔥 CHECK UPDATED LIST, not old list
       if (updatedList.length === 0 && currentPage > 1) {
@@ -112,6 +113,12 @@ export default function PedhinamuList() {
         position: "top",
       });
     }
+  };
+
+  // ✅ ADD: Handler for items per page change
+  const handleItemsPerPageChange = (newLimit) => {
+    setItemsPerPage(newLimit);
+    setCurrentPage(1); // Reset to first page when changing limit
   };
 
   return (
@@ -254,6 +261,8 @@ export default function PedhinamuList() {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={(p) => setCurrentPage(p)}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={handleItemsPerPageChange}  // ✅ PASS THESE PROPS
       />
 
 

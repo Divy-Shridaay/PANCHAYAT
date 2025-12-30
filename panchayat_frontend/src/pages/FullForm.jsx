@@ -762,20 +762,21 @@ useEffect(() => {
 
         <FormControl isRequired>
           <FormLabel fontWeight="600">{t("age")}</FormLabel>
-          <Input
-            {...inputStyle}
-            type="number"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            borderColor={
-              invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
-            }
-            value={p.age}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              updatePanch(i, "age", value);
-            }}
-          />
+         <Input
+  {...inputStyle}
+  type="text"
+  inputMode="numeric"
+  pattern="[0-9]*"
+  borderColor={
+    invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
+  }
+  value={p.age}
+  onChange={(e) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    updatePanch(i, "age", value);
+  }}
+/>
+
         </FormControl>
       </HStack>
 

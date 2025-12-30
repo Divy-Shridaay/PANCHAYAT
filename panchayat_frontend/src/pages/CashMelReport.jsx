@@ -8,9 +8,14 @@ import {
     Icon,
 } from "@chakra-ui/react";
 import { FiPrinter } from "react-icons/fi";
+import { useRef } from "react";
+
+
+
 
 // DateInput component (simplified for this artifact)
 const DateInput = ({ label, name, value, onDateChange, formatDisplayDate, convertToISO }) => {
+   
     return (
         <Box>
             <label style={{ fontSize: '14px', fontWeight: 600 }}>{label}</label>
@@ -35,14 +40,83 @@ const DateInput = ({ label, name, value, onDateChange, formatDisplayDate, conver
     );
 };
 
+
+
+
 const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [report, setReport] = useState({ from: "", to: "", type: "aavak" });
+    const dateErrorShownRef = useRef(false);
 // console.log("user object in CashMelReport:", user); 
-    const handleReportChange = (key, value) => {
-        setReport((p) => ({ ...p, [key]: value }));
-    };
+
+const hasRecordsInRange = (records, fromDate, toDate) => {
+    return records.some(r => {
+        const d = new Date(r.date?.slice(0, 10));
+        return d >= new Date(fromDate) && d <= new Date(toDate);
+    });
+};
+
+
+const isFromAfterTo = (from, to) => {
+    if (!from || !to) return false;
+    return new Date(convertToISO(from)) > new Date(convertToISO(to));
+};
+
+const isFutureDate = (date) => {
+    if (!date) return false;
+    const selected = new Date(convertToISO(date));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selected > today;
+};
+
+const handleReportChange = (key, value) => {
+    setReport((prev) => {
+        const updated = { ...prev, [key]: value };
+
+        // ❌ Future date not allowed
+        if (isFutureDate(value)) {
+            if (!dateErrorShownRef.current) {
+                toast({
+                    title: "તારીખ માન્ય નથી",
+                    description: "ભવિષ્યની તારીખ પસંદ કરી શકાતી નથી",
+                    status: "error",
+                    duration: 2500,
+                    position: "top",
+                });
+                dateErrorShownRef.current = true;
+            }
+            return prev;
+        }
+
+        // ❌ From > To not allowed
+        if (
+            updated.from &&
+            updated.to &&
+            isFromAfterTo(updated.from, updated.to)
+        ) {
+            if (!dateErrorShownRef.current) {
+                toast({
+                    title: "તારીખ ખોટી છે",
+                    description: "From તારીખ To તારીખથી મોટી હોઈ શકે નહીં",
+                    status: "error",
+                    duration: 2500,
+                    position: "top",
+                });
+                dateErrorShownRef.current = true;
+            }
+            return prev;
+        }
+
+        // ✅ Sab sahi → reset flag
+        dateErrorShownRef.current = false;
+        return updated;
+    });
+};
+
+
+
 
     const guj = (num) => {
         if (num === null || num === undefined || num === "") return "";
@@ -115,6 +189,20 @@ const handlePrintReport = async () => {
             });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
+            const hasValidRecords = hasRecordsInRange(allRecords, fromDate, toDate);
+
+if (!hasValidRecords) {
+    toast({
+        title: "કોઈ રેકોર્ડ નથી",
+        description: "પસંદ કરેલી તારીખ માટે કોઈ માહિતી ઉપલબ્ધ નથી",
+        status: "warning",
+        duration: 2500,
+        position: "top",
+    });
+    setLoading(false);
+    return;
+}
+
 
             const checkedRows = allRecords.filter(r =>
                 r.vyavharType === "javak" &&
@@ -185,6 +273,20 @@ const handlePrintReport = async () => {
             });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
+            const hasValidRecords = hasRecordsInRange(allRecords, fromDate, toDate);
+
+if (!hasValidRecords) {
+    toast({
+        title: "કોઈ રેકોર્ડ નથી",
+        description: "પસંદ કરેલી તારીખ માટે કોઈ માહિતી ઉપલબ્ધ નથી",
+        status: "warning",
+        duration: 2500,
+        position: "top",
+    });
+    setLoading(false);
+    return;
+}
+
 
             if (allRecords.length === 0) {
                 toast({
@@ -495,6 +597,21 @@ const handlePrintReport = async () => {
         const resJson = await recordsRes.json();
         const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
 
+        const hasValidRecords = hasRecordsInRange(allRecords, fromDate, toDate);
+
+if (!hasValidRecords) {
+    toast({
+        title: "કોઈ રેકોર્ડ નથી",
+        description: "પસંદ કરેલી તારીખ માટે કોઈ માહિતી ઉપલબ્ધ નથી",
+        status: "warning",
+        duration: 2500,
+        position: "top",
+    });
+    setLoading(false);
+    return;
+}
+
+
         if (allRecords.length === 0) {
             toast({ title: "કોઈ રેકોર્ડ નથી", status: "warning", duration: 2000 });
             setLoading(false);
@@ -792,23 +909,23 @@ const handlePrintReport = async () => {
     return (
         <Box mt={4} p={3} bg="gray.50" rounded="md">
             <HStack spacing={3} mb={3} flexWrap="wrap">
-                <DateInput
-                    label="From"
-                    name="from"
-                    value={report.from}
-                    onDateChange={handleReportChange}
-                    formatDisplayDate={formatDisplayDate}
-                    convertToISO={convertToISO}
-                />
+                    <DateInput
+                        label="From"
+                        name="from"
+                        value={report.from}
+                        onDateChange={handleReportChange}
+                        formatDisplayDate={formatDisplayDate}
+                        convertToISO={convertToISO}
+                    />
 
-                <DateInput
-                    label="To"
-                    name="to"
-                    value={report.to}
-                    onDateChange={handleReportChange}
-                    formatDisplayDate={formatDisplayDate}
-                    convertToISO={convertToISO}
-                />
+                    <DateInput
+                        label="To"
+                        name="to"
+                        value={report.to}
+                        onDateChange={handleReportChange}
+                        formatDisplayDate={formatDisplayDate}
+                        convertToISO={convertToISO}
+                    />
 
                 <Select
                     width="180px"

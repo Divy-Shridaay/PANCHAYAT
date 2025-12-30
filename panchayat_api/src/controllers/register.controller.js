@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { transliterateGujaratiToEnglish } from "../utils/toEnglish.js";
 
 dotenv.config();
 
@@ -47,7 +48,8 @@ const generateOTP = () => {
 // Generate random username
 const generateUsername = (firstName) => {
   const randomTwoDigit = Math.floor(10 + Math.random() * 90); // 10–99
-  return `${firstName.toLowerCase()}_${randomTwoDigit}`;
+  const englishName = transliterateGujaratiToEnglish(firstName);
+  return `${englishName}_${randomTwoDigit}`;
 };
 
 
