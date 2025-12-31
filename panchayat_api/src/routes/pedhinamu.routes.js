@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
+import auth from "../middleware/auth.js";
 import {
   createPedhinamu,
   getPedhinamus,
@@ -38,14 +39,14 @@ const upload = multer({ storage });
 /* ------------------------------------------
    BASIC PEDHINAMU
 ---------------------------------------------*/
-router.post("/", createPedhinamu);      // create basic pedhinamu
-router.get("/", getPedhinamus);         // list with pagination
+router.post("/", auth, createPedhinamu);      // create basic pedhinamu
+router.get("/", auth, getPedhinamus);         // list with pagination
 
 /* ------------------------------------------
    UPDATE FAMILY TREE
 ---------------------------------------------*/
-router.put("/:id", updatePedhinamuTree);
-router.put("/:id/tree", updatePedhinamuTree);
+router.put("/:id", auth, updatePedhinamuTree);
+router.put("/:id/tree", auth, updatePedhinamuTree);
 
 /* ------------------------------------------
    FULL FORM (🔥 FINAL FIX 🔥)
@@ -54,6 +55,7 @@ router.put("/:id/tree", updatePedhinamuTree);
 ---------------------------------------------*/
 router.post(
   "/form/:id",
+  auth,
   upload.fields([
     { name: "applicantPhoto", maxCount: 1 },
     { name: "panchPhotos", maxCount: 10 }
@@ -64,11 +66,11 @@ router.post(
 /* ------------------------------------------
    GET FULL PEDHINAMU (basic + form)
 ---------------------------------------------*/
-router.get("/:id", getFullPedhinamu);
+router.get("/:id", auth, getFullPedhinamu);
 
 /* ------------------------------------------
    SOFT DELETE
 ---------------------------------------------*/
-router.delete("/:id", softDeletePedhinamu);
+router.delete("/:id", auth, softDeletePedhinamu);
 
 export default router;

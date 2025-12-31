@@ -164,6 +164,8 @@ const PedhinamuSchema = new mongoose.Schema(
     mukhya: MukhyaSchema,
     heirs: [HeirSchema],
 
+    userId: { type: String, required: true },
+
     hasFullForm: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false }
   },

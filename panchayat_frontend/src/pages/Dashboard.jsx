@@ -210,26 +210,7 @@ export default function Dashboard() {
           </Text>
         </Box>
 
-        {/* Settings */}
-        {/* <Box
-          bg="white"
-          p={8}
-          rounded="2xl"
-          shadow="lg"
-          border="1px solid #E3EDE8"
-          textAlign="center"
-          cursor="pointer"
-          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-          onClick={() => navigate("/settings")}
-        >
-          <FiSettings size={40} color="#2A7F62" />
-          <Heading size="md" mt={4} color="#1E4D2B">
-            {t("settings")}
-          </Heading>
-          <Text mt={2} color="gray.600">
-            {t("cardSettingsText")}
-          </Text>
-        </Box> */}
+      
 
         {/* Cashmel */}
         <Box
@@ -251,7 +232,31 @@ export default function Dashboard() {
             {t("cardCashmelText")}
           </Text>
         </Box>
+
+{/* Settings */}
+        <Box
+          bg="white"
+          p={8}
+          rounded="2xl"
+          shadow="lg"
+          border="1px solid #E3EDE8"
+          textAlign="center"
+          cursor="pointer"
+          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          onClick={() => navigate("/settings")}
+        >
+          <FiSettings size={40} color="#2A7F62" />
+          <Heading size="md" mt={4} color="#1E4D2B">
+            {t("settings")}
+          </Heading>
+          <Text mt={2} color="gray.600">
+            {t("cardSettingsText")}
+          </Text>
+        </Box>
+
       </SimpleGrid>
+
+        
 
       {/* PAYMENT POPUP */}
       <PaymentPopup

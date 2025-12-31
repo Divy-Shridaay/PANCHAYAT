@@ -80,7 +80,9 @@ export const createPedhinamu = async (req, res) => {
               }))
             }))
           }
-        }))
+        })),
+
+      userId: req.user._id
     };
 
     const saved = await Pedhinamu.create(data);
@@ -103,7 +105,7 @@ export const getPedhinamus = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const filter = { isDeleted: false };
+    const filter = { isDeleted: false, userId: req.user._id };
 
     const total = await Pedhinamu.countDocuments(filter);
     let totalPages = Math.ceil(total / limit);
@@ -134,6 +136,11 @@ export const saveFullForm = async (req, res) => {
   try {
     const { id } = req.params;
     const body = req.body;
+
+    const pedhinamu = await Pedhinamu.findById(id);
+    if (!pedhinamu || pedhinamu.userId !== req.user._id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
 
     console.log("🟢 SAVE FULL FORM STARTED");
     console.log("🆔 Pedhinamu ID:", id);
@@ -309,6 +316,10 @@ export const getFullPedhinamu = async (req, res) => {
     const { id } = req.params;
 
     const pedhinamu = await Pedhinamu.findById(id);
+    if (!pedhinamu || pedhinamu.userId !== req.user._id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
     const form = await PedhinamuFormDetails.findOne({ pedhinamuId: id });
 
     res.json({
@@ -327,6 +338,11 @@ export const updatePedhinamuTree = async (req, res) => {
   try {
     const { id } = req.params;
     const { mukhya, heirs } = req.body;
+
+    const pedhinamu = await Pedhinamu.findById(id);
+    if (!pedhinamu || pedhinamu.userId !== req.user._id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
 
     if (!mukhya || !mukhya.name) {
       return res.status(400).json({ error: "Mukhya is required" });
@@ -358,6 +374,11 @@ export const updatePedhinamuTree = async (req, res) => {
 export const softDeletePedhinamu = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const pedhinamu = await Pedhinamu.findById(id);
+    if (!pedhinamu || pedhinamu.userId !== req.user._id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
 
     await Pedhinamu.findByIdAndUpdate(id, { isDeleted: true });
     await PedhinamuFormDetails.findOneAndUpdate(

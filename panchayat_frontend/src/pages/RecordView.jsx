@@ -511,7 +511,7 @@ const handlePedhinamuPrint = async () => {
         <td>
             <p>
                 <b>પંચનું નામ :</b> ${p.name} <br>
-                <b>આધાર નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
+                <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
                 <b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}
             </p>
         </td>
@@ -551,6 +551,7 @@ const handlePedhinamuPrint = async () => {
         isRoot: person.isRoot || false,
         children: []
       };
+    
 
       const spouse = person.spouse || person.subFamily?.spouse;
 
