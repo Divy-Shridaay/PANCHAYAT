@@ -140,7 +140,9 @@
         સવિનય ઉપરોકત વિષય અને સંદર્ભ અન્વયે અમો અરજદારશ્રી  <u>{{applicantName}}</u> રહેવાસી 
         <u>  {{mukkamAddress}}  </u>
        
-        તા. {{talukaName}}, જી. {{districtName}} નીચેના કામે અમારે પેઢીનામાની જરૂરિયાત હોઇ
+
+
+        તા. {{userTaluko}}, જી. {{userJillo}} નીચેના કામે અમારે પેઢીનામાની જરૂરિયાત હોઇ
         પેઢીનામુ બનાવી આપવા વિનંતી છે.
     </p>
 
@@ -185,14 +187,14 @@
  
   <tr>
     <td rowspan="4" class="center">૪૮</td>
-    <td>ગામ.  {{mukkamAddress}}<br>તા. {{talukaName}}</td>
+    <td>ગામ.  {{taluko}}<br>તા. {{userTaluko}}</td>
     <td>જમીન</td>
     <td>ખાતા નં.</td>
     <td class="center">{{jaminKhatano}}</td>
   </tr>
 
   <tr>
-    <td rowspan="3">જી. {{districtName}}</td>
+    <td rowspan="3">જી. {{userJillo}}</td>
     <td></td>
     <td>સર્વે નં.</td>
     <td class="center">{{jaminSurveyNo}}</td>
@@ -216,9 +218,10 @@
        ઉપરની વિગતે અમારે
 <u>જમીનના વેચાણ દસ્તાવેજની કબુલાત લેવા સારૂ</u>
 ના કામે પેઢીનામાની જરૂરીયાત હોઈ નીચે જણાવ્યા <br>
-મુજબ અમો સીધી લીટીના વારસદાર હોઈ મૈયતશ્રી {{mukhyoName}}
+મુજબ અમો સીધી લીટીના વારસદાર હોઈ મૈયતશ્રી   <u><b> {{mukhyoName}} </b></u>   
+ મૈયત તા. <u><b> {{deathDate}} </b></u>
 <!-- મૈયત {{deathDate}} -->
-        <u>  {{mukkamAddress}}  </u>
+     રે.   <u> <b>  {{mukkamAddress}}  </b>    </u>  
  ના નામે
 વારસદારોનુ પેઢીનામુ અમારા જણાવ્યા મુજબ નીચે મુજબ હોઈ
 બનાવી આપવા વિનંતી છે.
@@ -375,7 +378,7 @@
                     <b>અરજદાર :</b> {{applicantName}} <br>
                     <b>સરનામું :</b> {{mukkamAddress}} <br>
                     <b>મોબાઇલ :</b> {{applicantMobile}} <br>
-                    <b>આધાર :</b> {{applicantAadhaar}}
+                    <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b> {{applicantAadhaar}}
                 </p>
             </td>
                         <td style="width:160px;">
@@ -399,8 +402,8 @@
     <br><br>
 
     <p>
-       તારીખ: ____________ <br>
-        સ્થળ : ________________________
+        તારીખ : <b><u> {{applicationDate}} </u></b> <br>
+        સ્થળ : <u><b> {{taluko}}</b></u>
     </p>
 
     <h3>મારી રૂબરૂ ( )</h3>
@@ -411,7 +414,7 @@
         <br>
         તલાટી કમ મંત્રી
         <br>
-        વડસર ગ્રામ પંચાયત
+        {{taluko}} ગ્રામ પંચાયત
         <br>
         તા. <u><b>{{userTaluko}}</b></u> જી. <u><b>{{userJillo}}</b></u>
     </div>
@@ -452,7 +455,7 @@
 
  <p>
        તારીખ:<b><u> {{applicationDate}} </u></b> <br>
-        સ્થળ : ________________________
+        સ્થળ : <u><b> {{taluko}}</b></u>
     </p>
 
      <h3>મારી રૂબરૂ ( )</h3>
@@ -463,7 +466,7 @@
         <br>
         તલાટી કમ મંત્રી
         <br>
-        વડસર ગ્રામ પંચાયત
+        {{taluko}} ગ્રામ પંચાયત
         <br>
         તા. <u><b>{{userTaluko}}</b></u> જી. <u><b>{{userJillo}}</b></u>
     </div>

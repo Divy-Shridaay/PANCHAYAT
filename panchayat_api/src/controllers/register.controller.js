@@ -549,4 +549,94 @@ export const incrementPrintCount = async (req, res) => {
   }
 };
 
+// ---------- Get Current User Profile ----------
+export const getCurrentUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Handle admin case
+    if (userId === "admin_static_id") {
+      return res.json({
+        message: "Admin profile retrieved",
+        user: {
+          _id: "admin_static_id",
+          username: "admin",
+          role: "admin",
+          name: "System Admin"
+        }
+      });
+    }
+
+    const user = await User.findById(userId).select("-password -otp -otpExpiry -resetToken -resetTokenExpiry");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "વપરાશકર્તા મળ્યો નહીં (User not found)"
+      });
+    }
+
+    return res.json({
+      message: "પ્રોફાઇલ મેળવી (Profile retrieved)",
+      user
+    });
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      message: "પ્રોફાઇલ મેળવવામાં નિષ્ફળ (Failed to get profile)",
+      error: err.message
+    });
+  }
+};
+
+// ---------- Update Current User Profile ----------
+export const updateCurrentUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const updateData = req.body;
+
+    // Handle admin case
+    if (userId === "admin_static_id") {
+      return res.status(400).json({
+        message: "Admin profile cannot be updated through this endpoint"
+      });
+    }
+
+    // Remove sensitive fields that shouldn't be updated
+    delete updateData.password;
+    delete updateData.role;
+    delete updateData.isVerified;
+    delete updateData.isDeleted;
+    delete updateData.otp;
+    delete updateData.otpExpiry;
+    delete updateData.resetToken;
+    delete updateData.resetTokenExpiry;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password -otp -otpExpiry -resetToken -resetTokenExpiry");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "વપરાશકર્તા મળ્યો નહીં (User not found)"
+      });
+    }
+
+    return res.json({
+      message: "પ્રોફાઇલ અપડેટ થઈ (Profile updated)",
+      user
+    });
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      message: "પ્રોફાઇલ અપડેટ કરવામાં નિષ્ફળ (Failed to update profile)",
+      error: err.message
+    });
+  }
+};
 

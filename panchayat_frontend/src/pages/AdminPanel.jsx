@@ -402,9 +402,9 @@ const filteredUsers = (users || []).filter(user => {
           <Th fontSize="xs" color="#475569" fontWeight="700">
             યુઝરનેમ
           </Th>
-          <Th fontSize="xs" color="#475569" fontWeight="700">
+          {/* <Th fontSize="xs" color="#475569" fontWeight="700">
             ભૂમિકા
-          </Th>
+          </Th> */}
           <Th fontSize="xs" color="#475569" fontWeight="700">
             સ્થિતિ
           </Th>
@@ -433,7 +433,7 @@ const filteredUsers = (users || []).filter(user => {
               {user.username}
             </Td>
 
-            <Td>
+            {/* <Td>
               <Badge
                 fontSize="xs"
                 colorScheme={
@@ -446,7 +446,7 @@ const filteredUsers = (users || []).filter(user => {
               >
                 {user.role}
               </Badge>
-            </Td>
+            </Td> */}
 
             <Td>
               <VStack spacing={1} align="start">
@@ -530,7 +530,7 @@ const filteredUsers = (users || []).filter(user => {
             <Text color="#2563eb" fontWeight="600">{selectedUser.username}</Text>
           </HStack>
 
-          <HStack justify="space-between" width="100%">
+          {/* <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">
               ભૂમિકા:
             </Text>
@@ -545,7 +545,7 @@ const filteredUsers = (users || []).filter(user => {
             >
               {selectedUser.role}
             </Badge>
-          </HStack>
+          </HStack> */}
 
           <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">

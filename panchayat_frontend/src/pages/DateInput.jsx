@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -8,52 +8,48 @@ import {
   Icon,
   FormControl,
   FormLabel,
+  Text,
 } from "@chakra-ui/react";
 import { AiOutlineCalendar } from "react-icons/ai";
 
-const ChakraInput = forwardRef(({ value, onClick, onChange }, ref) => (
-  <Input
-    ref={ref}
-    value={value}
-    onClick={onClick}
-    onChange={onChange}
-    placeholder="DD/MM/YYYY"
-    size="lg"
-    bg="gray.100"
-w={{
-  base: "100%",    // Mobile (0 - 480px)
-  sm: "120%",      // Small mobile/tablet-480px -
-  md: "650px",     // Tablet-768px
-  lg: "780px",     // Laptop-992px
-  xl: "780px",     // Desktop-1280px
-  "2xl": "820px",  // Big screens
-}}
-
-            // ✅ Responsive width
-  />
-));
+// ✅ Convert Gujarati digits → English digits
+const gujaratiToEnglishDigits = (str) => {
+  if (!str) return str;
+  
+  const guj = "૦૧૨૩૪૫૬૭૮૯";
+  const eng = "0123456789";
+  
+  let result = str;
+  
+  for (let i = 0; i < guj.length; i++) {
+    result = result.split(guj[i]).join(eng[i]);
+  }
+  
+  result = result.replace(/[\u0AE6-\u0AEF]/g, (match) => {
+    return String(match.charCodeAt(0) - 0x0AE6);
+  });
+  
+  return result;
+};
 
 const DateInput = ({
   label,
-  formValue,        // case 1: formValue + setFormValue
+  formValue,
   setFormValue,
-
-  value,            // case 2: value + name + onDateChange
+  value,
   name,
   onDateChange,
-
   formatDisplayDate,
   convertToISO,
   t,
 }) => {
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  // 🟢 Universal GET function
   const getValue = () => {
     if (formValue) return formValue.dateDisplay || "";
     return value || "";
   };
 
-  // 🟢 Universal SET function
   const updateValue = (displayDate, isoDate) => {
     if (formValue && setFormValue) {
       setFormValue((prev) => ({
@@ -61,7 +57,7 @@ const DateInput = ({
         dateDisplay: displayDate,
         date: isoDate,
       }));
-      }
+    }
 
     if (onDateChange && name) {
       onDateChange(name, displayDate);
@@ -73,16 +69,63 @@ const DateInput = ({
     return val && !isNaN(new Date(val).getTime()) ? new Date(val) : null;
   })();
 
+  // ✅ Smart Input Handler
+  const handleManualInput = (e) => {
+    const raw = e.target.value || "";
+
+    if (raw.trim() === "") {
+      updateValue("", "");
+      return;
+    }
+
+    // ✅ Step 1: Convert Gujarati → English
+    const converted = gujaratiToEnglishDigits(raw);
+    
+    // ✅ Step 2: Format using parent function
+    const display = formatDisplayDate(converted);
+    
+    // ✅ Step 3: Convert to ISO
+    const iso = convertToISO(display);
+
+    updateValue(display, iso);
+  };
+
   return (
     <FormControl isRequired w="100%">
       <FormLabel fontWeight="600">{label || t("date")}</FormLabel>
 
       <InputGroup w="100%">
-        <DatePicker
-       selected={selectedDate}
+        <Input
+          placeholder="DD/MM/YYYY"
+          size="lg"
+          bg="gray.100"
           value={getValue()}
+          onChange={handleManualInput}
+          onFocus={() => setIsPickerOpen(true)}
+          w={{
+            base: "100%",
+            sm: "120%",
+            md: "650px",
+            lg: "780px",
+            xl: "780px",
+            "2xl": "820px",
+          }}
+        />
 
-                  onChange={(date) => {
+        <InputRightElement
+          pointerEvents="auto"
+          cursor="pointer"
+          onClick={() => setIsPickerOpen(!isPickerOpen)}
+        >
+          <Icon as={AiOutlineCalendar} color="gray.500" boxSize={5} />
+        </InputRightElement>
+      </InputGroup>
+
+      {/* ✅ DatePicker Popup */}
+      {isPickerOpen && (
+        <DatePicker
+          selected={selectedDate}
+          onChange={(date) => {
             if (!date) return;
 
             const dd = String(date.getDate()).padStart(2, "0");
@@ -93,34 +136,13 @@ const DateInput = ({
             const iso = `${yyyy}-${mm}-${dd}`;
 
             updateValue(display, iso);
+            setIsPickerOpen(false);
           }}
-
-
-
-           
-         onChangeRaw={(e) => {
-            const raw = e.target.value || "";
-
-            if (raw.trim() === "") {
-              updateValue("", "");
-              return;
-            }
-
-            const display = formatDisplayDate(raw);
-            const iso = convertToISO(display);
-
-            updateValue(display, iso);
-          }}
+          onClickOutside={() => setIsPickerOpen(false)}
+          inline
           dateFormat="dd/MM/yyyy"
-          customInput={<ChakraInput />}
-          popperPlacement="bottom-start"
-          portalId="root-portal"
         />
-
-        <InputRightElement pointerEvents="none">
-          <Icon as={AiOutlineCalendar} color="gray.500" boxSize={5} />
-        </InputRightElement>
-      </InputGroup>
+      )}
     </FormControl>
   );
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount } from "../controllers/register.controller.js";
+import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile } from "../controllers/register.controller.js";
 import logger from "../middleware/logger.js";
 import auth from "../middleware/auth.js";
 
@@ -55,6 +55,20 @@ router.post(
   "/user/increment-print",
   auth,
   incrementPrintCount
+);
+
+// Get current user profile
+router.get(
+  "/user/profile",
+  auth,
+  getCurrentUserProfile
+);
+
+// Update current user profile
+router.put(
+  "/user/profile",
+  auth,
+  updateCurrentUserProfile
 );
 
 export default router;

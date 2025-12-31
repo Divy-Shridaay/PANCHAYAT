@@ -131,6 +131,37 @@ const CashMelDetails = () => {
     }
   };
 
+const paymentMethodGujarati = (method) => {
+  if (!method) return "-";
+
+  const value = method.toString().toLowerCase().trim();
+
+  // CASH / ROKAD
+  if (
+    value === "cash" ||
+    value === "rokad" ||
+    value === "rokad-yes" ||
+    value.includes("rokad")
+  ) {
+    return "રોકડ";
+  }
+
+  // BANK
+  if (
+    value === "bank" ||
+    value === "cheque" ||
+    value === "check" ||
+    value === "dd" ||
+    value.includes("bank")
+  ) {
+    return "બેંક";
+  }
+
+  return method; // fallback
+};
+
+
+
   const [rows, setRows] = useState([]);
   const customCategories = { aavak: [], javak: [] };
 
@@ -398,13 +429,17 @@ const CashMelDetails = () => {
                         </Badge>
                       </Td>
                       <Td>{row.category}</Td>
-                      <Td>{row.paymentMethod}</Td>
-                      <Td>{row.ddCheckNum}</Td>
+                  <Td>{paymentMethodGujarati(row.paymentMethod)}</Td>
+
+
+
+                    <Td>{row.ddCheckNum?.trim() ? row.ddCheckNum : "-"}</Td>
+
                       <Td isNumeric>₹{toGujaratiDigits(row.amount)}</Td>
 
                       <Td>
                         <HStack spacing={2}>
-                          <IconButton
+                          {/* <IconButton
                             size="sm"
                             icon={<ViewIcon />}
                             variant="ghost"
@@ -414,7 +449,7 @@ const CashMelDetails = () => {
                               e.stopPropagation();
                               navigate(`/cashmel/view/${row._id}`);
                             }}
-                          />
+                          /> */}
 
                           <IconButton
                             size="sm"

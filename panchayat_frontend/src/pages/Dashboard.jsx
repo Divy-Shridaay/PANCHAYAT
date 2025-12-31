@@ -8,13 +8,6 @@ import {
   Button,
   Flex,
   useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  useDisclosure,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -23,7 +16,6 @@ import {
   FiLogOut,
   FiSettings,
   FiTrendingUp,
-  FiUser,
 } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -44,7 +36,6 @@ export default function Dashboard() {
   });
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [popupType, setPopupType] = useState("module");
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   /* =======================
      FETCH LOGGED IN USER
@@ -163,18 +154,14 @@ export default function Dashboard() {
 
         <Flex gap={4}>
           <Button
-            leftIcon={<FiUser />}
-            colorScheme="blue"
-            variant="ghost"
-            onClick={onOpen}
-          >
-            Profile
-          </Button>
-          <Button
             leftIcon={<FiLogOut />}
             colorScheme="red"
             variant="ghost"
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("username");
+              navigate("/login");
+            }}
           >
             {t("logout")}
           </Button>
@@ -272,71 +259,6 @@ export default function Dashboard() {
         onClose={() => setShowPaymentPopup(false)}
         type={popupType}
       />
-
-      {/* USER PROFILE MODAL */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>User Profile</ModalHeader>
-          <ModalCloseButton />
-         <ModalBody pb={6}>
-  {user ? (
-    <>
-      <Text fontSize="md" mb={2}>
-        <strong>પૂર્ણ નામ:</strong>{" "}
-        {user.name ||
-          `${user.firstName} ${user.middleName || ""} ${user.lastName}`.trim()}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>વપરાશકર્તા નામ:</strong> {user.username}
-      </Text>
-
-    
-
-      <Text fontSize="md" mb={2}>
-        <strong>ઇમેઇલ:</strong> {user.email}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>મોબાઇલ નંબર:</strong> {user.phone}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>લિંગ :</strong> {user.gender}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>જન્મ તારીખ:</strong> {user.dob}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>ગામ:</strong> {user.gam}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>તાલુકો:</strong> {user.taluko}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>જિલ્લો:</strong> {user.jillo}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>પિન કોડ:</strong> {user.pinCode}
-      </Text>
-
-      <Text fontSize="md" mb={2}>
-        <strong>ભૂમિકા:</strong> {user.role}
-      </Text>
-    </>
-  ) : (
-    <Text>વપરાશકર્તાની માહિતી લોડ થઈ રહી છે...</Text>
-  )}
-</ModalBody>
-
-        </ModalContent>
-      </Modal>
     </Box>
   );
 }

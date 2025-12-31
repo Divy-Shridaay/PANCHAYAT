@@ -36,6 +36,7 @@ import ResetPassword from "./pages/ResetPassword";
 // Core
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
+import Settings from "./pages/Settings";
 
 // Pedhinamu
 import PedhinamuHome from "./pages/PedhinamuHome";
@@ -53,39 +54,43 @@ import CashMelForm from "./pages/CashMelForm";
 import CashMelDetails from "./pages/CashMelDetails";
 import CashMelView from "./pages/CashMelView";
 
+// Components
+import PrivateRoute from "./components/PrivateRoute";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Auth Routes */}
+        {/* Auth Routes - Public */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* Core */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminPanel />} />
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
 
         {/* Pedhinamu Flow */}
-        <Route path="/pedhinamu" element={<PedhinamuHome />} />
-        <Route path="/pedhinamu/create" element={<Pedhinamu />} />
-        <Route path="/pedhinamu/edit/:id" element={<Pedhinamu />} />
-        <Route path="/pedhinamu/list" element={<PedhinamuList />} />
-        <Route path="/pedhinamu/view/:id" element={<PedhinamuView />} />
-        <Route path="/pedhinamu/form/:id" element={<FullForm />} />
+        <Route path="/pedhinamu" element={<PrivateRoute><PedhinamuHome /></PrivateRoute>} />
+        <Route path="/pedhinamu/create" element={<PrivateRoute><Pedhinamu /></PrivateRoute>} />
+        <Route path="/pedhinamu/edit/:id" element={<PrivateRoute><Pedhinamu /></PrivateRoute>} />
+        <Route path="/pedhinamu/list" element={<PrivateRoute><PedhinamuList /></PrivateRoute>} />
+        <Route path="/pedhinamu/view/:id" element={<PrivateRoute><PedhinamuView /></PrivateRoute>} />
+        <Route path="/pedhinamu/form/:id" element={<PrivateRoute><FullForm /></PrivateRoute>} />
 
         {/* Records */}
-        <Route path="/records" element={<Records />} />
-        <Route path="/records/view/:id" element={<RecordView />} />
+        <Route path="/records" element={<PrivateRoute><Records /></PrivateRoute>} />
+        <Route path="/records/view/:id" element={<PrivateRoute><RecordView /></PrivateRoute>} />
 
         {/* CashMel */}
-        <Route path="/cashmelform" element={<CashMelForm />} />
-        <Route path="/cashmel/details" element={<CashMelDetails />} />
-        <Route path="/cashmel/details/:id" element={<CashMelDetails />} />
-        <Route path="/cashmel/view/:id" element={<CashMelView />} />
+        <Route path="/cashmelform" element={<PrivateRoute><CashMelForm /></PrivateRoute>} />
+        <Route path="/cashmel/details" element={<PrivateRoute><CashMelDetails /></PrivateRoute>} />
+        <Route path="/cashmel/details/:id" element={<PrivateRoute><CashMelDetails /></PrivateRoute>} />
+        <Route path="/cashmel/view/:id" element={<PrivateRoute><CashMelView /></PrivateRoute>} />
 
       </Routes>
     </BrowserRouter>
