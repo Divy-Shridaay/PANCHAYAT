@@ -82,10 +82,10 @@ export default function FullForm() {
     documents: {
       affidavit: false,
       satbara: false,
-      aadhaarCopy: false,
+      // aadhaarCopy: false,
       govtForm: false,
       deathCertificate: false,
-      panchResolution: false,
+      // panchResolution: false,
       panchWitness: false,
       otherDocument: "",
     },
@@ -900,7 +900,11 @@ useEffect(() => {
       <Heading {...sectionTitle}>{t("deceasedDetails")}</Heading>
       <Box {...boxStyle}>
         {form.deceasedPersons?.length === 0 && (
-          <Text color="gray.600">{t("noDeceasedFound")}</Text>
+          <Text color="gray.600"> 
+          {/* {t("noDeceasedFound")}  */}
+          
+          કુટુંબમાં કોઈ મૃત્યુ પામેલ સભ્ય નથી
+          </Text>
         )}
 
         {form.deceasedPersons?.map((p, i) => (

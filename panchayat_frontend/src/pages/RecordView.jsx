@@ -193,9 +193,10 @@ export default function RecordView() {
                 relationText = `(${node.relation})`;
             }
 
-            if (!node.isDeceased && !node.isRoot) {
-                relationText += `  ઉંમર: ${toGujaratiDigits(node.age || "")}`;
-            }
+        if (!node.isDeceased) {
+    relationText += `  ઉંમર: ${toGujaratiDigits(node.age || "")}`;
+}
+
 
 
             const bg = isDead ? "#ffe3e3" : "#ffffff";
@@ -618,14 +619,15 @@ description: "PDF જનરેટ કરવામાં નિષ્ફળતા
                 >
                     ← {t("back")}
                 </Button>
+<Button
+    colorScheme="green"
+    px={6}
+    onClick={handlePedhinamuPrint}
+    isDisabled={!form} // ✅ ફોર્મ ન હોય તો disable
+>
+    {t("printPedhinamu")}
+</Button>
 
-                <Button
-                    colorScheme="green"
-                    px={6}
-                    onClick={handlePedhinamuPrint}
-                >
-                    {t("printPedhinamu")}
-                </Button>
             </Flex>
 
             <Box
