@@ -63,6 +63,12 @@ const generatePassword = () => {
   return password;
 };
 
+// Email validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Allowed email domains
+const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com', 'icloud.com', 'protonmail.com', 'mail.com', 'yandex.com', 'zoho.com'];
+
 // ---------- Step 1: Send OTP ----------
 export const sendOTP = async (req, res) => {
   try {
@@ -96,9 +102,10 @@ if (!emailRegex.test(email)) {
 }
 
 // 3. Email domain
+const emailDomain = email.split('@')[1];
 if (!allowedDomains.includes(emailDomain)) {
   return res.status(400).json({
-    message: "આ ઇમેઇલ અસ્તિત્વમાં નથી"
+    message: "આ ઇમેઇલ ડોમેન સપોર્ટેડ નથી "
   });
 }
 
@@ -107,7 +114,7 @@ if (!allowedDomains.includes(emailDomain)) {
     const existingUser = await User.findOne({ email, isDeleted: false });
     if (existingUser && existingUser.isVerified) {
       return res.status(400).json({
-        message: "આ ઇમેઇલ પહેલાથી રજીસ્ટર છે (Email already registered)"
+        message: "આ ઇમેઇલ પહેલાથી રજીસ્ટર છે "
       });
     }
 
@@ -206,7 +213,7 @@ panchayat.shridaay.com
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "OTP મોકલવામાં નિષ્ફળ (Failed to send OTP)",
+      message: "ઇમેઇલ મોકલવામાં નિષ્ફળ થયું. કૃપા કરીને યોગ્ય ઇમેઇલ સરનામું દાખલ કરો ",
       error: err.message
     });
   }
@@ -336,7 +343,7 @@ Regards,<br/>
     await sendMail(email, "Panchayat Dashboard - Login Credentials", htmlContent);
 
     return res.json({
-      message: "એકાઉન્ટ સફળતાપૂર્વક બનાવાયું (Account created successfully)",
+      message: "એકાઉન્ટ સફળતાપૂર્વક બનાવાયું ",
       user: {
         _id: user._id,
         name: user.name,
@@ -350,7 +357,7 @@ Regards,<br/>
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "OTP ચકાસવામાં નિષ્ફળ (OTP verification failed)",
+      message: "OTP ચકાસવામાં નિષ્ફળ થયું ",
       error: err.message
     });
   }
@@ -364,7 +371,7 @@ export const getAllUsers = async (req, res) => {
       .sort({ createdAt: -1 });
 
     return res.json({
-      message: "બધા યુઝર્સની યાદી (All users list)",
+      message: "બધા યુઝર્સની યાદી ",
       totalUsers: users.length,
       users
     });
@@ -372,7 +379,7 @@ export const getAllUsers = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "યુઝર્સ લાવવામાં નિષ્ફળ ગયો (Failed to fetch users)",
+      message: "યુઝર્સ લાવવામાં નિષ્ફળ ગયો ",
       error: err.message
     });
   }

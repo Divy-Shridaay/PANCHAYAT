@@ -675,7 +675,7 @@ export default function Pedhinamu() {
 
                     <VStack spacing={4}>
                         <FormControl>
-                            <FormLabel fontWeight="600">{t("name")}</FormLabel>
+                            <FormLabel fontWeight="600">{t("name")} </FormLabel>
                             <Input
                                 size="lg"
                                 bg="gray.100"
@@ -717,12 +717,12 @@ export default function Pedhinamu() {
                                 />
 
                                 {/* OR / અથવા TEXT */}
-                                <Text fontWeight="bold" color="green.700">
+                                {/* <Text fontWeight="bold" color="green.700">
                                     {t("orText")}
-                                </Text>
+                                </Text> */}
 
                                 {/* AGE INPUT */}
-                                <Input
+                                {/* <Input
                                     size="lg"
                                     width="120px"
                                     bg="gray.100"
@@ -738,7 +738,7 @@ export default function Pedhinamu() {
 
                                         setForm({ ...form, mukhyaAge: value });
                                     }}
-                                />
+                                /> */}
 
                             </HStack>
                         </FormControl>
@@ -952,12 +952,12 @@ export default function Pedhinamu() {
                                         />
 
                                         {/* OR TEXT */}
-                                        <Text fontWeight="bold" color="green.700">
+                                        {/* <Text fontWeight="bold" color="green.700">
                                             {t("orText")}
-                                        </Text>
+                                        </Text> */}
 
                                         {/* AGE (Manual Entry) */}
-                                        <Input
+                                        {/* <Input
                                             size="lg"
                                             width="120px"
                                             bg="gray.100"
@@ -973,7 +973,7 @@ export default function Pedhinamu() {
 
                                                 updateHeir(i, "age", value);
                                             }}
-                                        />
+                                        /> */}
 
                                     </HStack>
                                 </FormControl>
@@ -1111,12 +1111,12 @@ export default function Pedhinamu() {
                                                             />
 
                                                             {/* OR TEXT */}
-                                                            <Text fontWeight="bold" color="green.700">
+                                                            {/* <Text fontWeight="bold" color="green.700">
                                                                 {t("orText")}
-                                                            </Text>
+                                                            </Text> */}
 
                                                             {/* SPOUSE AGE */}
-                                                            <Input
+                                                            {/* <Input
                                                                 size="lg"
                                                                 width="120px"
                                                                 bg="gray.100"
@@ -1136,7 +1136,7 @@ export default function Pedhinamu() {
 
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
-                                                            />
+                                                            /> */}
 
                                                         </HStack>
                                                     </FormControl>
@@ -1365,14 +1365,14 @@ export default function Pedhinamu() {
                                                                                 />
 
                                                                                 {/* OR TEXT */}
-                                                                                <Text fontWeight="bold" color="green.700">
+                                                                                {/* <Text fontWeight="bold" color="green.700">
                                                                                     {t("orText")}
-                                                                                </Text>
+                                                                                </Text> */}
 
                                                                                 {/* SPOUSE AGE */}
                                                                                 <FormControl w="150px">
                                                                                     <FormLabel>{t("spouseAge")}</FormLabel>
-                                                                                    <Input
+                                                                                    {/* <Input
                                                                                         size="lg"
                                                                                         bg="gray.100"
                                                                                         value={child.spouse?.age || ""}
@@ -1390,7 +1390,7 @@ export default function Pedhinamu() {
                                                                                             u[i].subFamily.children[ci].spouse.age = value;
                                                                                             setForm({ ...form, heirs: u });
                                                                                         }}
-                                                                                    />
+                                                                                    /> */}
                                                                                 </FormControl>
 
                                                                             </HStack>
@@ -1632,12 +1632,12 @@ export default function Pedhinamu() {
                                                                                                 />
 
                                                                                                 {/* OR TEXT */}
-                                                                                                <Text fontWeight="bold" color="green.700">
+                                                                                                {/* <Text fontWeight="bold" color="green.700">
                                                                                                     {t("orText")}
-                                                                                                </Text>
+                                                                                                </Text> */}
 
                                                                                                 {/* MANUAL AGE INPUT */}
-                                                                                                <Input
+                                                                                                {/* <Input
                                                                                                     size="lg"
                                                                                                     width="120px"
                                                                                                     bg="gray.100"
@@ -1657,7 +1657,7 @@ export default function Pedhinamu() {
 
                                                                                                         setForm({ ...form, heirs: u });
                                                                                                     }}
-                                                                                                />
+                                                                                                /> */}
 
                                                                                             </HStack>
                                                                                         </FormControl>
@@ -1814,12 +1814,12 @@ export default function Pedhinamu() {
                                                                     />
 
                                                                     {/* OR TEXT */}
-                                                                    <Text fontWeight="bold" color="green.700">
+                                                                    {/* <Text fontWeight="bold" color="green.700">
                                                                         {t("orText")}
-                                                                    </Text>
+                                                                    </Text> */}
 
                                                                     {/* CHILD AGE */}
-                                                                    <Input
+                                                                    {/* <Input
                                                                         size="lg"
                                                                         width="120px"
                                                                         bg="gray.100"
@@ -1839,7 +1839,7 @@ export default function Pedhinamu() {
 
                                                                             setForm({ ...form, heirs: u });
                                                                         }}
-                                                                    />
+                                                                    /> */}
                                                                 </HStack>
                                                             </FormControl>
                                                         </HStack>
