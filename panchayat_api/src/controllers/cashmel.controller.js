@@ -98,16 +98,20 @@ const mapVyavhar = (val = "") => {
 
 export const uploadExcel = async (req, res, next) => {
   try {
-    if (!req.file)
-      return res.status(400).json({ success: false, message: "No file uploaded" });
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
 
     const buffer = req.file.buffer;
     const wb = XLSX.read(buffer);
     const ws = wb.Sheets[wb.SheetNames[0]];
-
     const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
     const saved = [];
+    const skipped = [];
     const errors = [];
 
     function parseExcelDate(val) {
@@ -115,40 +119,63 @@ export const uploadExcel = async (req, res, next) => {
 
       const s = String(val).trim();
 
+      // DD/MM/YYYY
       if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
         const [d, m, y] = s.split("/");
         return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
       }
 
+      // Excel serial date
       const num = Number(s);
       if (!isNaN(num)) {
         const dt = new Date((num - 25569) * 86400 * 1000);
         return dt.toISOString().split("T")[0];
       }
 
-      return s;
+      return null;
     }
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
 
       const dateISO = parseExcelDate(r.date);
-      const name = r.name || "";
-      const receiptPaymentNo = r.receiptPaymentNo || "";
+      const name = String(r.name || "").trim();
+      const receiptPaymentNo = String(r.receiptPaymentNo || "").trim();
       const vyavharType = mapVyavhar(r.vyavharType);
-      const category = r.category || "";
+      const category = String(r.category || "").trim();
       const amount = Number(r.amount || 0);
 
-      // Required field validation
+      // ✅ Required validation
       if (!dateISO || !name || !vyavharType || !category || !amount) {
         errors.push({
           row: i + 2,
-          raw: r,
           reason: "Missing required fields",
+          raw: r,
         });
         continue;
       }
 
+      // 🔍 DUPLICATE CHECK
+      const alreadyExists = await CashMel.findOne({
+        panchayatId: req.user.gam,
+        date: dateISO,
+        name,
+        receiptPaymentNo,
+        vyavharType,
+        category,
+        amount,
+      });
+
+      if (alreadyExists) {
+        skipped.push({
+          row: i + 2,
+          reason: "Duplicate entry",
+          raw: r,
+        });
+        continue; // ⛔ skip saving
+      }
+
+      // ✅ Save new entry
       await CashMel.create({
         panchayatId: req.user.gam,
         date: dateISO,
@@ -165,7 +192,9 @@ export const uploadExcel = async (req, res, next) => {
     return res.json({
       success: true,
       savedCount: saved.length,
-      errorRows: errors.length,
+      skippedCount: skipped.length,
+      errorCount: errors.length,
+      skipped,
       errors,
     });
 
@@ -173,6 +202,7 @@ export const uploadExcel = async (req, res, next) => {
     next(err);
   }
 };
+
 
 
 
