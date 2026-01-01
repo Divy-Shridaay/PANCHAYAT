@@ -70,7 +70,7 @@ export default function Register() {
     // Validate form
     if (
       !formData.firstName ||
-      !formData.lastName ||
+      
       !formData.email ||
       !formData.phone ||
       !formData.pinCode ||
@@ -80,7 +80,7 @@ export default function Register() {
     ) {
       toast({
         title: "ત્રુટિ",
-        description: "બધી જરૂરી ફીલ્ડ ભરો",
+        description: "જરૂરી ફીલ્ડ ભરો",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -511,16 +511,29 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   પિન કોડ <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
-                <Input
-                  placeholder="380001"
-                  name="pinCode"
-                  value={formData.pinCode}
-                  onChange={handleInputChange}
-                  bg="#f8fafc"
-                  border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
-                  fontSize="sm"
-                />
+               <Input
+  type="text"
+  placeholder="380001"
+  name="pinCode"
+  value={formData.pinCode}
+  maxLength={6}
+  inputMode="numeric"
+  pattern="[0-9]*"
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, ""); // sirf digits
+    if (value.length <= 6) {
+      setFormData((prev) => ({
+        ...prev,
+        pinCode: value,
+      }));
+    }
+  }}
+  bg="#f8fafc"
+  border="1px solid #cbd5e1"
+  _focus={{ borderColor: "#2563eb", bg: "white" }}
+  fontSize="sm"
+/>
+
               </FormControl>
 
             </HStack>

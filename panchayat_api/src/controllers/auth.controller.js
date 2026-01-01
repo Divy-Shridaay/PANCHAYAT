@@ -17,7 +17,7 @@ export const login = async (req, res) => {
       );
 
       return res.json({
-        message: "Admin login successful",
+        message: "એડમિન લૉગિન સફળ રહ્યું",
         token,
         user: {
           _id: "admin_static_id",
@@ -31,11 +31,11 @@ export const login = async (req, res) => {
     // 2) NORMAL USER LOGIN
     const user = await User.findOne({ username, isDeleted: false });
     if (!user)
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "વપરાશકર્તા મળ્યો નથી" });
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok)
-      return res.status(400).json({ message: "Wrong password" });
+      return res.status(400).json({ message: "ખોટો પાસવર્ડ " });
 
  
 
@@ -49,14 +49,15 @@ export const login = async (req, res) => {
     delete userData.password;
 
     return res.json({
-      message: "Login successful",
+     message: "લૉગિન સફળ રહ્યું",
+
       token,
       user: userData,
     });
 
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "Login failed", error: err.message });
+    return res.status(500).json({ message: "લૉગિન નિષ્ફળ રહ્યું", error: err.message });
   }
 };
 
@@ -154,12 +155,13 @@ panchayat.shridaay.com
 });
 
 
-    res.json({ message: "Password reset email sent successfully" });
+    res.json({ message: "પાસવર્ડ રીસેટ ઇમેઇલ સફળતાપૂર્વક મોકલવામાં આવ્યો છે" });
 
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err);
     res.status(500).json({
-      message: "Failed to send reset email",
+     message: "પાસવર્ડ રીસેટ ઇમેઇલ મોકલવામાં નિષ્ફળતા",
+
       error: err.message,
     });
   }
@@ -195,10 +197,10 @@ export const resetPassword = async (req, res) => {
     user.resetTokenExpiry = undefined;
     await user.save();
 
-    res.json({ message: "Password reset successfully" });
+    res.json({ message: "પાસવર્ડ સફળતાપૂર્વક બદલાયો છે" });
 
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "Failed to reset password", error: err.message });
+    return res.status(500).json({ message: "પાસવર્ડ બદલી શકાયો નથી", error: err.message });
   }
 };

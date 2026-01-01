@@ -322,7 +322,7 @@ const paymentMethodGujarati = (method) => {
       <Box bg="#F8FAF9" minH="100vh" p={10}>
         <Flex justify="space-between" align="center" mb={10}>
           <Heading size="lg" color="#1E4D2B" fontWeight="700">
-            💰 {t("cashmelDetails")}
+           {t("cashmelDetails")}
           </Heading>
 
           <Button

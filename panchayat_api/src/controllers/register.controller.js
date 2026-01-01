@@ -81,11 +81,27 @@ export const sendOTP = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!firstName || !lastName || !gender || !email || !phone || !pinCode || !taluko || !gam || !jillo) {
-      return res.status(400).json({
-        message: "બધા જરૂરી ફીલ્ડ ભરો (All required fields needed)"
-      });
-    }
+ // 1. Required fields
+if (!firstName || !email || !phone || !pinCode || !taluko || !gam || !jillo) {
+  return res.status(400).json({
+    message: "જરૂરી ફીલ્ડ ભરો"
+  });
+}
+
+// 2. Email format
+if (!emailRegex.test(email)) {
+  return res.status(400).json({
+    message: "યોગ્ય ઇમેઇલ સરનામું દાખલ કરો"
+  });
+}
+
+// 3. Email domain
+if (!allowedDomains.includes(emailDomain)) {
+  return res.status(400).json({
+    message: "આ ઇમેઇલ અસ્તિત્વમાં નથી"
+  });
+}
+
 
     // Check if email already exists
     const existingUser = await User.findOne({ email, isDeleted: false });
@@ -212,7 +228,7 @@ export const verifyOTP = async (req, res) => {
     const user = await User.findOne({ email, isDeleted: false });
     if (!user) {
       return res.status(404).json({
-        message: "યુઝર મળ્યો નથી (User not found)"
+        message: "વપરાશકર્તા મળ્યો નથી "
       });
     }
 
@@ -372,19 +388,19 @@ export const getUserDetail = async (req, res) => {
     
     if (!user || user.isDeleted) {
       return res.status(404).json({
-        message: "ઉપયોગકર્તા મળ્યો નથી (User not found)"
+        message: "ઉપયોગકર્તા મળ્યો નથી "
       });
     }
 
     return res.json({
-      message: "ઉપયોગકર્તાની વિગત (User details)",
+      message: "ઉપયોગકર્તાની વિગત ",
       user
     });
 
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "ઉપયોગકર્તાની માહિતી મેળવી શકાઈ નહીં (Failed to fetch user)",
+      message: "ઉપયોગકર્તાની માહિતી મેળવી શકાઈ નહીં ",
       error: err.message
     });
   }
@@ -403,19 +419,19 @@ export const activateUser = async (req, res) => {
     
     if (!user) {
       return res.status(404).json({
-        message: "ઉપયોગકર્તા મળ્યો નથી (User not found)"
+        message: "ઉપયોગકર્તા મળ્યો નથી "
       });
     }
 
     return res.json({
-      message: "ઉપયોગકર્તા સક્રિય કર્યો (User activated)",
+      message: "ઉપયોગકર્તા સક્રિય કર્યો ",
       user
     });
 
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "ઉપયોગકર્તાને સક્રિય કરવામાં નિષ્ફળ (Failed to activate user)",
+      message: "ઉપયોગકર્તાને સક્રિય કરવામાં નિષ્ફળ ",
       error: err.message
     });
   }
@@ -433,19 +449,19 @@ export const deactivateUser = async (req, res) => {
     
     if (!user) {
       return res.status(404).json({
-        message: "ઉપયોગકર્તા મળ્યો નથી (User not found)"
+        message: "ઉપયોગકર્તા મળ્યો નથી "
       });
     }
 
     return res.json({
-      message: "ઉપયોગકર્તા નિષ્ક્રિય કર્યો (User deactivated)",
+      message: "ઉપયોગકર્તા નિષ્ક્રિય કર્યો ",
       user
     });
 
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "ઉપયોગકર્તાને નિષ્ક્રિય કરવામાં નિષ્ફળ (Failed to deactivate user)",
+      message: "ઉપયોગકર્તાને નિષ્ક્રિય કરવામાં નિષ્ફળ ",
       error: err.message
     });
   }
@@ -460,7 +476,7 @@ export const getUserStatus = async (req, res) => {
     
     if (!user || user.isDeleted) {
       return res.status(404).json({
-        message: "ઉપયોગકર્તા મળ્યો નથી (User not found)"
+        message: "ઉપયોગકર્તા મળ્યો નથી "
       });
     }
 
@@ -488,7 +504,7 @@ export const getUserStatus = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "સ્થિતિ મેળવવામાં નિષ્ફળ (Failed to get status)",
+      message: "સ્થિતિ મેળવવામાં નિષ્ફળ ",
       error: err.message
     });
   }
@@ -502,7 +518,7 @@ export const incrementPrintCount = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "ઉપયોગકર્તા મળ્યો નથી " });
     }
 
     // ✅ CHANGE: Check isPaid instead of isActive
@@ -571,19 +587,19 @@ export const getCurrentUserProfile = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "વપરાશકર્તા મળ્યો નહીં (User not found)"
+        message: "વપરાશકર્તા મળ્યો નહીં "
       });
     }
 
     return res.json({
-      message: "પ્રોફાઇલ મેળવી (Profile retrieved)",
+      message: "પ્રોફાઇલ મેળવી ",
       user
     });
 
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "પ્રોફાઇલ મેળવવામાં નિષ્ફળ (Failed to get profile)",
+      message: "પ્રોફાઇલ મેળવવામાં નિષ્ફળ ",
       error: err.message
     });
   }
@@ -622,19 +638,19 @@ export const updateCurrentUserProfile = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "વપરાશકર્તા મળ્યો નહીં (User not found)"
+        message: "વપરાશકર્તા મળ્યો નહીં "
       });
     }
 
     return res.json({
-      message: "પ્રોફાઇલ અપડેટ થઈ (Profile updated)",
+      message: "પ્રોફાઇલ અપડેટ થઈ ",
       user
     });
 
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: "પ્રોફાઇલ અપડેટ કરવામાં નિષ્ફળ (Failed to update profile)",
+      message: "પ્રોફાઇલ અપડેટ કરવામાં નિષ્ફળ",
       error: err.message
     });
   }
