@@ -599,8 +599,9 @@ const handlePedhinamuPrint = async () => {
   } catch (err) {
     console.error("❌ PRINT ERROR:", err);
     toast({
-      title: "Print Error",
-      description: "Failed to generate PDF. Please try again.",
+     title: "પ્રિન્ટ ભૂલ",
+description: "PDF જનરેટ કરવામાં નિષ્ફળતા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+
       status: "error",
       duration: 3000,
       position: "top",

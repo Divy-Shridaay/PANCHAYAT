@@ -45,7 +45,8 @@ export default function ResetPassword() {
   const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
       toast({
-        title: "Please fill all fields",
+        title: "મહેરબાની કરીને બધા ફીલ્ડ ભરો",
+
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -56,7 +57,8 @@ export default function ResetPassword() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwords do not match",
+       title: "પાસવર્ડ મેચ થતો નથી",
+
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -67,7 +69,8 @@ export default function ResetPassword() {
 
     if (newPassword.length < 6) {
       toast({
-        title: "Password must be at least 6 characters",
+        title: "પાસવર્ડ ઓછામાં ઓછા 6 અક્ષરોનો હોવો જરૂરી છે",
+
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -86,7 +89,7 @@ export default function ResetPassword() {
       if (response.ok) {
         setMessage("Password reset successfully. You can now login with your new password.");
         toast({
-          title: "Password reset successfully",
+          title: "પાસવર્ડ સફળતાપૂર્વક બદલાયો છે",
           status: "success",
           duration: 3000,
           isClosable: true,
@@ -97,9 +100,9 @@ export default function ResetPassword() {
         }, 2000);
       } else {
         setIsValidToken(false);
-        setMessage(data.message || "Failed to reset password");
+        setMessage(data.message || "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળતા");
         toast({
-          title: data.message || "Failed to reset password",
+          title: data.message || "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળતા",
           status: "error",
           duration: 3000,
           isClosable: true,

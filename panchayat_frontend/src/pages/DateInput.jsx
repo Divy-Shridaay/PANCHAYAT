@@ -8,27 +8,21 @@ import {
   Icon,
   FormControl,
   FormLabel,
-  Text,
 } from "@chakra-ui/react";
 import { AiOutlineCalendar } from "react-icons/ai";
 
-// ✅ Convert Gujarati digits → English digits
+/* ================= Gujarati → English Digits ================= */
 const gujaratiToEnglishDigits = (str) => {
   if (!str) return str;
-  
+
   const guj = "૦૧૨૩૪૫૬૭૮૯";
   const eng = "0123456789";
-  
+
   let result = str;
-  
   for (let i = 0; i < guj.length; i++) {
     result = result.split(guj[i]).join(eng[i]);
   }
-  
-  result = result.replace(/[\u0AE6-\u0AEF]/g, (match) => {
-    return String(match.charCodeAt(0) - 0x0AE6);
-  });
-  
+
   return result;
 };
 
@@ -45,11 +39,13 @@ const DateInput = ({
 }) => {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
+  /* ================= Get Display Value ================= */
   const getValue = () => {
     if (formValue) return formValue.dateDisplay || "";
     return value || "";
   };
 
+  /* ================= Update Value ================= */
   const updateValue = (displayDate, isoDate) => {
     if (formValue && setFormValue) {
       setFormValue((prev) => ({
@@ -64,12 +60,13 @@ const DateInput = ({
     }
   };
 
+  /* ================= Selected Date for Picker ================= */
   const selectedDate = (() => {
     const val = formValue ? formValue.date : value;
     return val && !isNaN(new Date(val).getTime()) ? new Date(val) : null;
   })();
 
-  // ✅ Smart Input Handler
+  /* ================= Manual Input Handler ================= */
   const handleManualInput = (e) => {
     const raw = e.target.value || "";
 
@@ -78,14 +75,25 @@ const DateInput = ({
       return;
     }
 
-    // ✅ Step 1: Convert Gujarati → English
+    // Gujarati → English
     const converted = gujaratiToEnglishDigits(raw);
-    
-    // ✅ Step 2: Format using parent function
+
+    // DD/MM/YYYY formatting
     const display = formatDisplayDate(converted);
-    
-    // ✅ Step 3: Convert to ISO
+
+    // ISO conversion
     const iso = convertToISO(display);
+
+    // ❌ FUTURE DATE BLOCK
+    if (iso) {
+      const enteredDate = new Date(iso);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (enteredDate > today) {
+        return; // future date reject
+      }
+    }
 
     updateValue(display, iso);
   };
@@ -121,7 +129,7 @@ const DateInput = ({
         </InputRightElement>
       </InputGroup>
 
-      {/* ✅ DatePicker Popup */}
+      {/* ================= DatePicker ================= */}
       {isPickerOpen && (
         <DatePicker
           selected={selectedDate}
@@ -141,6 +149,7 @@ const DateInput = ({
           onClickOutside={() => setIsPickerOpen(false)}
           inline
           dateFormat="dd/MM/yyyy"
+          maxDate={new Date()}   // ✅ FUTURE DATE DISABLED
         />
       )}
     </FormControl>

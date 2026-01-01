@@ -272,7 +272,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  નામ (First Name)  <Text as="span" color="red.500">*</Text>
+                  નામ (First Name)  
                 </FormLabel>
 
                 <Input
@@ -308,7 +308,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             {/* Row 2: Last Name */}
             <FormControl>
               <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                અંતિમ નામ (Last Name) <Text as="span" color="red.500">*</Text>
+                અંતિમ નામ (Last Name) 
               </FormLabel>
 
               <Input
@@ -327,7 +327,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  લિંગ (Gender) <Text as="span" color="red.500">*</Text>
+                  જાતિ  (Gender) 
                 </FormLabel>
 
                 <Select

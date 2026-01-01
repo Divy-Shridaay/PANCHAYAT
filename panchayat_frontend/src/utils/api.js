@@ -26,7 +26,7 @@ export const apiFetch = async (url, options = {}, navigate, toast) => {
     // Handle trial expiration
     if (response.status === 403 && data.trialExpired) {
       toast({
-        title: "Trial Expired",
+        title: "ટ્રાયલ સમયસમાપ્તિ થઈ ગઈ છે",
         description: data.message,
         status: "warning",
         duration: 5000,

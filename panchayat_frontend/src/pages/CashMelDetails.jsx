@@ -459,7 +459,7 @@ const paymentMethodGujarati = (method) => {
                             rounded="full"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/cashmel/details/${row._id}`);
+                              navigate(`/cashmelform/${row._id}`);
                             }}
                           />
 

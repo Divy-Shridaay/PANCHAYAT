@@ -112,7 +112,17 @@ const fileInputRef = useRef(null);
 
 
     const handleChange = (key, value) => {
-        setForm((prev) => ({ ...prev, [key]: value }));
+        setForm((prev) => {
+            const updated = { ...prev, [key]: value };
+            
+            // Clear bank and ddCheckNum when payment method is not bank
+            if (key === "paymentMethod" && value !== "bank") {
+                updated.bank = "";
+                updated.ddCheckNum = "";
+            }
+            
+            return updated;
+        });
     };
 
     const fetchCategories = useCallback(async () => {
@@ -157,6 +167,53 @@ const fileInputRef = useRef(null);
         fetchBanks();
     }, [fetchCategories, fetchBanks]);
 
+    // Fetch data for editing if id is present
+    useEffect(() => {
+        if (id) {
+            setLoading(true);
+            const token = localStorage.getItem("token");
+            fetch(`${API_BASE}/cashmel/${id}`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            })
+                .then((res) => {
+                    if (!res.ok) throw new Error("Failed to fetch");
+                    return res.json();
+                })
+                .then((data) => {
+                    const entry = data.data;
+                    const dateParts = entry.date ? entry.date.split("-") : [];
+                    const displayDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : "";
+                    setForm({
+                        date: entry.date || "",
+                        dateDisplay: displayDate,
+                        name: entry.name || "",
+                        receiptPaymentNo: entry.receiptPaymentNo || "",
+                        vyavharType: entry.vyavharType || "",
+                        category: entry.category || "",
+                        amount: entry.amount || "",
+                        paymentMethod: entry.paymentMethod || "",
+                        bank: entry.bank || "",
+                        ddCheckNum: entry.ddCheckNum || "",
+                        remarks: entry.remarks || "",
+                        excelFile: null,
+                        excelData: [],
+                    });
+                })
+                .catch((err) => {
+                    console.error("Failed to load entry for editing:", err);
+                    toast({
+                        title: "Failed to load entry for editing",
+                        status: "error",
+                        duration: 3000,
+                        position: "top",
+                    });
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [id, API_BASE, toast]);
+
     const createCategoryApi = async (name, type) => {
         try {
             const token = localStorage.getItem("token");
@@ -173,7 +230,7 @@ const fileInputRef = useRef(null);
                 throw new Error(txt || 'Create failed');
             }
             await fetchCategories();
-            toast({ title: 'કેટેગરી સંગ્રહીત', status: 'success', duration: 2000 });
+            toast({ title: 'કેટેગરી સફળતાપૂર્વક ઉમેરાઈ છે', status: 'success', duration: 2000 });
             return true;
         } catch (err) {
             console.error(err);
@@ -397,7 +454,7 @@ const cancelExcelUpload = () => {
             const url = `${API_BASE}/cashmel${id ? '/' + id : ''}`;
             const token = localStorage.getItem("token");
             const res = await fetch(url, { 
-                method: id ? "PUT" : "POST", 
+                method: "POST", 
                 body: fd,
                 headers: {
                     ...(token && { Authorization: `Bearer ${token}` }),
@@ -411,11 +468,15 @@ const cancelExcelUpload = () => {
 
             toast({ title: "સફળતાપૂર્વક સેવ થયું!", status: "success", duration: 3000 });
 
-            // Reset form
-            setForm({
-                date: "", dateDisplay: "", name: "", receiptPaymentNo: "",
-                vyavharType: "", category: "", amount: "", paymentMethod: "", bank: "", ddCheckNum: "", remarks: "", excelFile: null, excelData: []
-            });
+            // Reset form only for new entries, navigate back for updates
+            if (id) {
+                navigate("/cashmel/details");
+            } else {
+                setForm({
+                    date: "", dateDisplay: "", name: "", receiptPaymentNo: "",
+                    vyavharType: "", category: "", amount: "", paymentMethod: "", bank: "", ddCheckNum: "", remarks: "", excelFile: null, excelData: []
+                });
+            }
 
         } catch (err) {
             console.error(err);
@@ -434,7 +495,7 @@ const cancelExcelUpload = () => {
             leftIcon={<FiArrowLeft />}
             colorScheme="green"
             variant="outline"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(id ? "/cashmel/details" : "/dashboard")}
         >
             પાછા જાવ
         </Button>
@@ -447,7 +508,7 @@ const cancelExcelUpload = () => {
         color="#1E4D2B"
         fontWeight="700"
     >
-        {t("cashMelForm")}
+        {id ? t("updateCashmel") : t("cashMelForm")}
     </Heading>
 
     {/* 👉 RIGHT */}

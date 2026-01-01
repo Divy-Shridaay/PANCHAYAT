@@ -231,7 +231,7 @@ export default function Settings() {
               />
             </FormControl>
 
-            <FormControl>
+            {/* <FormControl>
               <FormLabel>વપરાશકર્તા નામ</FormLabel>
               <Input
                 value={formData.username || ""}
@@ -239,7 +239,7 @@ export default function Settings() {
                 isReadOnly={!editing}
                 bg={editing ? "white" : "gray.50"}
               />
-            </FormControl>
+            </FormControl> */}
 
             <FormControl>
               <FormLabel>ઇમેઇલ</FormLabel>
@@ -267,7 +267,7 @@ export default function Settings() {
 
             </FormControl>
 
-            <FormControl>
+            {/* <FormControl>
               <FormLabel>લિંગ</FormLabel>
               <Select
                 value={formData.gender || ""}
@@ -280,7 +280,7 @@ export default function Settings() {
                 <option value="સ્ત્રી">સ્ત્રી</option>
                 <option value="અન્ય">અન્ય</option>
               </Select>
-            </FormControl>
+            </FormControl> */}
 
             <FormControl>
               <FormLabel>જન્મ તારીખ</FormLabel>

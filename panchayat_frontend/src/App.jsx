@@ -88,6 +88,7 @@ export default function App() {
 
         {/* CashMel */}
         <Route path="/cashmelform" element={<PrivateRoute><CashMelForm /></PrivateRoute>} />
+        <Route path="/cashmelform/:id" element={<PrivateRoute><CashMelForm /></PrivateRoute>} />
         <Route path="/cashmel/details" element={<PrivateRoute><CashMelDetails /></PrivateRoute>} />
         <Route path="/cashmel/details/:id" element={<PrivateRoute><CashMelDetails /></PrivateRoute>} />
         <Route path="/cashmel/view/:id" element={<PrivateRoute><CashMelView /></PrivateRoute>} />

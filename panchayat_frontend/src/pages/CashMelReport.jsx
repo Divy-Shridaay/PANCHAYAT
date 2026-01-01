@@ -189,7 +189,16 @@ const handlePrintReport = async () => {
             });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
-            const hasValidRecords = hasRecordsInRange(allRecords, fromDate, toDate);
+            const typeRecords = allRecords.filter(
+  r => r.vyavharType === report.type
+);
+
+const hasValidRecords = hasRecordsInRange(
+  typeRecords,
+  fromDate,
+  toDate
+);
+
 
 if (!hasValidRecords) {
     toast({
@@ -273,7 +282,16 @@ if (!hasValidRecords) {
             });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
-            const hasValidRecords = hasRecordsInRange(allRecords, fromDate, toDate);
+           const filteredRecords =
+  report.type === "aavak" || report.type === "javak"
+    ? allRecords.filter(r => r.vyavharType === report.type)
+    : allRecords;
+
+const hasValidRecords = hasRecordsInRange(
+  filteredRecords,
+  fromDate,
+  toDate
+);
 
 if (!hasValidRecords) {
     toast({
@@ -597,7 +615,17 @@ if (!hasValidRecords) {
         const resJson = await recordsRes.json();
         const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
 
-        const hasValidRecords = hasRecordsInRange(allRecords, fromDate, toDate);
+       const filteredRecords =
+  report.type === "aavak" || report.type === "javak"
+    ? allRecords.filter(r => r.vyavharType === report.type)
+    : allRecords;
+
+const hasValidRecords = hasRecordsInRange(
+  filteredRecords,
+  fromDate,
+  toDate
+);
+
 
 if (!hasValidRecords) {
     toast({
