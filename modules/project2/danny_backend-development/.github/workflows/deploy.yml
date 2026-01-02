@@ -1,0 +1,22 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_IP_ADDRESS }}
+          username: root
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          script: |
+            cd /root/application/dev/danny_backend
+            git pull
+            npm install
+            pm2 restart 1

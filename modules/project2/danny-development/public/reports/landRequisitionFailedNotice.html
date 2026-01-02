@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+  <meta charset="UTF-8">
+  <title>જમીન મહેસૂલ ન આપનારને નોટિસ</title>
+  <style>
+    body {
+        font-family: "Noto Sans Gujarati", "Arial Unicode MS", "Noto Sans", sans-serif;
+      margin: 10px;
+      line-height: 1.8;
+      font-size: 18px;
+    }
+
+    .center {
+      text-align: center;
+      font-weight: bold;
+      font-size: 22px;
+    }
+
+    .right {
+      display: flex;
+      justify-content: end;
+    }
+
+    .section {
+      margin-top: 10px;
+      text-align: justify;
+  text-justify: inter-word;
+      
+    }
+
+    .underline {
+      display: inline-block;
+      border-bottom: 1px dotted black;
+      min-width: 100px;
+      height: 1em;
+      vertical-align: bottom;
+    }
+
+    .signature {
+      margin-top: 50px;
+      display: flex;
+      justify-content: end;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="right">
+    નં./તા.પં./જ.મ./ &nbsp;&nbsp; /20<br>
+    તાલુકા પંચાયત કચેરી, {{ taluka }} <br>
+    તા. {{ date }}
+  </div>
+
+  <div class="center section">
+    જમીન મહેસૂલ ન આપનારને નોટિસ<br>
+    <div style="font-size: 16px;">(લેન્ડ રેવન્યુ કોડની કલમ ૧૪૮ મુજબની નોટિસ)</div>
+  </div>
+
+  <div class="section">
+    {{ village }} ના રહેવાસી
+    {{ name }} </div>
+
+  <div class="section">
+    જયભારત સહ ઉપરોક્ત વિષયમાં જણાવવાનું કે, મુ. <strong>{{ village }}</strong> ખાતે આપના કબજા હેઠળની……………આરે જમીનમાં
+    પરચુરણ વસુલાત / મહેસુલ બાકી રૂ|. <strong>{{ total }}</strong> અંકે રૂ|. <strong>{{ totalWord }}</strong> પુરા
+    આજદિન
+    સુધીમાં ભરપાઈ કરેલ નથી, આ અંગે તલાટી કમ મંત્રી દ્વારા આપને વિગતવાર માંગણું પાઠવી મહેસુલ બાકી વસુલાત
+    ભરપાઈ કરવા જાણ કરવામાં આવેલ છે. તેમ છતાં તમારા દ્વારા મહેસુલ ભરપાઈ ન થતા સંદર્ભ ૧ થી બોમ્બે લેન્ડ રેવન્યુ
+    એક્ટ-૧૮૭૯ ની કલમ ૧૫૨ હેઠળ આપને નોટીસ આપવામાં આવેલ છે. તેની પણ આપે અવગણના કરી ઈરાદાપૂર્વક
+    મહેસુલ ન ભરવાના વલણને વળગી રહી તમે જમીન મહેસુલ કાયદા હેઠળ મહેસુલ ભરવાની તમારી કાયદેસર કલમ
+    ૧૪૮ મુજબ આપનું કૃત્ય ચોથાઈ દંડને પાત્ર કૃત્ય બનતું હોય, રૂ. <strong>{{ total }}</strong> નો ચોથાઈ દંડ રૂ.
+    <strong>{{ quarter }}</strong> આપની પાસેથી શા માટે વસુલ ન કરવા અને પરચુરણ વસુલાત બાકી રકમ
+     <strong>{{ quarter }}</strong> અંકે રૂ. <strong>{{ quarterWord }}</strong> પુરા મહેસુલ બાકી તરીકે મહેસુલ કાયદા મુજબ
+    કાયદેસરની કાર્યવાહી કરી શા માટે વસુલ ન કરવા તે અંગે આપ કોઈ રજૂઆત કરવા ઇચ્છતા હોય તો તા
+    {{ date }} ના રોજ {{ time }} કલાકે તાલુકા પંચાયત કચેરી, <strong>{{ village }}</strong> ખાતે આપને જાતે હાજર રહી
+    રજૂઆત કરવા આપને તક આપવામાં આવે છે.
+  </div>
+
+  <div class="section">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; જણાવેલ સ્થળે સમય મુજબ રજૂઆત કરવામાં નહિ આવે તો આપ આ અંગે કોઈ રજૂઆત કરવા માંગતા નથી.
+    એમ માની ગુણદોષ મુજબ કાયદેસર નિર્ણય લેવામાં આવશે જેની નોધ લેશો.
+  </div>
+
+  <div class="signature">
+    તાલુકા વિકાસ અધિકારી<br>
+    તાલુકા પંચાયત {{ taluka }}<br>
+  </div>
+
+  <div class="section">
+    <strong>નકલ રવાના :-</strong><br>
+    ૧.&nbsp; તલાટી કમ મંત્રી, {{ village }} ગ્રા.પં. તા. {{ taluka }} જી. {{ district }} તરફ બજવણી પરત
+    સહીત
+    ત્રણ નકલમાં બાકીદાર બજવણી પ્રત પર સહી લઈ બજવણી અર્થે તથા તા. {{ date }} ના
+    સુનાવણી સબબ હાજર રહેવા સારું.
+
+  </div>
+
+</body>
+
+</html>

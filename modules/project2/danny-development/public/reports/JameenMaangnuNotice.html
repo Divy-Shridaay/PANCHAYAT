@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <title>જમીન મહેસૂલ ન આપનારને નોટીસ</title>
+    <style>
+        body {
+              font-family: "Noto Sans Gujarati", "Arial Unicode MS", "Noto Sans", sans-serif;
+            margin: 50px;
+            font-size: 18px;
+            line-height: 1.8;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+            font-weight: bold;
+            font-size: 22px;
+            margin: 30px 0 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            text-align: justify;
+  text-justify: inter-word;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            text-align: center;
+            padding: 8px;
+        }
+
+        .signature {
+            margin-top: 50px;
+            text-align: right;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="" style="display: flex; justify-content: end;">
+        <div >
+            જા.નં.તા.પં./આરઈવી/વશી/<br>
+            તાલુકા પંચાયત કચેરી, {{ taluka }}<br>
+            તા. {{ date }}
+        </div>
+    </div>
+
+    <div class="center">
+        જમીન મહેસુલ ન આપનારને નોટીસ<br>
+        <span style="font-size: 16px; font-weight: normal;">
+            (લેન્ડ રેવન્યુ કોડની કલમ ૧૫૨ મુજબની નોટીસ)
+        </span>
+    </div>
+
+    <div class="section">
+        શ્રી <strong>{{ name }}</strong> જોગ તમને આ ઉપરથી નોટીસ આપવામાં આવે છે કે,
+        તાલુકો <strong>{{ taluka }}</strong> માં મોજે <strong>{{ village }}</strong> ગામમાં જે જમીન તમારા કબજામાં છે.તેની જમીન મહેસુલ
+        હપ્તાની (અથવા બીજી બાબતની જે પ્રમાણે હોય તેમ) રકમ રૂ|. <strong>{{ total }}</strong> જે વિષેની સંપૂર્ણ હકીકત
+        તમને તલાટી પાસેથી મળી શકશે, તમારી લહેણી થયેલી રકમ ભરવામાં આવી નથી તો સદર હું રકમ આ
+        નોટીસ ફીના રૂ |. ૧.૦૦ આ નોટીસ આપ્યાની તારીખની દશ દિવસની અંદર તમો ન ભરો તો સદર
+        હું જમીન બાબતનું તમામ લહેણું તમારા ઉપર છે તો તેમજ જમીન મહેસુલના કાયદાની કલમ ૧૪૮ મુજબ
+        લહેણી રકમના ચોથા ભાગથી વધુ નહિ રકમના વધારાના દંડ તરીકે બંને વસુલ કરવા સારૂ તમારા ઉપર
+        કાયદા પ્રમાણે ફરજીયાત કામ ચલાવવામાં આવશે.
+    </div>
+
+    <div class="center">લેણાની વિગત</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ખાતા નંબર</th>
+                <th>પ્રકાર</th>
+                <th>પાછલી બાકી</th>
+                <th>ચાલુ</th>
+                <th>ફરતી</th>
+                <th>કુલ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="5">{{ accountNo }}</td>
+                <td>જમીન મહેસુલ</td>
+                <td>{{ landLeft }}</td>
+                <td>{{ landPending }}</td>
+                <td>{{ landRotating }}</td>
+                <td>{{ landTotal }}</td>
+            </tr>
+            <tr>
+                <td>લોકલ ફંડ</td>
+                <td>{{ localLeft }}</td>
+                <td>{{ localPending }}</td>
+                <td>{{ localRotating }}</td>
+                <td>{{ localTotal }}</td>
+            </tr>
+            <tr>
+                <td>શિક્ષણ ઉપકર</td>
+                <td>{{ educationLeft }}</td>
+                <td>{{ educationPending }}</td>
+                <td>{{ educationRotating }}</td>
+                <td>{{ educationTotal }}</td>
+            </tr>
+            <tr>
+                <td>નોટીસ ફી</td>
+                <td>૦.૦૦</td>
+                <td>{{ noticeTotal }}</td>
+                <td>૦.૦૦</td>
+                <td>{{ noticeTotal }}</td>
+            </tr>
+            <tr>
+                <td><strong>કુલ</strong></td>
+                <td>{{ totalLeft }}</td>
+                <td>{{ totalPending }}</td>
+                <td>{{ totalRotating }}</td>
+                <td>{{ total }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <div class="footer">
+        <div class="left">
+            તા:- {{ date }}<br>
+        </div>
+        <div class="">
+            તાલુકા વિકાસ અધિકારી<br>
+            તા. પં. {{ taluka }}<br>
+        </div>
+    </div>
+
+</body>
+
+</html>

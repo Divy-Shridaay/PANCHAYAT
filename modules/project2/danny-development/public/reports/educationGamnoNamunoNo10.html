@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <title> શિક્ષણ ઉપકર - ગામનો નમૂનો નંબર ૧૦</title>
+    <style>
+        body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+            font-size: 16px;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            border: 1px solid #000;
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .sub-title {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .no-border {
+            border: none !important;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .section {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .page-break {
+            page-break-before: always;
+            /* For older browsers */
+            break-before: page;
+            /* Modern standard */
+        }
+
+        .no-border {
+            border: none !important;
+        }
+
+        .no-right-border {
+            border-right: none !important;
+        }
+
+        .no-left-border {
+            border-left: none !important;
+        }
+
+        .no-top-border {
+            border-top: none !important;
+        }
+
+        .no-bottom-border {
+            border-bottom: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+
+        <table>
+            <tr>
+                <td colspan="8" class="title no-bottom-border">
+                    શિક્ષણ ઉપકર
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" class="center no-top-border no-bottom-border">
+                    ૦૦૪૫ - ૦૦ - ૧૦૧ - ૦૧
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" class="center no-top-border no-bottom-border">
+                    ગામનો નમુનો નબર ૧૦
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" class="center no-bottom-border no-top-border">
+                    ( ગામમાં મળેલ શિક્ષણ ઉપકાર માટેના ચલણનો નમુનો )
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" class="no-bottom-border no-top-border">
+                    ગામ {{village}} તાલુકો {{taluka}}
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8" rowspan="2">
+                    ચલણ નં. {{challanNo}} ગામનો નમુનો નં.૯ (શિક્ષણ ઉપકર) માની પહોચનો નં. {{ from }} સુધી
+                </td>
+            </tr>
+            <tr></tr>
+            <tr>
+                <td colspan="1">
+                    બાબત
+                </td>
+                <td colspan="1">
+
+                </td>
+                <td colspan="1">
+                    કુલ માંગણું
+                </td>
+                <td colspan="2">
+
+                </td>
+                <td colspan="4" class="no-bottom-border">
+                    રકમ મોકલ્યાની વિગતો
+                </td>
+
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td>
+                    પા.બા.
+                </td>
+                <td>
+                    કાયમી
+                </td>
+                <td>
+                    ફરતી
+                </td>
+                <td>
+                    કુલ
+                </td>
+                <td class="no-bottom-border no-top-border" colspan="3">
+                    આગળની વસુલાત નોટો {{previousTotal}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                    શિક્ષણ ઉપકરનું માંગણું
+                </td>
+                <td>
+                    {{left}}
+                </td>
+                <td>
+                    {{kayam}}
+                </td>
+                <td>
+                    {{rotating}}
+                </td>
+                <td>
+                    {{total}}
+                </td>
+                <td class="no-bottom-border no-top-border" colspan="3">
+                    રૂ. {{totalInWords}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    અગાઉનું વસુલાત
+                </td>
+                <td>
+                    {{previousChallanLeft}}
+                </td>
+                <td>
+                    {{previousChallanKayam}}
+                </td>
+                <td>
+                    {{previousChallanRotating}}
+                </td>
+                <td>
+                    {{previousTotal}}
+                </td>
+                <td class="no-bottom-border no-top-border" colspan="3">
+                    ચલણ સાથે મોકલેલ રકમ
+                </td>
+            </tr>
+
+
+            <tr>
+                <td>
+                    આ ચલણ મુજબ વસુલાત
+                </td>
+                <td>
+                    {{selectedLeft}}
+                </td>
+                <td>
+                    {{selectedKayam}}
+                </td>
+                <td>
+                    {{selectedRotating}}
+                </td>
+                <td>
+                    {{selectedTotal}}
+                </td>
+                <td class="no-bottom-border no-top-border" colspan="3">
+                    રૂ. {{totalInWords}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    કુલ વસુલાત
+                </td>
+                <td>
+                    {{leftTotals}}
+                </td>
+                <td>
+                    {{kayamTotals}}
+                </td>
+                <td>
+                    {{rotatingTotals}}
+                </td>
+                <td>
+                    {{wholeTotals}}
+                </td>
+                <td class="no-bottom-border no-top-border" colspan="3">
+                    કુલ શબ્દોમાં રૂપિયા
+                </td>
+            </tr>
+
+            <tr>
+                <td class="no-bottom-border no-right-border " colspan="4">
+                    ____________________________ ના સાથે મોકલ્યા
+                </td>
+                <td colspan="4" class=" no-bottom-border no-left-border">
+                    પહોચ્યાની તારીખ {{date}}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" class="no-top-border no-bottom-border no-right-border">
+                    તારીખ {{date}}
+                </td>
+                <td colspan="4" class="no-top-border no-bottom-border no-left-border">
+                    તલાટી/કારકુન /અવલ કારકુન/ટી..ડી.ઓ.
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" class="no-bottom-border">
+                    __________________ ની ખાતાવહીમાં ખતવણી કરી
+                </td>
+            </tr>
+
+            <tr>
+                <td class="no-top-border no-bottom-border no-right-border " colspan="3">
+                    તારીખ {{date}}
+                </td>
+                <td colspan="3" class="no-border">
+
+                </td>
+                <td class="no-top-border no-bottom-border no-left-border">
+                    નં. __________________________
+                </td>
+            </tr>
+            <tr>
+                <td class="no-top-border no-bottom-border no-right-border" colspan="5">
+
+                </td>
+                <td class="no-border"></td>
+                <td colspan="2" class=" no-left-border no-bottom-border no-top-border">
+                    રૂ. (શબ્દોમાં ) ___________________
+                </td>
+            </tr>
+            <tr>
+                <td class="no-top-border no-bottom-border no-right-border" colspan="5">
+                </td>
+                <td class="no-top-border no-bottom-border no-left-border" colspan="3">
+                    તાલુકાના નમુના નં. માં ______________________
+                </td>
+            </tr>
+
+            <tr>
+                <td class="no-bottom-border no-top-border no-right-border" colspan="6">
+
+                </td>
+                <td class="no-bottom-border no-top-border no-left-border" colspan="1">
+                    જમા કર્યા.
+                </td>
+
+            </tr>
+
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border no-right-border" colspan="2">
+                    તારીખ {{date}}
+                </td>
+                <td class="no-border" colspan="2">
+
+                </td class="no-bottom-border no-top-border no-left-border">
+                <td colspan="4" class="center no-bottom-border no-top-border no-left-border">
+                    તલાટી/કારકુન /અવલ કારકુન/ટી..ડી.ઓ.
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-bottom-border no-top-border" colspan="8">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-top-border" colspan="8">
+
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+
+
+</body>
+
+</html>

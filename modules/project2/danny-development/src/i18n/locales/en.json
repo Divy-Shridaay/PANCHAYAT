@@ -1,0 +1,310 @@
+{
+  "common": {
+    "search": "Search",
+    "cancel": "Cancel",
+    "create": "Create",
+    "update": "Update",
+    "selectStatus": "Select Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "deleted": "Deleted",
+    "status": "Status",
+    "left": "Left",
+    "pending": "Pending",
+    "rotating": "Rotating",
+    "spare": "Spare",
+    "total": "Total",
+    "save": "Save",
+    "emptyMessage": "No data found",
+    "fajal": "Fajal",
+    "sarkari": "Sarkari",
+    "sivay": "Sivay",
+    "accountNo": "Account Number",
+    "name": "Name",
+    "delete": "Delete"
+  },
+
+  "signin": {
+    "title": "Sign in",
+    "emailPlaceholder": "Enter Email",
+    "passwordPlaceholder": "Enter Password",
+    "forgotPassword": "Forgot Password?",
+    "backToSignIn": "Back to Sign-In",
+    "sendVerification": "Send Verification Email",
+    "resendIn": "Resend in {{seconds}}s",
+    "sending": "Sending...",
+    "signInButton": "Sign in",
+    "emailRequired": "Email is required.",
+    "invalidEmail": "Please enter a valid email address.",
+    "passwordRequired": "Password is required."
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+    "accountNumber": "Account Number",
+    "accountName": "Account Name",
+    "types": "Types",
+    "leftBehind": "Left Behind",
+    "pending": "Pending",
+    "rotating": "Rotating",
+    "spare": "Spare",
+    "total": "Total",
+    "landRevenue": "Land Revenue",
+    "localFund": "Local Fund",
+    "educationCess": "Education Cess",
+    "collectionOfLandRevenue": "Land Revenue Collection",
+    "localFundLevy": "Local Fund Collection",
+    "levyOfEducationCess": "Levy of Education Cess",
+    "landRequisitionNotice": "Land Requisition Notice",
+    "lavaniImprovement": "Lavani Improvement",
+    "addDemand": "Add Demand",
+    "once": "Once",
+    "search": "Search",
+    "village": "Village"
+  },
+  "revenueCollectionModal": {
+    "landTitle": "Collection of Land Revenue",
+    "localFundTitle": "Collection of Local Fund",
+    "educationCessTitle": "Levy of Education Cess",
+    "reachNo": "Reach No.",
+    "arrivalDate": "Arrival Date",
+    "accountNumber": "Account Number",
+    "accountName": "Name of Account Holder",
+    "leftBehind": "Left Behind",
+    "pending": "Pending",
+    "rotating": "Rotating",
+    "spare": "Spare",
+    "billDate": "Bill Date",
+    "billNo":"Bill No.",
+    "total": "Total",
+    "recovery": "Recovery",
+    "save": "Save"
+  },
+  "manganuModal": {
+    "landTitle": "Land Mangnu",
+    "localFundTitle": "Local Fund Mangnu",
+    "educationCessTitle": "Education Cess Mangnu",
+  
+    "accountNumber": "Account Number",
+    "accountName": "Name",
+    "leftBehind": "Left",
+    "pending": "Pending",
+    "rotating": "Rotating",
+    "spare": "Fajal",
+    "total": "Total",
+    "recovery": "વસુલાત",
+    "sarkari": "Sarkari",
+    "sivay": "Sivay",
+    "save": "Save",
+    "fajal": "Fajal"
+  },
+  "districts": {
+    "name": "District Name",
+    "caption": "Districts Table"
+  },
+  "districtCreateModal": {
+    "createTitle": "Create District",
+    "updateTitle": "Update District",
+    "name": "District Name"
+  },
+
+  "talukas": {
+    "name": "Taluka Name",
+    "district": "District",
+    "caption": "Talukas Table"
+  },
+  "talukaCreateModal": {
+    "createTitle": "Create Taluka",
+    "updateTitle": "Update Taluka",
+    "name": "Taluka Name",
+    "district": "District",
+    "selectDistrict": "Select District"
+  },
+
+  "villages": {
+    "villageName": "Village Name",
+    "taluka": "Taluka",
+    "district": "District",
+    "caption": "Villages Table"
+  },
+  "villageCreateModal": {
+    "createTitle": "Create Village",
+    "updateTitle": "Update Village",
+    "name": "Village Name",
+    "taluka": "Taluka",
+    "district": "District",
+    "selectTaluka": "Select Taluka",
+    "selectDistrict": "Select District"
+  },
+
+  "table": {
+    "create": "Create",
+    "search": "Search",
+    "previous": "Previous",
+    "next": "Next",
+    "actions": "Actions",
+    "confirmDeleteTitle": "Delete",
+    "confirmDeleteMessage": "Are you sure you want to delete this item?"
+  },
+
+  "topbar": {
+    "title": "Gram Panchayat",
+    "hello": "Hi, {{name}}",
+    "dashboard": "Dashboard",
+    "masters": "Masters",
+    "districts": "Districts",
+    "talukas": "Talukas",
+    "villages": "Villages",
+    "master": "Master",
+    "mainReport" : "Main Report",
+    "roles": "Roles",
+    "permissions": "Permissions",
+    "users": "Users",
+    "villagers": "Villagers",
+    "myProfile": "My Profile",
+    "changeLanguage": "Change Language",
+    "settings": "Settings",
+    "landRevenue": "Land Revenue",
+    "localFund": "Local Fund",
+    "educationCess": "Education Cess",
+    "mangnu": "Mangnu",
+    "collection": "Collection",
+    "report": "Report",
+    "challan": "Challan",
+    "logoutConfirmTitle": "Confirm Logout",
+    "logoutConfirmBody": "Are you sure you want to logout?",
+    "logout": "Logout",
+    "selectVillage": "Select Village",
+    "selectFinancialYear": "Select Year",
+    "importData" : "Import Data"
+  },
+
+  "profile": {
+    "title": "Profile",
+    "name": "Name",
+    "firstName": "First Name",
+    "middleName": "Middle Name",
+    "lastName": "Last Name",
+    "age": "Age",
+    "gender": "Gender",
+    "dob": "Date of Birth",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "changePassword": "Change Password",
+    "signOut": "Sign Out",
+    "saveChanges" : "Save Changes"
+  },
+  "changePasswordModal": {
+    "title": "Change Password",
+    "oldPassword": "Old Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "save": "Save",
+    "cancel": "Cancel", 
+    "oldPasswordRequired": "Old Password is required",
+    "newPasswordRequired": "New Password is required",
+    "confirmNewPasswordRequired": "Confirm New Password is required",
+    "passwordsDoNotMatch": "Passwords do not match"
+  },
+
+  "roles": {
+    "title": "Roles",
+    "roleName": "Role Name",
+    "roleId": "Role ID",
+    "caption": "Roles Table"
+  },
+  "roleCreateModal": {
+    "createTitle": "Create Role",
+    "updateTitle": "Update Role",
+    "roleName": "Role Name",
+    "status": "Status",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+
+  "permissions": {
+    "title": "Permissions",
+    "permissionName": "Permission Name",
+    "permissionValue": "Permission Value",
+    "status": "Status",
+    "caption": "Permissions Table"
+  },
+  "permissionCreateModal": {
+    "title": "Create Permission",
+    "permissionName": "Permission Name",
+    "permissionValue": "Permission Value",
+    "status": "Status"
+  },
+
+  "users": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "dob": "Date of Birth",
+    "role": "Role",
+    "caption": "Users Table"
+  },
+  "userCreateModal": {
+    "createTitle": "Create User",
+    "updateTitle": "Update User",
+    "firstName": "First Name",
+    "middleName": "Middle Name",
+    "lastName": "Last Name",
+    "gender": "Gender",
+    "dob": "Date of Birth",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "save": "Save",
+    "cancel": "Cancel",
+    "villageAccess": "Village Access"
+  },
+
+  "villagers": {
+    "accountNumber": "Account Number",
+    "name": "Name",
+    "email": "Email",
+    "village": "Village",
+    "caption": "Villagers Table"
+  },
+  "villagerCreateModal": {
+    "createTitle": "Create Villager",
+    "updateTitle": "Update Villager",
+    "name": "Name",
+    "accountNo": "Account Number",
+    "date": "Date",
+    "sarkari": "Sarkari",
+    "sivay": "Kheti Sivay"
+  },
+
+  "revenue": {
+    "billNo": "Bill No.",
+    "bookNo": "Book No.",
+    "billDate": "Bill Date",
+    "villagerName": "Villager Name",
+    "villagerAccountNo": "Villager Account No.",
+    "landCaption": "Land Revenue Table",
+    "localCaption": "Local Fund Table",
+    "educationCaption": "Education Cess Table"
+  },
+
+  "challan": {
+    "challanNo": "Challan No.",
+    "date": "Challan Date",
+    "generate": "Generate {{type}} Challan",
+    "from": "From",
+    "to": "To",
+    "caption": "Challan Table"
+  },
+
+  "master": {
+    "title": "Master",
+    "localFund": "Local Fund (100%)",
+    "educationCess": "Education Cess (100%)",
+    "lSarkari": "Sarkari ",
+    "lSivay": "Kheti Sivay",
+    "sSarkari": "Sarkari",
+    "sSivay": "Kheti Sivay"
+  }
+}

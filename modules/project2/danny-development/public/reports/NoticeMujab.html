@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+  <meta charset="UTF-8">
+  <title>નોટીસ (લે. રે. કો. ૨૦૦ મુજબ)</title>
+  <style>
+    body {
+       font-family: "Noto Sans Gujarati", "Arial Unicode MS", "Noto Sans", sans-serif;
+      margin: 50px;
+      font-size: 20px;
+      line-height: 2;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .center {
+      text-align: center;
+      font-weight: bold;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+
+    .signature {
+      margin-top: 60px;
+      text-align: right;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      text-align: justify;
+  text-justify: inter-word;
+    }
+
+    .b {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="right b">(લે. રે. કો. ૨૦૦ મુજબ)</div>
+
+  <div class="center">નોટીસ</div>
+
+  <div class="section">
+    શ્રી <strong>{{ name }}</strong> રે <strong>{{ village }}</strong> તા
+    <strong>{{ taluka }}</strong>
+  </div>
+
+  <div class="section">
+    લેન્ડ રેવન્યુ કોડ કલમ ૨૦૦ પ્રમાણે આ નોટીસ આપવામાં આવે છે કે, તમારી પાસે જમીન મહેસૂલ હપ્તાની રકમ રૂ.
+    <strong>{{ total }}</strong> બાકી છે.
+    આ રકમની તલાટી તરફથી વારંવાર ઉઘરાણી કરવા છતાં તમો ભરાતા નથી. તો આ નોટીસ મળેથી દિન – ૮ માં રકમ ભરી જવા તજવીજ કરશો.
+    તેમ કરવામાં કુસુર કરશો તો તમારા ઘરમાં પ્રવેશ કરી
+    તમારી જંગમ મિલકત જપ્ત કરવામાં આવશે તેની નોંધ લેશો. આ નોટીસ મળ્યાની બીજી પ્રત ઉપર સહી કરી આપશો.
+  </div>
+
+  <div class="signature">
+    તાલુકા વિકાસ અધિકારી <br>
+    તાલુકા પંચાયત {{ taluka }}<br>
+  </div>
+
+  <div class="section">
+    તારીખ : {{ date }}<br>
+  </div>
+
+</body>
+
+</html>

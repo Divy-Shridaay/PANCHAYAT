@@ -1,0 +1,26 @@
+name: Deploy to dev server
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Connect to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: root
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/html/dev/danny
+            git pull
+            npm install
+            npm run build
+            sudo systemctl restart nginx

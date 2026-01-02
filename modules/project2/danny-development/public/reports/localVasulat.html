@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <title>R.V. 19 G.</title>
+    <style>
+       body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+            /* margin: 20px; */
+        }
+
+        .container {
+            border: 2px solid black;
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .logo {
+            height: 80px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid black;
+            margin-top: 2px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            text-align: center;
+            padding: 4px;
+            font-size: 10px;
+        }
+
+        .footer {
+            padding: 10px;
+            font-size: 10px;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 10px;
+            padding: 0 10px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                તારીખ - {{ date }} <br>
+                ગામ - {{ village }} <br>
+                તાલુકો - {{ taluka }} <br>
+            </div>
+            <div class="center">
+                <div>ORIGINAL</div>
+              <img style="height: 40px;" src="../images/ashokStambhImage.png" alt="Logo" class="logo"><br>
+            </div>
+            <div style="text-align: right;">
+                R.V. 19 G.<br>
+                પહોંચ નંબર : {{ billNo }} <br>
+              <div style="margin-top: 10px;">
+                    ખાતા નંબર : {{ accountNo }} <br>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <tr>
+                <th colspan="4">સંયુકત જમીન મહેસૂલની રકમ</th>
+                <th rowspan="3" style="text-align: left;">ખાતેદારનું નામ -<br>{{ name }}<br>હસ્તે -</th>
+            </tr>
+            <tr>
+                <th>પાછલી બાકી</th>
+                <th>કાયમી</th>
+                <th>ફરતી</th>
+                <th>હાથ પરની સિલક</th>
+            </tr>
+            <tr>
+                <td style="height: 50px;">{{ localLeft }}</td>
+                <td>{{ localPending }}</td>
+                <td>{{ localRotating }}</td>
+                <td>{{ localTotal }}</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            અંકે રૂપિયા
+            {{ totalWord }} ભર્યા.
+        </div>
+
+        <div class="signatures">
+            <div>સરપંચ</div>
+            <div>ગ્રામ પંચાયત</div>
+            <div>તલાટી/મંત્રી, ગ્રામ પંચાયત</div>
+        </div>
+    </div>
+</body>
+
+</html>

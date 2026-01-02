@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ગામના નમુના નં. ૮ બ</title>
+    <style>
+        body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid black;
+        }
+
+        td,
+        th {
+            border: 1px solid black;
+            padding: 6px;
+            /* text-align: center; */
+            vertical-align: top;
+        }
+
+        .no-border {
+            border: none;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            padding: 10px;
+        }
+
+        .no-vertical-border {
+            border-top: none !important;
+            border-bottom: none !important;
+        }
+
+        .no-bottom-border {
+            border-bottom: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <table>
+        <tr>
+            <td class="no-border">R.V. 18</td>
+            <td colspan="5" class="header ">ગામના નમુના નં. ૮ બ</td>
+        </tr>
+        <tr>
+            <td colspan="2">ખાતાનો નંબર: {{accountNumber}}</td>
+            <td colspan="4">નામ: {{name}}</td>
+        </tr>
+        <tr>
+            <td class="no-border">બાકી</td>
+            <td class="no-border"></td>
+            <td>વરસ</td>
+            <td>રકમ</td>
+            <td>કુલ સંયુક્ત જમીન મહેસુલ</td>
+        </tr>
+        <tr>
+            <td class="no-border" rowspan="2">&nbsp;&nbsp;&nbsp; મુલત્વી રાખેલી <br> મુલત્વી નહી રાખેલી</td>
+            <td rowspan="2" class="no-border"></td>
+            <td rowspan="2">{{financialYear}}</td>
+            <td rowspan="2" style="text-align: end;">{{landCollumnTwentyOne}} <br> {{localCollumnFourteen}}</td>
+            <td rowspan="2" style="text-align: end;">{{totalMulatviSayuktLand}}</td>
+        </tr>
+        <tr></tr>
+
+        <tr>
+            <td colspan="3" class="no-border">ચાલતી કાયમ</td>
+            <td>
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        ૧. સરકારી :<br>
+                        ૨. ઇનામી <br>
+                        ૩. ખૈતી સિવાય<br>
+                        ૪. લોકલ ફંડ
+                    </div>
+                    <div style="text-align: end;">
+                       {{sarkari}} <br>
+                        <br>
+                       {{sivay}} <br>
+                       {{localFundFourFiveTotal}}
+                    </div>
+                </div>
+            </td>
+            <td style="text-align: end;">{{totalChaltiSayuktLand}}</td>
+        </tr>
+        <tr>
+
+        </tr>
+        <tr>
+            <td colspan="3" class="no-border">ફરતી પરચુરણ</td>
+            <td style="text-align: end;"> {{landRotating}} <br> {{localRotating}} <br> {{sarkari}}</td>
+            <td style="text-align: end;"> {{TotalRotatingSayuktLand}}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="no-border">બાદ છૂટ {{sarkari}}</td>
+            <td class="no-border"></td>
+            <td colspan="" rowspan="2" class="no-border">એકંદર લહેણું </td>
+            <td class="no-vertical-border" style="text-align: end;">{{totalEkndarLahenuSayuktLand}}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="no-border" style="text-align: center;">મુકતવી</td>
+            <td class="no-vertical-border"></td>
+        </tr>
+        <tr>
+            <td>હપ્તો</td>
+            <td>૧ લી</td>
+            <td>
+                ૨ જો
+            </td>
+            <td>નક્કી લહેણું</td>
+            <td class="no-border"></td>
+
+        </tr>
+        <tr>
+            <td>પહોચનો નં</td>
+            <td>તા.</td>
+            <td colspan="2" style="text-align: center;">જમાની બાબત</td>
+            <td> </td>
+
+        </tr>
+           <tr>
+            <td class="no-vertical-border">જમીન મહેસુલ</td>
+            <td class="no-vertical-border"></td>
+            <td class="no-vertical-border" colspan="2"> 
+<div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="width: 33.33%;">
+
+                    પાછલી બાકી
+                </div>
+                <div style="width: 33.33%;">
+                    ચાલુ
+                </div>
+                <div style="width: 33.33%;">
+                    ફરતી
+                </div>
+            </div>
+        </td>
+            <td class="no-vertical-border"></td>
+        </tr>
+   
+        <tr>
+            <td class="no-vertical-border">{{landRevenueBillNo}}</td>
+            <td class="no-vertical-border">
+{{landrevenueBillDate}}
+            </td>
+            <td class="no-vertical-border" colspan="2">
+                 <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="width: 33.33%;">
+{{landRevenueLeft}}
+                </div>
+                <div style="width: 33.33%;">
+                    {{landRevenuePending}}
+                </div>
+                <div style="width: 33.33%;">
+            {{landRevenueRotating}}
+                </div>
+            </div>
+            </td>
+            <td class="no-vertical-border" style="text-align: end;">{{totalLandRevenueSayuktLand}}</td>
+        </tr>
+        <tr>
+            <td class="no-vertical-border">લોકલ ફંડ</td>
+            <td class="no-vertical-border"></td>
+          <td class="no-vertical-border" colspan="2"> 
+<div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="width: 33.33%;">
+
+                    પાછલી બાકી
+                </div>
+                <div style="width: 33.33%;">
+                    ચાલુ
+                </div>
+                <div style="width: 33.33%;">
+                    ફરતી
+                </div>
+            </div>
+        </td>
+            <td class="no-vertical-border"></td>
+        </tr>
+        <tr>
+<td class="no-vertical-border"> {{localFundRevenueBillNo}}</td>
+            <td class="no-vertical-border">{{localFundrevenueBillDate}}</td>
+            <td class="no-vertical-border" colspan="2">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="width: 33.33%;">
+{{localFundRevenueLeft}}
+                </div>
+                <div style="width: 33.33%;">
+                    {{localFundRevenuePending}}
+                </div>
+                <div style="width: 33.33%;">
+            {{localFundRevenueRotating}}
+                </div>
+            </div>
+            </td>
+            <td class="no-vertical-border" style="text-align: end;">
+                {{totalLocalFundRevenueSayuktLand}}
+            </td>
+        </tr>
+        <tr>
+            <td class="no-vertical-border"></td>
+            <td class="no-vertical-border"></td>
+            <td class="no-vertical-border" colspan="2"></td>
+            <td class="no-vertical-border"></td>
+        </tr>
+        <tr>
+            <td class="no-vertical-border"></td>
+            <td class="no-vertical-border"></td>
+            <td class="no-vertical-border" colspan="2"></td>
+            <td class="no-vertical-border"></td>
+        </tr>
+
+        <tr>
+            <td class="no-bottom-border">
+                વરસ
+            </td>
+            <td class="no-bottom-border">
+                બાબત
+            </td>
+            <td class="no-bottom-border">
+                રકમ
+            </td>
+            <td>
+                એકંદર વસુલ
+            </td>
+            <td class="no-bottom-border" style="text-align: end;">
+                {{ekandarVasulSayuktLand}}
+            </td>
+        </tr>
+
+        <tr>
+            <td class="no-vertical-border">
+                (અ)
+            </td>
+            <td class="no-vertical-border">
+{{A}}
+            </td>
+            <td class="no-vertical-border">
+            </td>
+            <td>
+                બાકી (અ)મુલત્વી
+            </td>
+            <td class="no-vertical-border">
+
+            </td>
+        </tr>
+        <tr>
+            <td class="no-vertical-border">
+                (બ)
+            </td>
+            <td class="no-vertical-border">
+            {{B}}
+            </td>
+            <td class="no-vertical-border">
+
+            </td>
+            <td>
+                રાખેલી (બ)
+            </td>
+            <td class="no-vertical-border">
+
+            </td>
+        </tr>
+        <tr>
+            <td class="no-vertical-border">
+
+            </td>
+            <td class="no-vertical-border">
+
+            </td>
+            <td class="no-vertical-border">
+
+            </td>
+            <td>
+                મુલત્વી નહી રાખેલી
+            </td>
+            <td class="no-vertical-border">
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+
+</html>

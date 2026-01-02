@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+  <meta charset="UTF-8">
+  <title>કલમ ૧૫૪ મુજબબાની નોટિસ</title>
+  <style>
+    body {
+        font-family: "Noto Sans Gujarati", "Arial Unicode MS", "Noto Sans", sans-serif;
+      margin: 40px;
+      line-height: 1.8;
+      font-size: 18px;
+    }
+
+    .center {
+      text-align: center;
+      font-weight: bold;
+      font-size: 22px;
+      margin-bottom: 30px;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .signature {
+      margin-top: 60px;
+    }
+
+    .section {
+      margin-bottom: 25px;
+         text-align: justify;
+  text-justify: inter-word;
+    }
+
+    table {
+      width: 60%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 5px 10px;
+    }
+
+    .label {
+      text-align: left;
+    }
+
+    .amount {
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="center">
+    લેન્ડ રેવન્યુ કોડની કલમ ૧૫૪ મુજબની નોટીસ
+  </div>
+
+  <div class="section">
+    પ્રતિ,<br>
+    શ્રી, <strong>{{ name }}</strong> રે,<br><br>
+  </div>
+
+  <div class="section">
+    <p>
+      &nbsp;&nbsp;&nbsp;આથી તમોને સને ૧૮૭૯ ની મુંબઈ જમીન મહેસુલ કાયદાની કલમ ૧૫૪ નીચે નોટીસ આપી જણાવવામાં આવે
+      છે કે તમારા નામે ઘણા સમયથી નીચેની વિગતમાં બતાવ્યા મુજબની રકમ બાકી નીકળે છે. તેની વસુલાત કરવા માટે
+      તમોને તલાટી કમ મંત્રી તરફથી વારંવાર ઉઘરાણી કરવા છતાં તમો રકમ ભરતા નથી જેથી સરકારશ્રીના નાણા ઘણા
+      લાંબા સમયથી બાકી ખેંચાય છે. જેથી તમો ઈરાદાપૂર્વક આ રકમ ભરતા નથી તેવું સાબિત થાય છે. તો નીચે જણાવેલ
+      વિગતે બતાવેલ રકમ તા. {{ date }} સુધીમાં તલાટી કમ મંત્રી ને ભરીને પહોચ મેળવી
+      લેશો. જો તેમ
+      કરવામાં ચૂક થશે તો તા {{ date }} ના રોજ સૂર્યોદયથી સુર્યાસ્ત સુધીમાં કોઈપણ સમયે
+      તમારી જંગમ મિલકત
+      જપ્તમાં લઇ તેનું જાહેરમાં લીલામ કરી રકમ વસુલ કરવામાં આવશે તે જાણશો.
+    </p>
+  </div>
+
+  <div class="section">
+    સ્થળ: તાલુકા પંચાયત {{ taluka }} <br>
+    તા. {{ date }} <br>
+  </div>
+
+  <table>
+    <tr>
+      <td class="label">જમીન મહેસૂલ</td>
+      <td class="amount">રૂ| {{ landTotal }} </td>
+    </tr>
+    <tr>
+      <td class="label">લોકલ ફંડ</td>
+      <td class="amount">રૂ| {{ localTotal }} </td>
+    </tr>
+    <tr>
+      <td class="label">શિક્ષણ ઉપકર</td>
+      <td class="amount">રૂ| {{ educationTotal }} </td>
+    </tr>
+    <tr>
+      <td class="label">નોટીસ ફી</td>
+      <td class="amount">રૂ| {{ noticeFee }} </td>
+    </tr>
+    <tr>
+      <td class="label">ચોથાઈ દંડ</td>
+    <td class="amount">રૂ| {{ quarter }} </td>
+    </tr>
+    <tr>
+      <td class="label"><strong>કુલ</strong></td>
+      <td class="amount"><strong>રૂ| {{ total2 }} </strong></td>
+    </tr>
+  </table>
+
+  <div class="right signature">
+    તાલુકા વિકાસ અધિકારી<br>
+    તા.પં. {{ taluka }}<br>
+  </div>
+
+</body>
+
+</html>

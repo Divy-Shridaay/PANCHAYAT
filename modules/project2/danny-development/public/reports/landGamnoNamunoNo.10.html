@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <title> જમીન મહેસુલ - ગામનો નમૂનો નંબર ૧૦</title>
+    <style>
+        body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+            font-size: 16px;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            border: 1px solid #000;
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .sub-title {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .no-border {
+            border: none !important;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .section {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .page-break {
+            page-break-before: always;
+            /* For older browsers */
+            break-before: page;
+            /* Modern standard */
+        }
+
+        .no-border {
+            border: none !important;
+        }
+        
+        .no-right-border {
+           border-right: none !important;
+        }
+        .no-left-border {
+           border-left: none !important;
+        }
+        .no-top-border {
+           border-top: none !important;
+        }
+        .no-bottom-border {
+           border-bottom: none !important;
+        }
+
+
+    </style>
+</head>
+
+<body>
+    <div>
+
+        <table>
+            <tr>
+                <td colspan="7" class="title no-right-border no-bottom-border">    જમીન મહેસુલ       </td>
+                <td colspan="3" class=" no-left-border no-bottom-border" style="font-size: small;">0029.00-101-00</td>
+            </tr>
+            <tr>
+                <td colspan="7" class="sub-title no-right-border no-top-border no-bottom-border">ગામનો નમૂનો નંબર. ૧૦</td>
+
+                <td colspan="3 " class="no-left-border no-top-border no-bottom-border">
+                    <div style="display: flex; justify-content: space-between; ">
+
+                        <span style="font-size: small;">
+                            0029.L.R.T.
+                        </span>
+                        <span style="font-size: small;">
+                            R.V.20g.
+                        </span>
+                    </div>
+                </td>
+
+            </tr>
+
+            <tr>
+                <td colspan="1" class="no-top-border no-right-border no-bottom-border">મોજે</td>
+                <td colspan="4" class="no-border">{{village}}</td>
+
+                <td colspan="2" class="no-border">તાલુકો</td>
+                <td colspan="3" class="no-top-border no-left-border ">{{taluka}}</td>
+                <!-- <td colspan="3" class="center bold">સંયુક્ત લોકલ ફંડ</td> -->
+            </tr>
+            <tr>
+                <td colspan="5" class="center">ચલન નંબર : {{challanNo}} </td>
+                
+                <td colspan="5" class="center">{{tableName}}</td>
+                <!-- <td colspan="3"></td> -->
+                <!-- <td colspan="3" class="center bold">સંયુક્ત લોકલ ફંડ</td> -->
+            </tr>
+            <tr>
+                <td rowspan="7" colspan="4" >
+                    <div class="center " style="margin-top: 70px;">
+                        ગામના ન.નંબર ૯ માં ની નોંધો પહોચ નંબર {{from}} નંબર સુધી
+                    </div>
+                </td>
+                <td rowspan="3" class="center">
+                    માંગણું
+                </td>
+                <td colspan="2" st>
+                    પાછલી બાકી
+                </td>
+                <td>
+                    કાયમ
+                </td>
+                <td>
+                    ફરતી
+                </td>
+                <td>
+                    કુલ
+                </td>
+                <!-- <td rowspan="4">
+                આંકિત વસૂલ થનારી રકમ<br>
+                તાલુકે આપેલ વસૂલ<br>
+                આ ચલન મુજબ<br>
+                કુલ ....
+            </td>
+            <td rowspan="4"></td>
+            <td>પાછલી બાકી</td>
+            <td>કામ</td>
+            <td>ફરીથી</td> -->
+            </tr>
+
+            <tr>
+                <td rowspan="2" colspan="2">
+                    {{left}}
+                </td>
+                <td rowspan="2">
+                     {{kayam}}
+                </td>
+                <td rowspan="2">
+                    {{rotating}}
+                </td>
+                <td rowspan="2">
+                      {{total}}
+                </td>
+            </tr>
+            <tr>
+
+            </tr>
+            <tr>
+                <td style="text-align: right;">
+                    અગાઉ વસુલ થયેલી રકમ
+                </td>
+                <td colspan="2">
+                  {{previousChallanLeft}}
+                </td>
+                <td>
+                    {{previousChallanKayam}}
+                </td>
+                <td>
+                    {{previousChallanRotating}}
+                </td>
+                <td>
+                    {{previousTotal}}
+                </td>
+            </tr>
+
+            <tr>
+                <td style="text-align: right;">
+                    તાલુકે આવેલ વસુલ
+                </td>
+                <td colspan="2">
+                    ૦.૦૦
+                </td>
+                <td>
+                     ૦.૦૦
+                </td>
+                <td>
+                     ૦.૦૦
+                </td>
+                <td>
+                     ૦.૦૦
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">
+                    આ ચલન મુજબ
+                </td>
+                <td colspan="2">
+                    {{selectedLeft}}
+                </td>
+                <td>
+                    {{selectedKayam}}
+                </td>
+                <td>
+                    {{selectedRotating}}
+                </td>
+                <td>
+                    {{selectedTotal}}
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">
+                    કુલ ....
+                </td>
+                <td colspan="2">
+                   {{leftTotals}}
+                </td>
+                <td>
+                    {{kayamTotals}}
+                </td>
+                <td>
+                    {{rotatingTotals}}
+                </td>
+                <td>
+                    {{wholeTotals}}
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4" class=" center">
+
+                    સંયુક્ત જમીન મહેસુલની
+                </td>
+                <td colspan="1" class="no-bottom-border">
+                      
+                </td>
+                <td colspan="5" class="center">
+                    નાણાની તપાસ
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4" class="no-bottom-border">
+                    પાછલી બાકી
+                </td>
+
+                <td class="no-border">
+                    {{leftTotals}}
+                </td>
+                <td colspan="2">
+                    નોટો...................
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4" class="no-top-border no-bottom-border">
+
+                </td>
+                <td class="no-border">
+
+                </td>
+                <td colspan="2">
+                    શોવરેઇન..............
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4" class="no-top-border no-bottom-border">
+                    ચાલુ :-
+                </td>
+
+                <td class="no-bottom-border">
+
+                </td>
+                <td colspan="2">
+                    રૂપા નાણું.............
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+            </tr>
+
+            <tr>
+
+            </tr>
+            <tr>
+                <td colspan="2" class="no-bottom-border no-top-border no-right-border">
+
+                </td>
+
+                <td colspan="2" class="no-border">
+                    કાયમ
+                </td>
+
+                <td class="no-top-border no-bottom-border">
+                    {{kayamTotals}}
+                </td>
+                <td colspan="2">
+                    નિકલ નાણું...........
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+
+            </tr>
+            <tr>
+                <td colspan="4" class="no-top-border no-bottom-border">
+
+                </td>
+                <td class="no-top-border">
+
+                </td>
+
+                <td colspan="2">
+                    તાંબા નાણું...........
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td class="no-top-border no-bottom-border no-right-border" colspan="2" rowspan="2">
+
+                </td>
+                <td class="no-border" colspan="2" rowspan="2">
+                    ફરતી
+                </td>
+                <td class="no-top-border no-bottom-border" colspan="1" rowspan="2">
+                    {{rotatingTotals}}
+                </td>
+                <td class="no-bottom-border " colspan="5" rowspan="2">
+
+                </td>
+            </tr>
+            <tr>
+
+            </tr>
+            <tr>
+                <td class="no-top-border no-right-border" colspan="2">
+
+                </td>
+                <td class="no-border" colspan="2">
+                    કુલ .....
+                </td>
+                <td class="no-top-border">
+                    {{wholeTotals}}
+                </td>
+                <td colspan="2" class="no-border">
+                    મની ઓર્ડર…........
+                </td>
+                <td class="no-border">
+
+                </td>
+                <td class="no-border">
+
+                </td>
+                <td class="no-left-border no-top-border"></td>
+            </tr>
+
+            <tr>
+                <td colspan="10" class="no-bottom-border">
+            (અંકે ) રૂપિયા {{totalInWords}}
+                </td>
+
+
+            </tr>
+            <tr>
+                <td class="no-top-border no-bottom-border no-right-border" colspan="4">
+
+                </td>
+                <td class="no-border" colspan="1">
+                    સાથે ભરણું કર્યું
+                </td>
+                <td class="no-border" colspan="2">
+
+                </td>
+                <td class="no-bottom-border no-top-border no-left-border" colspan="3">
+                    તાલુકા વિકાસ અધિકારી
+                </td>
+            </tr>
+            <tr>
+                <td colspan="7" class="no-bottom-border no-top-border no-right-border">
+
+                </td>
+                <td colspan="3" class="no-bottom-border no-top-border no-left-border">
+                    તાલુકા પંચાયત {{taluka}}
+                </td>
+
+            </tr>
+
+            <tr>
+                <td colspan="7" class="no-bottom-border no-top-border no-right-border">
+
+                </td>
+                <td colspan="3" class="no-bottom-border no-top-border no-left-border">
+                    જી. {{district}}
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="1" class="no-top-border no-right-border">
+                    તારીખ {{date}}
+                </td>
+                <td colspan="3" class="no-left-border no-top-border no-right-border">
+
+                </td>
+                <td class="no-top-border no-right-border no-left-border">
+                    તલાટી
+                </td>
+                <td class="no-top-border no-left-border" colspan="5">
+
+                </td>
+            </tr>
+
+
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+
+    <div style="width: 100%; text-align: center; margin-top: 10px; border-bottom: 1px solid black;">
+        ((૨))
+    </div>
+    <div style="display: flex; width: 100%; height: 200px;">
+        <div style="width: 60%;">
+
+            પહોચ્યા તારીખ
+        </div>
+        <div>
+            વખત
+        </div>
+    </div>
+    <div style="display: flex; justify-content: end; width: 100%; border-bottom: 1px solid black;">
+        <div>
+            અવલ કારકુન
+        </div>
+    </div>
+
+    <div style="display: flex; width: 100%; height: 600px;">
+        <div style="width: 50%; border-right: 1px solid black;">
+            <div style="margin-top: 50px;">
+                તાલુકાના નમુના નંબર ૪ માં ખતવણી કરી
+            </div>
+            <div style="margin-top: 270px; display: flex; width:100%;">
+                <div style="width: 50%;">
+                    તારીખ <br>
+                    {{date}}
+                </div>
+                <div>
+                    જમા બંધી કારકુન
+                </div>
+            </div>
+        </div>
+        <div style="width: 50%;">
+
+            <div style="padding: 10px;">
+                રૂ.{{wholeTotals}} અંકે {{totalInWords}}
+            </div>
+            <div style="padding: 10px; margin-top: 40px;">
+                જમીન મહેસુલ ઉપજની રજીસ્ટરમાં જમા કર્યા
+            </div>
+            <div style="padding: 10px; margin-top:10px;">
+                તારીખ     {{date}}
+            </div>
+            <div style="padding: 10px; margin-top:60px;">
+                શરાફ કારકુન
+            </div>
+
+            <div style="padding: 10px; margin-top:10px; ">
+                <div style="display: flex; justify-content: end; width: 100%; line-height: 30px ; ">
+
+                    તાલુકા વિકાસ અધિકારી <br>
+                    તાલુકા પંચાયત <br>
+                    {{taluka}}, જી. {{district}}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</body>
+
+</html>

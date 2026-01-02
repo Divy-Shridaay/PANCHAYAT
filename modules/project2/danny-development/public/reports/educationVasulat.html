@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+  <meta charset="UTF-8">
+  <title>R.V. 55 J</title>
+  <style>
+    body {
+      font-family: 'Noto Sans Gujarati', sans-serif;
+      /* padding: 30px; */
+    }
+
+    .container {
+      border: 2px solid black;
+      max-width: 900px;
+      margin: auto;
+      padding: 5px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .center-title {
+      text-align: center;
+      margin-top: 5px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .info {
+      margin-top: 5px;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+
+    .name-line {
+      margin-top: 5px;
+      font-size: 10px;
+    }
+
+    .pavti {
+      margin-top: 5px;
+    }
+
+    .pavti table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .pavti td,
+    .pavti th {
+      padding: 5px;
+      border: 1px solid black;
+    }
+
+    .footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: end;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .no-border {
+      border: none !important;
+    }
+    .no-left-border {
+      border-left: none !important;
+    }
+    .no-right-border {
+      border-right: none !important;
+    }
+    .no-top-border {
+      border-top: none !important;
+    }
+    .no-bottom-border {
+      border-bottom: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div>સ.ઠ.મ. અને ખે.વિ.નં. ઇસીએફ-૧૦૬૨ <br>એલ. તા. ૧૦-૧૦-૬૨ </div>
+      <div>  આર.વી.૫૫ જી.</div>
+    </div>
+
+    <div class="center-title">ગામનો નમુનો નં. - ૯ (શિક્ષણ ઉપકર) </div>
+
+    <div class="info">
+      <table>
+        <tr>
+          <td>પહોચ નંબર : </td>
+          <td colspan="5">{{ billNo }}</td>
+        </tr>
+        <tr>
+          <td>મોજે :</td>
+          <td>{{ village}}</td>
+          <td>તાલુકો :</td>
+          <td>{{ taluka }}</td>
+          <td>જીલ્લો :</td>
+          <td>{{ district }}</td>
+        </tr>
+        <tr>
+          <td>ખાતા નંબર: </td>
+          <td colspan="3">{{ accountNo }}</tdc>
+        
+          <td>તારીખ :</td>
+          <td>{{ date }}</td>
+        </tr>
+        
+      </table>
+    </div>
+
+    <div class="name-line">
+      નામ {{ name }}
+    </div>
+
+    <div class="pavti">
+      <div style="text-align: center;">
+        <strong>પહોંચ </strong>
+      </div>
+      <table>
+        <tr>
+          <th class="no-border">પાછલી બાકી </th>
+          <th class="no-border"> ચાલુ</th>
+          <th class="no-border">કુલ</th>
+          <th class="no-top-border no-bottom-border no-right-border">ના તરફથી અંકે રૂપિયા</th>
+        </tr>
+        <tr>
+          <td class="no-border">{{ educationLeft}}</td>
+          <td class="no-border">{{ educationPending }}</td>
+          <td class="no-border">{{ educationTotal }}</td>
+          <td class="no-top-border no-bottom-border no-right-border">{{ educationTotal }} મળ્યા.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="footer">
+    <div>
+
+      મંત્રી
+    </div>
+    </div>
+  </div>
+</body>
+
+</html>

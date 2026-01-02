@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import { useApiFetch } from "../utils/api";
 import PaymentPopup from "../components/PaymentPopup";
 
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -230,6 +231,27 @@ export default function Dashboard() {
           </Heading>
           <Text mt={2} color="gray.600">
             {t("cardCashmelText")}
+          </Text>
+        </Box>
+
+        {/* project2 */}
+  <Box
+          bg="white"
+          p={8}
+          rounded="2xl"
+          shadow="lg"
+          border="1px solid #E3EDE8"
+          textAlign="center"
+          cursor="pointer"
+          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          onClick={() => window.open("http://localhost:5174", "_blank")}
+        >
+         <FiFileText size={40} color="#2A7F62" />
+          <Heading size="md" mt={4} color="#1E4D2B">
+          માગણું 
+          </Heading>
+          <Text mt={2} color="gray.600">
+            {t("cardSettingsText")}
           </Text>
         </Box>
 
