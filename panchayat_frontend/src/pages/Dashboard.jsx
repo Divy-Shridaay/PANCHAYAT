@@ -244,7 +244,7 @@ export default function Dashboard() {
   textAlign="center"
   cursor="pointer"
   _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-   onClick={() => window.open("http://localhost:5174", "_blank")}
+  onClick={() => window.open("/magana", "_blank")}
 >
   <FiFileText size={40} color="#2A7F62" />
   <Heading size="md" mt={4} color="#1E4D2B">
