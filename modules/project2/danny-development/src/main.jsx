@@ -14,7 +14,8 @@ import { FinancialYearProvider } from "./ports/context/FinancialYearContext.jsx"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
+   <BrowserRouter basename="/magana">
+
       <ChakraProvider>
         <ComponentLibraryProvider customStyles={lightTheme}>
           <FinancialYearProvider>
