@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true,
-    basename: '/p2',
-  }
+   
+  },
+  base:'/p2/'
 })
