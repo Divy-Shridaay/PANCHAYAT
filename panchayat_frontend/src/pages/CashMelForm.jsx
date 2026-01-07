@@ -30,6 +30,24 @@ import "react-datepicker/dist/react-datepicker.css";
 
 import DateInput from "./DateInput.jsx";
 
+
+
+
+/* ---------- Excel Serial Date → DD/MM/YYYY ---------- */
+const excelSerialToDDMMYYYY = (serial) => {
+  if (typeof serial !== "number") return serial;
+
+  const excelEpoch = new Date(1899, 11, 30);
+  const date = new Date(excelEpoch.getTime() + serial * 86400000);
+
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+
 /* ---------------- Format DD/MM/YYYY ---------------- */
 const formatDisplayDate = (input) => {
     const digits = input.replace(/\D/g, "").slice(0, 8);
@@ -333,9 +351,29 @@ const fileInputRef = useRef(null);
   const data = await f.arrayBuffer();
   const wb = XLSX.read(data);
   const first = wb.Sheets[wb.SheetNames[0]];
-  const json = XLSX.utils.sheet_to_json(first, { header: 0 });
+const json = XLSX.utils.sheet_to_json(first, { header: 0 });
 
-  setForm((p) => ({ ...p, excelData: json }));
+const fixedJson = json.map((row) => {
+  const newRow = {};
+
+  Object.entries(row).forEach(([key, value]) => {
+    // 🔹 Detect date columns by name OR value
+    const isDateColumn =
+      /date/i.test(key) ||              // header contains "date"
+      /તારીખ/.test(key);                // Gujarati "date"
+
+    if (isDateColumn && typeof value === "number") {
+      newRow[key] = excelSerialToDDMMYYYY(value);
+    } else {
+      newRow[key] = value;
+    }
+  });
+
+  return newRow;
+});
+
+setForm((p) => ({ ...p, excelData: fixedJson }));
+
 
   toast({
     title: "Excel ફાઇલ વાંચાઈ ગઈ",

@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import LoaderSpinner from "../components/LoaderSpinner";
 import { apiFetch } from "../utils/api.js";
 
+
 export default function Pedhinamu() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -44,10 +45,19 @@ export default function Pedhinamu() {
     const [totalHeirs, setTotalHeirs] = useState(0);
 
     const [form, setForm] = useState({
-        mukhyaName: "",
-        mukhyaAge: "",
-        heirs: []
-    });
+    mukhyaName: "",
+    mukhyaAge: "",
+
+    // 🔴 REQUIRED PHOTOS
+    mukhyaPhoto: null,
+    panchPhotos: [null, null, null], // Panch 1, 2, 3
+
+    heirs: []
+});
+
+
+
+
     // Loader for edit mode
     const [initialLoading, setInitialLoading] = useState(!!id);
 
@@ -62,6 +72,14 @@ export default function Pedhinamu() {
         }
         return age;
     };
+
+    // ✅ FINAL AGE OF MUKHYA (DOB first, else manual age)
+const getMukhyaFinalAge = () => {
+    if (form.mukhyaDob) {
+        return Number(calculateAge(form.mukhyaDob));
+    }
+    return Number(form.mukhyaAge || 0);
+};
 
 
 const calculateAgeAtDeath = (dob, dod) => {
@@ -237,8 +255,33 @@ const calculateAgeAtDeath = (dob, dod) => {
         }
     };
 
+
+    const handlePanchPhoto = (index, photo) => {
+    const updated = [...form.panchPhotos];
+    updated[index] = photo;
+    setForm({ ...form, panchPhotos: updated });
+};
+
   const handleSave = async () => {
     try {
+
+
+        // 🔴 PHOTO VALIDATION (MANDATORY)
+
+// Applicant photo
+if (!form.mukhyaPhoto) {
+    showError("અરજદારનો ફોટો ફરજિયાત છે");
+    return;
+}
+
+// Panch photos (3 required)
+for (let i = 0; i < 3; i++) {
+    if (!form.panchPhotos[i]) {
+        showError(`પંચ #${i + 1} નો ફોટો ફરજિયાત છે`);
+        return;
+    }
+}
+
 
         // ✅ MAIN PERSON NAME REQUIRED
 if (!form.mukhyaName || !form.mukhyaName.trim()) {
@@ -247,14 +290,38 @@ if (!form.mukhyaName || !form.mukhyaName.trim()) {
 }
 
 
-// ✅ AT LEAST ONE HEIR REQUIRED
-const validHeirs = form.heirs.filter(
-  (h) => h.name && h.name.trim()
-);
-
-if (validHeirs.length < 1) {
-  showError("ઓછામાં ઓછો એક વારસદાર દાખલ કરવો જરૂરી છે");
+// 🔴 ALL SELECTED HEIRS MUST BE FILLED
+if (form.heirs.length !== totalHeirs) {
+  showError("વારસદારોની સંખ્યા અને વિગતો મળતી નથી");
   return;
+}
+
+for (let i = 0; i < totalHeirs; i++) {
+  const h = form.heirs[i];
+
+  // Name required
+  if (!h.name || !h.name.trim()) {
+    showError(`વારસદાર #${i + 1} નું નામ જરૂરી છે`);
+    return;
+  }
+
+  // Relation required
+  if (!h.relation || !h.relation.trim()) {
+    showError(`વારસદાર #${i + 1} માટે સંબંધ પસંદ કરવો જરૂરી છે`);
+    return;
+  }
+
+  // DOB or Age required
+  if (!h.dobDisplay && !h.age) {
+    showError(`વારસદાર #${i + 1} માટે જન્મ તારીખ અથવા ઉંમર જરૂરી છે`);
+    return;
+  }
+
+  // DOB format check
+  if (h.dobDisplay && !validateDob(h.dobDisplay)) {
+    showError(`વારસદાર #${i + 1} માટે અમાન્ય જન્મ તારીખ`);
+    return;
+  }
 }
 
 
@@ -507,14 +574,18 @@ if (validHeirs.length < 1) {
         // -----------------------------
         const payload = {
             mukhya: {
-                name: form.mukhyaName,
-                age: form.mukhyaAge,
-                dob: form.mukhyaDob || "",
-                dobDisplay: form.mukhyaDobDisplay || "",
-                isDeceased: form.mukhyaIsDeceased || false,
-                dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
-                dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
-            },
+    name: form.mukhyaName,
+    age: form.mukhyaAge,
+    dob: form.mukhyaDob || "",
+    dobDisplay: form.mukhyaDobDisplay || "",
+    isDeceased: form.mukhyaIsDeceased || false,
+    dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
+    dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : "",
+
+    photo: form.mukhyaPhoto // 🔴 ADD THIS
+},
+panchPhotos: form.panchPhotos, // 🔴 ADD THIS
+
 
             heirs: form.heirs.map((h) => ({
                 name: h.name,
@@ -762,6 +833,31 @@ if (validHeirs.length < 1) {
                             />
                         </FormControl>
 
+                        <FormControl isRequired>
+  <FormLabel fontWeight="600">અરજદારનો ફોટો</FormLabel>
+
+  <Input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setForm(prev => ({
+        ...prev,
+        mukhyaPhoto: file
+      }));
+    }}
+  />
+
+  {form.mukhyaPhoto && (
+    <Text color="green.600" fontSize="sm">
+      ✔ ફોટો પસંદ થયો
+    </Text>
+  )}
+</FormControl>
+
+
                         <FormControl>
                             <FormLabel fontWeight="600">{t("birthDateAge")}</FormLabel>
 
@@ -965,27 +1061,23 @@ if (validHeirs.length < 1) {
   width="100%"
   rounded="xl"
 onClick={() => {
-  // 🔴 Minimum 1 heir required
+
+  // 🔴 MUKHYA AGE VALIDATION (STEP-1)
+  const mukhyaAge = getMukhyaFinalAge();
+  if (mukhyaAge < 18) {
+    showError("મુખિયા ની ઉંમર ઓછામાં ઓછી ૧૮  વર્ષ હોવી જરૂરી છે");
+    return;
+  }
+
+  // existing validation
   if (totalHeirs < 1) {
     showError("ઓછામાં ઓછો એક વારસદાર જરૂરી છે");
     return;
   }
 
-  // 🔴 Validate death vs birth
-  if (
-    form.mukhyaIsDeceased &&
-    form.mukhyaDobDisplay &&
-    form.mukhyaDodDisplay &&
-    !isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)
-  ) {
-    showError(
-      "કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ"
-    );
-    return;
-  }
-
   setStep(2);
 }}
+
 
 >
   {t("next")}
@@ -1003,6 +1095,35 @@ onClick={() => {
                     <Heading size="md" mb={4} color="green.700" borderLeft="4px solid #2A7F62" pl={3}>
                         {t("heirs")}
                     </Heading>
+
+                    <Box mb={6} p={4} bg="green.50" rounded="xl" border="1px solid #C6F6D5">
+  <Heading size="sm" mb={3} color="green.700">
+    પંચના ફોટા (ફરજિયાત)
+  </Heading>
+
+  {[0, 1, 2].map((i) => (
+    <FormControl key={i} mb={3} isRequired>
+      <FormLabel>પંચ #{i + 1}</FormLabel>
+
+      <Input
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          handlePanchPhoto(i, file);
+        }}
+      />
+
+      {form.panchPhotos[i] && (
+        <Text color="green.600" fontSize="sm">
+          ✔ ફોટો પસંદ થયો
+        </Text>
+      )}
+    </FormControl>
+  ))}
+</Box>
+
 
                     {form.heirs.map((h, i) => (
                         <Box key={i} p={4} bg="#F8FAF9" rounded="xl" borderWidth="1px" mb={4}>
