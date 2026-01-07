@@ -111,19 +111,25 @@ const fileInputRef = useRef(null);
 
 
 
-    const handleChange = (key, value) => {
-        setForm((prev) => {
-            const updated = { ...prev, [key]: value };
-            
-            // Clear bank and ddCheckNum when payment method is not bank
-            if (key === "paymentMethod" && value !== "bank") {
-                updated.bank = "";
-                updated.ddCheckNum = "";
-            }
-            
-            return updated;
-        });
-    };
+   const handleChange = (key, value) => {
+    setForm((prev) => {
+        const updated = { ...prev, [key]: value };
+
+        // 🔴 IMPORTANT FIX: reset category on type change
+        if (key === "vyavharType") {
+            updated.category = "";
+        }
+
+        // clear bank fields if not bank
+        if (key === "paymentMethod" && value !== "bank") {
+            updated.bank = "";
+            updated.ddCheckNum = "";
+        }
+
+        return updated;
+    });
+};
+
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -424,17 +430,42 @@ const cancelExcelUpload = () => {
 };
 
 
+const isCategoryValidForType = (type, category) => {
+    if (!type || !category) return false;
+
+    const list =
+        type === "aavak"
+            ? customCategories.aavak
+            : customCategories.javak;
+
+    return list.some((c) => c.name === category);
+};
+
+
+
     /* ------------------ Submit --------------------- */
     const handleSubmit = async () => {
-        if (!form.date || !form.name || !form.receiptPaymentNo || !form.vyavharType || !form.category || !form.amount || !form.paymentMethod || (form.paymentMethod === "bank" && !form.bank)) {
-            toast({
-                title: "કૃપા કરીને બધા જરૂરી ફીલ્ડ ભરો",
-                status: "error",
-                duration: 5000,
-                position: "top",
-            });
-            return;
-        }
+      if (
+    !form.date ||
+    !form.name ||
+    !form.receiptPaymentNo ||
+    !form.vyavharType ||
+    !form.category ||
+    !isCategoryValidForType(form.vyavharType, form.category) ||
+    !form.amount ||
+    !form.paymentMethod ||
+    (form.paymentMethod === "bank" && !form.bank)
+) {
+    toast({
+        title: "કૃપા કરીને યોગ્ય કેટેગરી પસંદ કરો",
+        description: "વ્યવહાર પ્રકાર મુજબ કેટેગરી ફરજિયાત છે",
+        status: "error",
+        duration: 3000,
+        position: "top",
+    });
+    return;
+}
+
 
         setLoading(true);
         try {

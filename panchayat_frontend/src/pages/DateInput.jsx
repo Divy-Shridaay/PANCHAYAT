@@ -67,36 +67,47 @@ const DateInput = ({
   })();
 
   /* ================= Manual Input Handler ================= */
-  const handleManualInput = (e) => {
-    const raw = e.target.value || "";
+ const handleManualInput = (e) => {
+  const raw = e.target.value || "";
 
-    if (raw.trim() === "") {
-      updateValue("", "");
-      return;
-    }
+  // clear
+  if (raw.trim() === "") {
+    updateValue("", "");
+    return;
+  }
 
-    // Gujarati → English
-    const converted = gujaratiToEnglishDigits(raw);
+  // Gujarati → English digits
+  const converted = gujaratiToEnglishDigits(raw);
 
-    // DD/MM/YYYY formatting
-    const display = formatDisplayDate(converted);
+  // format DD/MM/YYYY
+  const display = formatDisplayDate(converted);
 
-    // ISO conversion
+  // ✅ validate ONLY when full date entered
+  if (display.length === 10) {
     const iso = convertToISO(display);
 
-    // ❌ FUTURE DATE BLOCK
     if (iso) {
       const enteredDate = new Date(iso);
       const today = new Date();
+
+      // normalize both
+      enteredDate.setHours(0, 0, 0, 0);
       today.setHours(0, 0, 0, 0);
 
+      // ❌ block future date only
       if (enteredDate > today) {
-        return; // future date reject
+        return;
       }
-    }
 
-    updateValue(display, iso);
-  };
+      updateValue(display, iso);
+      return;
+    }
+  }
+
+  // ⏳ allow partial typing
+  updateValue(display, "");
+};
+
 
   return (
     <FormControl isRequired w="100%">

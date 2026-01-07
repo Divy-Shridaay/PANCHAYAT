@@ -320,47 +320,43 @@ const handlePedhinamuPrint = async () => {
        BASIC PLACEHOLDER REPLACEMENTS
     ----------------------------------------- */
 
-    const replacements = {
-      applicantName: form?.applicantName || "",
-      mukkamAddress: form?.mukkamAddress || "",
-      talatiName: form?.talatiName || "",
-      javadNo: form?.javadNo || "",
-      totalHeirsCount: form?.totalHeirsCount || "",
+const replacements = {
+  applicantName: form?.applicantName || "",
+  mukkamAddress: form?.mukkamAddress || "",
+  talatiName: form?.talatiName || "",
+  javadNo: form?.javadNo || "",
+  totalHeirsCount: form?.totalHeirsCount || "",
 
-      mukhyoName: pedhinamu?.mukhya?.name || "",
+  mukhyoName: pedhinamu?.mukhya?.name || "",
 
-      deathDate:
-        pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
-          ? formatDateToGujarati(pedhinamu.mukhya.dodDisplay)
-          : "",
+  // 🔥 ADD THESE (THIS WAS MISSING)
+mukhyoPrefix: pedhinamu?.mukhya?.isDeceased ? "મૈયત શ્રી" : "શ્રી",
 
-      notarySerialNo: form?.notarySerialNo || "",
-      notaryBookNo: form?.notaryBookNo || "",
-      notaryPageNo: form?.notaryPageNo || "",
-      notaryName: form?.notaryName || "",
-      notaryDate: form?.notaryDate
-        ? formatDateToGujarati(form.notaryDate)
-        : "",
+deathLine:
+  pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
+    ? ` (મૃત્યુ તા. ${pedhinamu.mukhya.dodDisplay})`
+    : "",
 
-      reasonForPedhinamu: form?.reasonForPedhinamu || "",
-      jaminSurveyNo: form?.jaminSurveyNo || "",
-      jaminKhatano: form?.jaminKhatano || "",
+  notarySerialNo: form?.notarySerialNo || "",
+  notaryBookNo: form?.notaryBookNo || "",
+  notaryPageNo: form?.notaryPageNo || "",
+  notaryName: form?.notaryName || "",
+  notaryDate: form?.notaryDate
+    ? formatDateToGujarati(form.notaryDate)
+    : "",
 
-      applicationDate: form?.applicationDate
-        ? formatDateToGujarati(form.applicationDate)
-        : formatDateToGujarati(pedhinamu.createdAt),
+  applicationDate: form?.applicationDate
+    ? formatDateToGujarati(form.applicationDate)
+    : formatDateToGujarati(pedhinamu.createdAt),
 
-      applicantMobile: formatMobile(form?.applicantMobile),
-      applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
-      
-    //   talukaName: form?.talukaName?.trim() ? form.talukaName : "કાલોલ",
-    //   districtName: form?.districtName?.trim() ? form.districtName : "ગાંધીનગર",
+  applicantMobile: formatMobile(form?.applicantMobile),
+  applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
 
-      // User data
-      taluko: user?.gam || "",
-      userTaluko: user?.taluko || "",
-      userJillo: user?.jillo || "",
-    };
+  taluko: user?.gam || "",
+  userTaluko: user?.taluko || "",
+  userJillo: user?.jillo || "",
+};
+
     console.log('userTaluko:', replacements.userTaluko);
     console.log('userJillo:', replacements.userJillo);
     console.log('taluko:', replacements.taluko);

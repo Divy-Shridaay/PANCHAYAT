@@ -19,6 +19,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import CameraCapture from "../components/CameraCapture";
 import { apiFetch } from "../utils/api.js";
+const API_BASE_URL = "http://localhost:5000";
 
 const gujaratiToEnglishDigits = (str) => {
   return str.replace(/[૦-૯]/g, (d) => "૦૧૨૩૪૫૬૭૮૯".indexOf(d));
@@ -255,7 +256,8 @@ useEffect(() => {
 
       // 🔥 Preview URL (display ke liye)
       applicantPhotoPreview: existingApplicantPhoto
-        ? `${import.meta.env.VITE_API_BASE_URL}${existingApplicantPhoto}`
+        ? `${API_BASE_URL}${existingApplicantPhoto}`
+
         : null,
 
       deceasedPersons: deceasedList.map((p) => ({
@@ -287,7 +289,8 @@ useEffect(() => {
 
               // 🔥 Preview URL
               photoPreview: p.photo
-                ? `${import.meta.env.VITE_API_BASE_URL}${p.photo}`
+                ? `${API_BASE_URL}${p.photo}`
+
                 : null,
             }))
           : [
@@ -521,13 +524,17 @@ useEffect(() => {
     }
   });
 
-  const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/pedhinamu/form/${id}`, {
+const res = await fetch(
+  `${API_BASE_URL}/api/pedhinamu/form/${id}`,
+  {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
     body: formData,
-  });
+  }
+);
+
 
   if (!res.ok) {
     toast({

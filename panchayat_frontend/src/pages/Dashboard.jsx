@@ -22,7 +22,6 @@ import { useEffect, useState } from "react";
 import { useApiFetch } from "../utils/api";
 import PaymentPopup from "../components/PaymentPopup";
 
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();

@@ -204,3 +204,53 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({ message: "પાસવર્ડ બદલી શકાયો નથી", error: err.message });
   }
 };
+
+
+
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        message: "જૂનો અને નવો પાસવર્ડ આપવો ફરજિયાત છે"
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({
+        message: "વપરાશકર્તા મળ્યો નથી"
+      });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "જૂનો પાસવર્ડ ખોટો છે"
+      });
+    }
+
+    const isSame = await bcrypt.compare(newPassword, user.password);
+    if (isSame) {
+      return res.status(400).json({
+        message: "નવો પાસવર્ડ જૂના પાસવર્ડ જેવો ન હોવો જોઈએ"
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return res.json({
+      message: "પાસવર્ડ સફળતાપૂર્વક બદલાયો છે"
+    });
+
+  } catch (err) {
+    console.error("CHANGE PASSWORD ERROR:", err);
+    return res.status(500).json({
+      message: "પાસવર્ડ બદલવામાં સમસ્યા આવી"
+    });
+  }
+};

@@ -62,6 +62,25 @@ export default function Pedhinamu() {
         }
         return age;
     };
+
+
+const calculateAgeAtDeath = (dob, dod) => {
+    if (!dob || !dod) return "";
+
+    const birth = new Date(dob);
+    const death = new Date(dod);
+
+    let age = death.getFullYear() - birth.getFullYear();
+    const m = death.getMonth() - birth.getMonth();
+
+    if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
+        age--;
+    }
+
+    return age >= 0 ? age : "";
+};
+
+    
     // Converts user input "20 1 2004" → "2004-01-20"
     const formatDisplayDate = (value) => {
         // Keep digits only
@@ -106,6 +125,22 @@ export default function Pedhinamu() {
 
         return true;
     };
+
+
+    const isDeathAfterBirth = (birthDisplay, deathDisplay) => {
+    if (!birthDisplay || !deathDisplay) return true;
+
+    const [bd, bm, by] = birthDisplay.split("/");
+    const [dd, dm, dy] = deathDisplay.split("/");
+
+    if (!bd || !bm || !by || !dd || !dm || !dy) return false;
+
+    const birth = new Date(`${by}-${bm}-${bd}`);
+    const death = new Date(`${dy}-${dm}-${dd}`);
+
+    return death > birth;
+};
+
 
 
     const generateHeirs = (count) => {
@@ -204,6 +239,25 @@ export default function Pedhinamu() {
 
   const handleSave = async () => {
     try {
+
+        // ✅ MAIN PERSON NAME REQUIRED
+if (!form.mukhyaName || !form.mukhyaName.trim()) {
+    showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
+    return;
+}
+
+
+// ✅ AT LEAST ONE HEIR REQUIRED
+const validHeirs = form.heirs.filter(
+  (h) => h.name && h.name.trim()
+);
+
+if (validHeirs.length < 1) {
+  showError("ઓછામાં ઓછો એક વારસદાર દાખલ કરવો જરૂરી છે");
+  return;
+}
+
+
         // -----------------------------
         // VALIDATION HELPERS
         // -----------------------------
@@ -227,31 +281,26 @@ export default function Pedhinamu() {
             return;
         }
 
-        if (
-            form.mukhyaIsDeceased &&
-            form.mukhyaDodDisplay &&
-            !validateDob(form.mukhyaDodDisplay)
-        ) {
-            showError(t("invalidDate"));
-            return;
-        }
+        if (form.mukhyaIsDeceased && form.mukhyaDodDisplay) {
+
+    if (!validateDob(form.mukhyaDodDisplay)) {
+        showError(t("invalidDate"));
+        return;
+    }
+
+    if (!isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)) {
+        showError(
+            "કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ."
+        );
+        return;
+    }
+}
 
         // -----------------------------
         // VALIDATE HEIRS (UPDATED LOGIC)
         // -----------------------------
 
-        // First, check if at least ONE heir has any data filled
-        const hasAnyHeirData = form.heirs.some(h => 
-            h.name?.trim() || 
-            h.relation?.trim() || 
-            h.age || 
-            h.dobDisplay
-        );
-
-        if (!hasAnyHeirData) {
-            showError(t("કૃપા કરીને  વારસદારની માહિતી ભરો")); // Add translation: "કૃપા કરીને ઓછામાં ઓછા એક વારસદારની માહિતી ભરો"
-            return;
-        }
+      
 
         for (let h of form.heirs) {
             // Skip completely empty heirs (no name, relation, age, or dob)
@@ -287,10 +336,20 @@ export default function Pedhinamu() {
                 return;
             }
 
-            if (h.isDeceased && h.dodDisplay && !validateDob(h.dodDisplay)) {
-                showError(`${h.name}: ${t("invalidDate")}`);
-                return;
-            }
+           if (h.isDeceased && h.dodDisplay) {
+
+    if (!validateDob(h.dodDisplay)) {
+        showError(`${h.name}: ${t("invalidDate")}`);
+        return;
+    }
+
+    if (!isDeathAfterBirth(h.dobDisplay, h.dodDisplay)) {
+        showError(
+            ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+        );
+        return;
+    }
+}
 
             // -----------------------------
             // SPOUSE VALIDATION
@@ -318,10 +377,21 @@ export default function Pedhinamu() {
                     return;
                 }
 
-                if (s.isDeceased && s.dodDisplay && !validateDob(s.dodDisplay)) {
-                    showError(`${s.name}: ${t("invalidDate")}`);
-                    return;
-                }
+               if (s.isDeceased && s.dodDisplay) {
+
+    if (!validateDob(s.dodDisplay)) {
+        showError(`${s.name}: ${t("invalidDate")}`);
+        return;
+    }
+
+    if (!isDeathAfterBirth(s.dobDisplay, s.dodDisplay)) {
+        showError(
+            ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+        );
+        return;
+    }
+}
+
             }
 
             // -----------------------------
@@ -351,10 +421,21 @@ export default function Pedhinamu() {
                     return;
                 }
 
-                if (c.isDeceased && c.dodDisplay && !validateDob(c.dodDisplay)) {
-                    showError(`${c.name}: ${t("invalidDate")}`);
-                    return;
-                }
+              if (c.isDeceased && c.dodDisplay) {
+
+    if (!validateDob(c.dodDisplay)) {
+        showError(`${c.name}: ${t("invalidDate")}`);
+        return;
+    }
+
+    if (!isDeathAfterBirth(c.dobDisplay, c.dodDisplay)) {
+        showError(
+            ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+        );
+        return;
+    }
+}
+
 
                 // -----------------------------
                 // CHILD SPOUSE VALIDATION
@@ -383,10 +464,7 @@ export default function Pedhinamu() {
                         return;
                     }
 
-                    if (cs.isDeceased && cs.dodDisplay && !validateDob(cs.dodDisplay)) {
-                        showError(`${cs.name}: ${t("invalidDate")}`);
-                        return;
-                    }
+                   
                 }
 
                 // -----------------------------
@@ -690,55 +768,59 @@ export default function Pedhinamu() {
                             <HStack spacing={3} align="center">
 
                                 {/* DATE INPUT */}
-                                <Input
-                                    type="text"
-                                    placeholder="DD/MM/YYYY"
-                                    size="lg"
-                                    bg="gray.100"
-                                    value={form.mukhyaDobDisplay || ""}
-                                    onChange={(e) => {
-                                        const display = formatDisplayDate(e.target.value);
+                              <Input
+  type="text"
+  placeholder="DD/MM/YYYY"
+  size="lg"
+  bg="gray.100"
+  value={form.mukhyaDobDisplay || ""}
+  onChange={(e) => {
+    const display = formatDisplayDate(e.target.value);
 
-                                        // Validate only when full DD/MM/YYYY entered
-                                        if (display.length === 10 && !validateDob(display)) {
-                                            showError(t("invalidDate"));
-                                            return;
-                                        }
+    if (display.length === 10 && !validateDob(display)) {
+        showError(t("invalidDate"));
+        return;
+    }
 
-                                        const iso = convertToISO(display);
+    const iso = convertToISO(display);
 
-                                        setForm({
-                                            ...form,
-                                            mukhyaDobDisplay: display,
-                                            mukhyaDob: iso,
-                                            mukhyaAge: iso ? calculateAge(iso) : ""
-                                        });
-                                    }}
-                                />
+    setForm({
+        ...form,
+        mukhyaDobDisplay: display,
+        mukhyaDob: iso,
+        mukhyaAge: form.mukhyaIsDeceased
+            ? form.mukhyaDod
+                ? calculateAgeAtDeath(iso, form.mukhyaDod)
+                : ""
+            : iso
+            ? calculateAge(iso)
+            : ""
+    });
+}}
+/>
 
-                                {/* OR / અથવા TEXT */}
-                                {/* <Text fontWeight="bold" color="green.700">
-                                    {t("orText")}
-                                </Text> */}
+{ 
+                               <Text fontWeight="bold" color="green.700">
+  {t("orText")}
+</Text> }
 
-                                {/* AGE INPUT */}
-                                {/* <Input
-                                    size="lg"
-                                    width="120px"
-                                    bg="gray.100"
-                                    placeholder={t("age")}
-                                    value={form.mukhyaAge}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
+<Input
+  size="lg"
+  width="120px"
+  bg="gray.100"
+  placeholder={t("age")}
+  value={form.mukhyaAge}
+  onChange={(e) => {
+    const value = e.target.value;
 
-                                        if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                            // showError(t("invalidAge"));
-                                            return;
-                                        }
+    if (value && !/^[0-9]{1,3}$/.test(value)) {
+      return;
+    }
 
-                                        setForm({ ...form, mukhyaAge: value });
-                                    }}
-                                /> */}
+    setForm({ ...form, mukhyaAge: value });
+  }}
+/>
+
 
                             </HStack>
                         </FormControl>
@@ -748,9 +830,22 @@ export default function Pedhinamu() {
                                 size="lg"
                                 bg="gray.100"
                                 value={form.mukhyaIsDeceased ? "dead" : "alive"}
-                                onChange={(e) =>
-                                    setForm({ ...form, mukhyaIsDeceased: e.target.value === "dead" })
-                                }
+                               onChange={(e) => {
+    const isDead = e.target.value === "dead";
+
+    setForm({
+        ...form,
+        mukhyaIsDeceased: isDead,
+        mukhyaAge: isDead
+            ? form.mukhyaDob && form.mukhyaDod
+                ? calculateAgeAtDeath(form.mukhyaDob, form.mukhyaDod)
+                : ""
+            : form.mukhyaDob
+            ? calculateAge(form.mukhyaDob)
+            : ""
+    });
+}}
+
                             >
                                 <option value="alive">{t("alive")}</option>
                                 <option value="dead">{t("deceased")}</option>
@@ -761,23 +856,34 @@ export default function Pedhinamu() {
                             <FormControl>
                                 <FormLabel fontWeight="600">{t("deathDate")}</FormLabel>
 
-                                <Input
-                                    type="text"
-                                    placeholder="DD/MM/YYYY"
-                                    size="lg"
-                                    bg="gray.100"
-                                    value={form.mukhyaDodDisplay || ""}
-                                    onChange={(e) => {
-                                        const display = formatDisplayDate(e.target.value);
-                                        const iso = convertToISO(display);
+                               <Input
+  type="text"
+  placeholder="DD/MM/YYYY"
+  size="lg"
+  bg="gray.100"
+  value={form.mukhyaDodDisplay || ""}
+  onChange={(e) => {
+      const display = formatDisplayDate(e.target.value);
 
-                                        setForm({
-                                            ...form,
-                                            mukhyaDodDisplay: display,
-                                            mukhyaDod: iso
-                                        });
-                                    }}
-                                />
+      if (display.length === 10 && !validateDob(display)) {
+          showError(t("invalidDate"));
+          return;
+      }
+
+      const iso = convertToISO(display);
+
+      setForm({
+          ...form,
+          mukhyaDodDisplay: display,
+          mukhyaDod: iso,
+          mukhyaAge:
+              form.mukhyaDob && iso
+                  ? calculateAgeAtDeath(form.mukhyaDob, iso)
+                  : ""
+      });
+  }}
+/>
+
                             </FormControl>
                         )}
 
@@ -853,16 +959,38 @@ export default function Pedhinamu() {
                                 onWheel={(e) => e.target.blur()}
                             />
                         </FormControl>
-                        <Button
-                            colorScheme="green"
-                            size="lg"
-                            width="100%"
-                            rounded="xl"
-                            isDisabled={!form.mukhyaName || !form.mukhyaAge || totalHeirs <= 0}
-                            onClick={() => setStep(2)}
-                        >
-                            {t("next")}
-                        </Button>
+                       <Button
+  colorScheme="green"
+  size="lg"
+  width="100%"
+  rounded="xl"
+onClick={() => {
+  // 🔴 Minimum 1 heir required
+  if (totalHeirs < 1) {
+    showError("ઓછામાં ઓછો એક વારસદાર જરૂરી છે");
+    return;
+  }
+
+  // 🔴 Validate death vs birth
+  if (
+    form.mukhyaIsDeceased &&
+    form.mukhyaDobDisplay &&
+    form.mukhyaDodDisplay &&
+    !isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)
+  ) {
+    showError(
+      "કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ"
+    );
+    return;
+  }
+
+  setStep(2);
+}}
+
+>
+  {t("next")}
+</Button>
+
                     </VStack>
 
                 </Box>
@@ -945,19 +1073,26 @@ export default function Pedhinamu() {
                                                 const updated = [...form.heirs];
                                                 updated[i].dobDisplay = display;
                                                 updated[i].dob = iso;
-                                                updated[i].age = iso ? calculateAge(iso) : "";
+                                             updated[i].age = updated[i].isDeceased
+    ? updated[i].dod
+        ? calculateAgeAtDeath(iso, updated[i].dod)
+        : ""
+    : iso
+    ? calculateAge(iso)
+    : "";
+
 
                                                 setForm({ ...form, heirs: updated });
                                             }}
                                         />
 
                                         {/* OR TEXT */}
-                                        {/* <Text fontWeight="bold" color="green.700">
+                                        <Text fontWeight="bold" color="green.700">
                                             {t("orText")}
-                                        </Text> */}
+                                        </Text>
 
                                         {/* AGE (Manual Entry) */}
-                                        {/* <Input
+                                        <Input
                                             size="lg"
                                             width="120px"
                                             bg="gray.100"
@@ -973,7 +1108,7 @@ export default function Pedhinamu() {
 
                                                 updateHeir(i, "age", value);
                                             }}
-                                        /> */}
+                                        />
 
                                     </HStack>
                                 </FormControl>
@@ -984,7 +1119,22 @@ export default function Pedhinamu() {
                                         size="lg"
                                         bg="gray.100"
                                         value={h.isDeceased ? "dead" : "alive"}
-                                        onChange={(e) => updateHeir(i, "isDeceased", e.target.value === "dead")}
+                                       onChange={(e) => {
+    const isDead = e.target.value === "dead";
+    const updated = [...form.heirs];
+
+    updated[i].isDeceased = isDead;
+    updated[i].age = isDead
+        ? updated[i].dob && updated[i].dod
+            ? calculateAgeAtDeath(updated[i].dob, updated[i].dod)
+            : ""
+        : updated[i].dob
+        ? calculateAge(updated[i].dob)
+        : "";
+
+    setForm({ ...form, heirs: updated });
+}}
+
                                     >
                                         <option value="alive">{t("alive")}</option>
                                         <option value="dead">{t("deceased")}</option>
@@ -1010,8 +1160,13 @@ export default function Pedhinamu() {
                                                     const iso = convertToISO(display);
 
                                                     const updated = structuredClone(form.heirs);
-                                                    updated[i].dodDisplay = display;
-                                                    updated[i].dod = iso;
+                                                  updated[i].dodDisplay = display;
+updated[i].dod = iso;
+updated[i].age =
+    updated[i].dob && iso
+        ? calculateAgeAtDeath(updated[i].dob, iso)
+        : "";
+
 
                                                     setForm({ ...form, heirs: updated });
                                                 }}
@@ -1104,19 +1259,27 @@ export default function Pedhinamu() {
                                                                     const u = [...form.heirs];
                                                                     u[i].subFamily.spouse.dobDisplay = display;
                                                                     u[i].subFamily.spouse.dob = iso;
-                                                                    u[i].subFamily.spouse.age = iso ? calculateAge(iso) : "";
+                                                                  u[i].subFamily.spouse.age =
+    u[i].subFamily.spouse.isDeceased
+        ? u[i].subFamily.spouse.dod
+            ? calculateAgeAtDeath(iso, u[i].subFamily.spouse.dod)
+            : ""
+        : iso
+        ? calculateAge(iso)
+        : "";
+
 
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
                                                             />
 
                                                             {/* OR TEXT */}
-                                                            {/* <Text fontWeight="bold" color="green.700">
+                                                            <Text fontWeight="bold" color="green.700">
                                                                 {t("orText")}
-                                                            </Text> */}
+                                                            </Text>
 
                                                             {/* SPOUSE AGE */}
-                                                            {/* <Input
+                                                            <Input
                                                                 size="lg"
                                                                 width="120px"
                                                                 bg="gray.100"
@@ -1136,7 +1299,7 @@ export default function Pedhinamu() {
 
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
-                                                            /> */}
+                                                            />
 
                                                         </HStack>
                                                     </FormControl>
@@ -1184,7 +1347,19 @@ export default function Pedhinamu() {
                                                         value={h.subFamily.spouse.isDeceased ? "dead" : "alive"}
                                                         onChange={(e) => {
                                                             const u = [...form.heirs];
-                                                            u[i].subFamily.spouse.isDeceased = e.target.value === "dead";
+                                                          const isDead = e.target.value === "dead";
+u[i].subFamily.spouse.isDeceased = isDead;
+u[i].subFamily.spouse.age = isDead
+    ? u[i].subFamily.spouse.dob && u[i].subFamily.spouse.dod
+        ? calculateAgeAtDeath(
+              u[i].subFamily.spouse.dob,
+              u[i].subFamily.spouse.dod
+          )
+        : ""
+    : u[i].subFamily.spouse.dob
+    ? calculateAge(u[i].subFamily.spouse.dob)
+    : "";
+
                                                             setForm({ ...form, heirs: u });
                                                         }}
                                                     >
@@ -1212,8 +1387,13 @@ export default function Pedhinamu() {
                                                                     const iso = convertToISO(display);
 
                                                                     const u = structuredClone(form.heirs);
-                                                                    u[i].subFamily.spouse.dodDisplay = display;
-                                                                    u[i].subFamily.spouse.dod = iso;
+                                                                   u[i].subFamily.spouse.dodDisplay = display;
+u[i].subFamily.spouse.dod = iso;
+u[i].subFamily.spouse.age =
+    u[i].subFamily.spouse.dob && iso
+        ? calculateAgeAtDeath(u[i].subFamily.spouse.dob, iso)
+        : "";
+
 
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
@@ -1358,7 +1538,18 @@ export default function Pedhinamu() {
                                                                                         const u = structuredClone(form.heirs);
                                                                                         u[i].subFamily.children[ci].spouse.dobDisplay = display;
                                                                                         u[i].subFamily.children[ci].spouse.dob = iso;
-                                                                                        u[i].subFamily.children[ci].spouse.age = iso ? calculateAge(iso) : "";
+                                                                                        u[i].subFamily.children[ci].spouse.age =
+    u[i].subFamily.children[ci].spouse.isDeceased
+        ? u[i].subFamily.children[ci].spouse.dod
+            ? calculateAgeAtDeath(
+                  iso,
+                  u[i].subFamily.children[ci].spouse.dod
+              )
+            : ""
+        : iso
+        ? calculateAge(iso)
+        : "";
+
 
                                                                                         setForm({ ...form, heirs: u });
                                                                                     }}
@@ -1372,7 +1563,7 @@ export default function Pedhinamu() {
                                                                                 {/* SPOUSE AGE */}
                                                                                 <FormControl w="150px">
                                                                                     <FormLabel>{t("spouseAge")}</FormLabel>
-                                                                                    {/* <Input
+                                                                                    <Input
                                                                                         size="lg"
                                                                                         bg="gray.100"
                                                                                         value={child.spouse?.age || ""}
@@ -1390,7 +1581,7 @@ export default function Pedhinamu() {
                                                                                             u[i].subFamily.children[ci].spouse.age = value;
                                                                                             setForm({ ...form, heirs: u });
                                                                                         }}
-                                                                                    /> */}
+                                                                                    />
                                                                                 </FormControl>
 
                                                                             </HStack>
@@ -1437,12 +1628,26 @@ export default function Pedhinamu() {
                                                                             size="lg"
                                                                             bg="gray.100"
                                                                             value={child.spouse?.isDeceased ? "dead" : "alive"}
-                                                                            onChange={(e) => {
-                                                                                const u = structuredClone(form.heirs);
-                                                                                u[i].subFamily.children[ci].spouse.isDeceased =
-                                                                                    e.target.value === "dead";
-                                                                                setForm({ ...form, heirs: u });
-                                                                            }}
+                                                                           onChange={(e) => {
+    const u = structuredClone(form.heirs);
+    const isDead = e.target.value === "dead";
+
+    u[i].subFamily.children[ci].spouse.isDeceased = isDead;
+    u[i].subFamily.children[ci].spouse.age = isDead
+        ? u[i].subFamily.children[ci].spouse.dob &&
+          u[i].subFamily.children[ci].spouse.dod
+            ? calculateAgeAtDeath(
+                  u[i].subFamily.children[ci].spouse.dob,
+                  u[i].subFamily.children[ci].spouse.dod
+              )
+            : ""
+        : u[i].subFamily.children[ci].spouse.dob
+        ? calculateAge(u[i].subFamily.children[ci].spouse.dob)
+        : "";
+
+    setForm({ ...form, heirs: u });
+}}
+
                                                                         >
                                                                             <option value="alive">{t("alive")}</option>
                                                                             <option value="dead">{t("deceased")}</option>
@@ -1469,8 +1674,16 @@ export default function Pedhinamu() {
                                                                                         const iso = convertToISO(display);
 
                                                                                         const u = structuredClone(form.heirs);
-                                                                                        u[i].subFamily.children[ci].spouse.dodDisplay = display;
-                                                                                        u[i].subFamily.children[ci].spouse.dod = iso;
+                                                                                      u[i].subFamily.children[ci].spouse.dodDisplay = display;
+u[i].subFamily.children[ci].spouse.dod = iso;
+u[i].subFamily.children[ci].spouse.age =
+    u[i].subFamily.children[ci].spouse.dob && iso
+        ? calculateAgeAtDeath(
+              u[i].subFamily.children[ci].spouse.dob,
+              iso
+          )
+        : "";
+
 
                                                                                         setForm({ ...form, heirs: u });
                                                                                     }}
@@ -1625,7 +1838,18 @@ export default function Pedhinamu() {
                                                                                                         const u = structuredClone(form.heirs);
                                                                                                         u[i].subFamily.children[ci].children[gi].dobDisplay = display;
                                                                                                         u[i].subFamily.children[ci].children[gi].dob = iso;
-                                                                                                        u[i].subFamily.children[ci].children[gi].age = iso ? calculateAge(iso) : "";
+                                                                                                        u[i].subFamily.children[ci].children[gi].age =
+    u[i].subFamily.children[ci].children[gi].isDeceased
+        ? u[i].subFamily.children[ci].children[gi].dod
+            ? calculateAgeAtDeath(
+                  iso,
+                  u[i].subFamily.children[ci].children[gi].dod
+              )
+            : ""
+        : iso
+        ? calculateAge(iso)
+        : "";
+
 
                                                                                                         setForm({ ...form, heirs: u });
                                                                                                     }}
@@ -1637,7 +1861,7 @@ export default function Pedhinamu() {
                                                                                                 </Text> */}
 
                                                                                                 {/* MANUAL AGE INPUT */}
-                                                                                                {/* <Input
+                                                                                                <Input
                                                                                                     size="lg"
                                                                                                     width="120px"
                                                                                                     bg="gray.100"
@@ -1657,7 +1881,7 @@ export default function Pedhinamu() {
 
                                                                                                         setForm({ ...form, heirs: u });
                                                                                                     }}
-                                                                                                /> */}
+                                                                                                />
 
                                                                                             </HStack>
                                                                                         </FormControl>
@@ -1671,8 +1895,20 @@ export default function Pedhinamu() {
                                                                                                 value={gc.isDeceased ? "dead" : "alive"}
                                                                                                 onChange={(e) => {
                                                                                                     const u = structuredClone(form.heirs);
-                                                                                                    u[i].subFamily.children[ci].children[gi].isDeceased =
-                                                                                                        e.target.value === "dead";
+                                                                                                    const isDead = e.target.value === "dead";
+u[i].subFamily.children[ci].children[gi].isDeceased = isDead;
+u[i].subFamily.children[ci].children[gi].age = isDead
+    ? u[i].subFamily.children[ci].children[gi].dob &&
+      u[i].subFamily.children[ci].children[gi].dod
+        ? calculateAgeAtDeath(
+              u[i].subFamily.children[ci].children[gi].dob,
+              u[i].subFamily.children[ci].children[gi].dod
+          )
+        : ""
+    : u[i].subFamily.children[ci].children[gi].dob
+    ? calculateAge(u[i].subFamily.children[ci].children[gi].dob)
+    : "";
+
                                                                                                     setForm({ ...form, heirs: u });
                                                                                                 }}
                                                                                             >
@@ -1690,22 +1926,29 @@ export default function Pedhinamu() {
                                                                                                         bg="gray.100"
                                                                                                         value={gc.dodDisplay || ""}
                                                                                                         onChange={(e) => {
-                                                                                                            const display = formatDisplayDate(e.target.value);
+    const display = formatDisplayDate(e.target.value);
 
-                                                                                                            // Validate proper date
-                                                                                                            if (display.length === 10 && !validateDob(display)) {
-                                                                                                                showError(t("invalidDate"));
-                                                                                                                return;
-                                                                                                            }
+    if (display.length === 10 && !validateDob(display)) {
+        showError(t("invalidDate"));
+        return;
+    }
 
-                                                                                                            const iso = convertToISO(display);
+    const iso = convertToISO(display);
 
-                                                                                                            const u = structuredClone(form.heirs);
-                                                                                                            u[i].subFamily.children[ci].children[gi].dodDisplay = display;
-                                                                                                            u[i].subFamily.children[ci].children[gi].dod = iso;
+    const u = structuredClone(form.heirs);
+    u[i].subFamily.children[ci].children[gi].dodDisplay = display;
+    u[i].subFamily.children[ci].children[gi].dod = iso;
+    u[i].subFamily.children[ci].children[gi].age =
+        u[i].subFamily.children[ci].children[gi].dob && iso
+            ? calculateAgeAtDeath(
+                  u[i].subFamily.children[ci].children[gi].dob,
+                  iso
+              )
+            : "";
 
-                                                                                                            setForm({ ...form, heirs: u });
-                                                                                                        }}
+    setForm({ ...form, heirs: u });
+}}
+
                                                                                                     />
                                                                                                 </FormControl>
                                                                                             )}
@@ -1807,19 +2050,30 @@ export default function Pedhinamu() {
                                                                             const u = structuredClone(form.heirs);
                                                                             u[i].subFamily.children[ci].dobDisplay = display;
                                                                             u[i].subFamily.children[ci].dob = iso;
-                                                                            u[i].subFamily.children[ci].age = iso ? calculateAge(iso) : "";
+                                                                            u[i].subFamily.children[ci].age =
+    u[i].subFamily.children[ci].isDeceased &&
+    u[i].subFamily.children[ci].dod
+        ? calculateAgeAtDeath(
+              iso,
+              u[i].subFamily.children[ci].dod
+          )
+        : iso
+        ? calculateAge(iso)
+        : "";
 
+
+                                                                            
                                                                             setForm({ ...form, heirs: u });
                                                                         }}
                                                                     />
 
                                                                     {/* OR TEXT */}
-                                                                    {/* <Text fontWeight="bold" color="green.700">
+                                                                    <Text fontWeight="bold" color="green.700">
                                                                         {t("orText")}
-                                                                    </Text> */}
+                                                                    </Text>
 
                                                                     {/* CHILD AGE */}
-                                                                    {/* <Input
+                                                                    <Input
                                                                         size="lg"
                                                                         width="120px"
                                                                         bg="gray.100"
@@ -1839,7 +2093,7 @@ export default function Pedhinamu() {
 
                                                                             setForm({ ...form, heirs: u });
                                                                         }}
-                                                                    /> */}
+                                                                    />
                                                                 </HStack>
                                                             </FormControl>
                                                         </HStack>
@@ -1852,7 +2106,20 @@ export default function Pedhinamu() {
                                                                 value={child.isDeceased ? "dead" : "alive"}
                                                                 onChange={(e) => {
                                                                     const u = structuredClone(form.heirs);
-                                                                    u[i].subFamily.children[ci].isDeceased = e.target.value === "dead";
+                                                                    const isDead = e.target.value === "dead";
+u[i].subFamily.children[ci].isDeceased = isDead;
+u[i].subFamily.children[ci].age = isDead
+    ? u[i].subFamily.children[ci].dob &&
+      u[i].subFamily.children[ci].dod
+        ? calculateAgeAtDeath(
+              u[i].subFamily.children[ci].dob,
+              u[i].subFamily.children[ci].dod
+          )
+        : ""
+    : u[i].subFamily.children[ci].dob
+    ? calculateAge(u[i].subFamily.children[ci].dob)
+    : "";
+
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
                                                             >
@@ -1880,8 +2147,15 @@ export default function Pedhinamu() {
                                                                             const iso = convertToISO(display);
 
                                                                             const u = structuredClone(form.heirs);
-                                                                            u[i].subFamily.children[ci].dodDisplay = display;
-                                                                            u[i].subFamily.children[ci].dod = iso;
+                                                                         u[i].subFamily.children[ci].dodDisplay = display;
+u[i].subFamily.children[ci].dod = iso;
+u[i].subFamily.children[ci].age =
+    u[i].subFamily.children[ci].dob && iso
+        ? calculateAgeAtDeath(
+              u[i].subFamily.children[ci].dob,
+              iso
+          )
+        : "";
 
                                                                             setForm({ ...form, heirs: u });
                                                                         }}
@@ -1929,4 +2203,4 @@ export default function Pedhinamu() {
 
         </Box>
     );
-}
+}   

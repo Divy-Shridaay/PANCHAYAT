@@ -1,66 +1,104 @@
 import { useToast } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+/**
+ * 🌐 API BASE URL
+ * Works with or without .env
+ */
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-// Custom fetch wrapper that handles authentication and trial expiration
+/**
+ * 🔧 Safely join base URL + path
+ */
+const buildUrl = (base, path) => {
+  if (!path) return base;
+  if (path.startsWith("http")) return path;
+  return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+};
+
+/**
+ * 🔑 Core apiFetch function
+ */
 export const apiFetch = async (url, options = {}, navigate, toast) => {
   const token = localStorage.getItem("token");
+  const fullUrl = buildUrl(API_BASE_URL, url);
 
-  // Prepend base URL if URL doesn't start with http
-  const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-  const defaultOptions = {
+  const fetchOptions = {
+    method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
     },
     ...options,
   };
 
   try {
-    const response = await fetch(fullUrl, defaultOptions);
-    const data = await response.json();
+    const response = await fetch(fullUrl, fetchOptions);
 
-    // Handle trial expiration
-    if (response.status === 403 && data.trialExpired) {
-      toast({
+    // ✅ Safe JSON parse (prevents crashes)
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
+    // 🔴 Unauthorized → force logout
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      navigate?.("/login");
+      return { response, data };
+    }
+
+    // 🔴 Trial expired handling
+    if (response.status === 403 && data?.trialExpired) {
+      toast?.({
         title: "ટ્રાયલ સમયસમાપ્તિ થઈ ગઈ છે",
-        description: data.message,
+        description: data.message || "",
         status: "warning",
         duration: 5000,
         isClosable: true,
         position: "top",
       });
-      // Clear token and redirect to login
+
       localStorage.removeItem("token");
       localStorage.removeItem("username");
-      setTimeout(() => navigate("/login"), 2000);
-      throw new Error("Trial expired");
+
+      setTimeout(() => {
+        navigate?.("/login");
+      }, 2000);
+
+      return { response, data };
     }
 
-    // Handle other auth errors
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      navigate("/login");
-      throw new Error("Unauthorized");
-    }
-
+    // ✅ Normal return (even for other 4xx/5xx)
     return { response, data };
+
   } catch (error) {
-    if (error.message !== "Trial expired" && error.message !== "Unauthorized") {
-      console.error("API Error:", error);
-    }
+    console.error("API / NETWORK ERROR:", error);
+
+    toast?.({
+      title: "સર્વર સાથે કનેક્શન શક્ય નથી",
+      status: "error",
+      duration: 4000,
+      isClosable: true,
+      position: "top",
+    });
+
     throw error;
   }
 };
 
-// Hook to use apiFetch with navigation and toast
+/**
+ * 🪝 Hook wrapper (NO breaking change)
+ */
 export const useApiFetch = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  return (url, options) => apiFetch(url, options, navigate, toast);
+  return (url, options = {}) =>
+    apiFetch(url, options, navigate, toast);
 };

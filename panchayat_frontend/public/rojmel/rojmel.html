@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <title>નમૂનો નં. ૫ સામાન્ય રોકડમેળ</title>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;700&display=swap');
 
@@ -15,6 +16,13 @@ body {
 h3, h4 {
     text-align: center;
     margin: 4px 0;
+}
+
+/* ✅ SAFE UNDERLINE FOR PRINT / PDF */
+.underline {
+    display: inline-block;
+    padding-bottom: 2px;
+    border-bottom: 2px solid #000;
 }
 
 .table-wrapper {
@@ -85,56 +93,64 @@ th {
 
 <body>
 
-<h3>નમૂનો નં. ૫ સામાન્ય રોકડમેળ</h3>
+<h3>
+    નમૂનો નં. ૫ 
+    <span class="underline">સામાન્ય રોકડમેળ</span>
+</h3>
+
 <h4>ગુજરાત રાજયના પંચાયતના સુધારેલા નિયમ ૫ મુજબ</h4>
-<h3>{{taluko}} : ગ્રામ  પંચાયતનો સને {{yearRange}} ની તારીખ {{dateRange}} ના રોજ નો સામાન્ય રોકડમેળ</h3>
+
+<h3>
+    <span class="underline">{{taluko}}</span> : ગ્રામ પંચાયતનો  
+    સને <span class="underline">{{yearRange}}</span>  
+    ની તારીખ <span class="underline">{{dateRange}}</span>  
+    ના રોજ નો સામાન્ય રોકડમેળ
+</h3>
+
 <h4 style="text-align: right; margin-right: 20px;">ઉધાર</h4>
 
 <div class="table-wrapper">
 <table border="1" cellspacing="0" cellpadding="3">
-  <thead>
+    <thead>
 
-    <!-- ROW 1: Main headers -->
-    <tr>
-      <th rowspan="3">પાવતી નં.</th>
-      <th colspan="{{totalIncomeCols}}">રકમ આવી તેની વિગત</th>
-      <th rowspan="3">કુલ રકમ</th>
-      <th rowspan="3">ચેક નં.</th>
-      <th rowspan="3">વાઉચર નં.</th>
-      <th colspan="2">નાણાં આપ્યાની વિગત</th>
-      
-      <th rowspan="3">ખાતાનું મઠાડું</th>
-      <th rowspan="3">કુલ રકમ</th>
-    </tr>
+        <!-- ROW 1 -->
+        <tr>
+            <th rowspan="3">પાવતી નં.</th>
+            <th colspan="{{totalIncomeCols}}">રકમ આવી તેની વિગત</th>
+            <th rowspan="3">કુલ રકમ</th>
+            <th rowspan="3">ચેક નં.</th>
+            <th rowspan="3">વાઉચર નં.</th>
+            <th colspan="2">નાણાં આપ્યાની વિગત</th>
+            <th rowspan="3">ખાતાનું મઠાડું</th>
+            <th rowspan="3">કુલ રકમ</th>
+        </tr>
 
-    <!-- ROW 2: Sub headers -->
-    <tr>
-      <th rowspan="2">કોના તરફથી આવી</th>
-      <th colspan="{{incomeColspan}}">શા ખાતે મળ્યા</th>
-      <th rowspan="2">કોને આપ્યા</th>
-      <th rowspan="2">શા બાબતના આપ્યા</th>
-      <!-- <th colspan="2">સી.સી.ડી ખર્ચ</th> -->
-    </tr>
+        <!-- ROW 2 -->
+        <tr>
+            <th rowspan="2">કોના તરફથી આવી</th>
+            <th colspan="{{incomeColspan}}">શા ખાતે મળ્યા</th>
+            <th rowspan="2">કોને આપ્યા</th>
+            <th rowspan="2">શા બાબતના આપ્યા</th>
+        </tr>
 
-    <!-- ROW 3: Dynamic income category headers -->
-    <tr>
-      {{incomeHeaders}}
-      <!-- <th>સી.સી.ડી ખર્ચ</th>
-      <th>કામ</th> -->
-    </tr>
+        <!-- ROW 3 -->
+        <tr>
+            {{incomeHeaders}}
+        </tr>
 
-  </thead>
+    </thead>
 
-  <tbody>
-    {{tableRows}}
-  </tbody>
+    <tbody>
+        {{tableRows}}
+    </tbody>
 </table>
 </div>
 
-<!-- તપસીલ Section -->
+<!-- 🔹 તપસીલ -->
 <div class="footer-section">
-    <h3 style="text-align: left; margin: 20px 0 10px 0;">તપસીલ  : -</h3>
-    <table class="footer-table" border="1" cellspacing="0" cellpadding="5">
+    <h3 style="text-align:left; margin: 20px 0 10px;">તપસીલ : -</h3>
+
+    <table class="footer-table">
         <thead>
             <tr>
                 <th>અ. નં.</th>
@@ -150,7 +166,6 @@ th {
         </tbody>
     </table>
 </div>
-
 
 </body>
 </html>

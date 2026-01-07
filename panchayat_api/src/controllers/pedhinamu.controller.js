@@ -1,6 +1,26 @@
 import Pedhinamu from "../models/Pedhinamu.js";
 import PedhinamuFormDetails from "../models/PedhinamuFormDetails.js";
 
+
+
+// ✅ Helper: prefix + death line for deceased / alive
+function getPrefixAndDeathLine(isDeceased, dodDisplay) {
+  if (isDeceased) {
+    return {
+      prefix: "મૈયત શ્રી",
+      deathLine: dodDisplay
+        ? ` (મૃત્યુ તા. ${dodDisplay})`
+        : " (મૃત્યુ પામેલ)"
+    };
+  }
+
+  return {
+    prefix: "શ્રી",
+    deathLine: ""
+  };
+}
+
+
 export const createPedhinamu = async (req, res) => {
   try {
     const d = req.body;
@@ -87,11 +107,12 @@ export const createPedhinamu = async (req, res) => {
 
     const saved = await Pedhinamu.create(data);
 
-    res.json({
-      success: true,
-      message: "Pedhinamu saved successfully",
-      data: saved
-    });
+res.json({
+  success: true,
+  message: "Pedhinamu saved successfully",
+  data: saved
+});
+
 
   } catch (err) {
     console.log("PEDHINAMU SAVE ERROR:", err);
@@ -392,4 +413,8 @@ export const softDeletePedhinamu = async (req, res) => {
     console.log("DELETE ERROR:", err);
     res.status(500).json({ error: "Failed to delete record" });
   }
+
+
+
+  
 };

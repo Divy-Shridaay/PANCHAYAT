@@ -60,14 +60,33 @@ const hasRecordsInRange = (records, fromDate, toDate) => {
 
 const isFromAfterTo = (from, to) => {
     if (!from || !to) return false;
-    return new Date(convertToISO(from)) > new Date(convertToISO(to));
+    if (from.length !== 10 || to.length !== 10) return false; // 🔥 IMPORTANT
+
+    const fromISO = convertToISO(from);
+    const toISO = convertToISO(to);
+    if (!fromISO || !toISO) return false;
+
+    const f = new Date(fromISO);
+    const t = new Date(toISO);
+
+    f.setHours(0,0,0,0);
+    t.setHours(0,0,0,0);
+
+    return f > t;
 };
 
 const isFutureDate = (date) => {
-    if (!date) return false;
-    const selected = new Date(convertToISO(date));
+    if (!date || date.length !== 10) return false; // 🔥 IMPORTANT
+
+    const iso = convertToISO(date);
+    if (!iso) return false;
+
+    const selected = new Date(iso);
     const today = new Date();
+
+    selected.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
+
     return selected > today;
 };
 
@@ -75,7 +94,13 @@ const handleReportChange = (key, value) => {
     setReport((prev) => {
         const updated = { ...prev, [key]: value };
 
-        // ❌ Future date not allowed
+        // ✅ Allow typing until date is complete
+        if ((key === "from" || key === "to") && value.length < 10) {
+            dateErrorShownRef.current = false;
+            return updated;
+        }
+
+        // ❌ Future date check (only full date)
         if (isFutureDate(value)) {
             if (!dateErrorShownRef.current) {
                 toast({
@@ -90,10 +115,10 @@ const handleReportChange = (key, value) => {
             return prev;
         }
 
-        // ❌ From > To not allowed
+        // ❌ From > To check (only when BOTH complete)
         if (
-            updated.from &&
-            updated.to &&
+            updated.from?.length === 10 &&
+            updated.to?.length === 10 &&
             isFromAfterTo(updated.from, updated.to)
         ) {
             if (!dateErrorShownRef.current) {
@@ -109,11 +134,11 @@ const handleReportChange = (key, value) => {
             return prev;
         }
 
-        // ✅ Sab sahi → reset flag
         dateErrorShownRef.current = false;
         return updated;
     });
 };
+
 
 
 
@@ -129,12 +154,28 @@ const handleReportChange = (key, value) => {
         return display.replace(/\d/g, (d) => guj(d));
     };
 
-    const getGujaratiFinancialYear = (dateRange) => {
-        const year = Number(dateRange.substring(0, 4));
-        const fyStart = year - 1;
-        const fyEnd = year;
-        return `${guj(fyStart)}–${guj(fyEnd)}`;
-    };
+    const getGujaratiFinancialYear = (isoDate) => {
+    if (!isoDate) return "";
+
+    const d = new Date(isoDate);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1; // 1–12
+
+    let fyStart, fyEnd;
+
+    if (month < 4) {
+        // Jan–Mar → previous FY
+        fyStart = year - 1;
+        fyEnd = year;
+    } else {
+        // Apr–Dec → current FY
+        fyStart = year;
+        fyEnd = year + 1;
+    }
+
+    return `${guj(fyStart)}–${guj(fyEnd)}`;
+};
+
 
     const formatDisplayDate = (input) => {
         const digits = input.replace(/\D/g, "").slice(0, 8);
@@ -245,7 +286,9 @@ if (!hasValidRecords) {
             if (!templateRes.ok) throw new Error("Template missing");
 
             let htmlTemplate = await templateRes.text();
-            const fyGujarati = getGujaratiFinancialYear(fromDate);
+           const fyGujarati = getGujaratiFinancialYear(fromDate);
+
+
 
             htmlTemplate = htmlTemplate
                 .replace("{{taluko}}", talukoName)
@@ -260,9 +303,15 @@ if (!hasValidRecords) {
                 .replace("{{rows}}", rowsHtml);
 
             const win = window.open("", "_blank", "width=900,height=700");
+            setLoading(false);
+
             win.document.write(htmlTemplate);
             win.document.close();
-            setTimeout(() => win.print(), 500);
+         setTimeout(() => {
+  win.focus();   // 🔥 IMPORTANT LINE
+  win.print();
+}, 500);
+
 
             setLoading(false);
             return;
@@ -567,7 +616,9 @@ if (!hasValidRecords) {
             const templateRes = await fetch(templateFile);
             let htmlTemplate = await templateRes.text();
 
-            const fyGujarati = getGujaratiFinancialYear(fromDate);
+          const fyGujarati = getGujaratiFinancialYear(fromDate);
+
+
 
             htmlTemplate = htmlTemplate
                 .replace("{{taluko}}", talukoName)
@@ -583,9 +634,15 @@ if (!hasValidRecords) {
                 .replace("{{accountTransferRows}}", accountTransferRows);
 
             const win = window.open("", "_blank", "width=1200,height=800");
+            setLoading(false);
+
             win.document.write(htmlTemplate);
             win.document.close();
-            setTimeout(() => win.print(), 500);
+            setTimeout(() => {
+  win.focus();   // 🔥 IMPORTANT LINE
+  win.print();
+}, 500);
+
 
             setLoading(false);
             return;
@@ -601,7 +658,13 @@ if (!hasValidRecords) {
         const fromDateObj = new Date(fromDate);
 
         // Fetch data from beginning of the year for accurate carry-forward
-        const yearStart = new Date(fromDateObj.getFullYear(), 0, 1);
+        const fyStartYear =
+    fromDateObj.getMonth() + 1 < 4
+        ? fromDateObj.getFullYear() - 1
+        : fromDateObj.getFullYear();
+
+const yearStart = new Date(fyStartYear, 3, 1); // April 1 ✅
+
         const historicalFromDate = yearStart.toISOString().slice(0, 10);
 
         const historicalQs = `?vyavharType=${report.type}&from=${historicalFromDate}&to=${toDate}`;
@@ -771,9 +834,15 @@ if (!hasValidRecords) {
                 .replace(/{{closingBalance}}/g, guj(closingBalance));
 
             const win = window.open("", "_blank", "width=1200,height=800");
+            setLoading(false);
+
             win.document.write(htmlTemplate);
             win.document.close();
-            setTimeout(() => win.print(), 500);
+            setTimeout(() => {
+  win.focus();   // 🔥 IMPORTANT LINE
+  win.print();
+}, 500);
+
             setLoading(false);
             return;
         }
@@ -852,7 +921,9 @@ if (!hasValidRecords) {
         selectedMonths.forEach((monthKey, mIdx) => {
             const mg = monthGroups[monthKey];
             const [year, m] = monthKey.split("-");
-            const fyGujarati = getGujaratiFinancialYear(`${year}-01-01`);
+          const fyGujarati = getGujaratiFinancialYear(`${year}-${m}-01`);
+
+
             let pageHTML = htmlTemplate
                 .replace(/{{yearRange}}/g, fyGujarati)
                 .replace(/{{taluko}}/g, talukoName)
@@ -917,9 +988,15 @@ if (!hasValidRecords) {
         });
 
         const win = window.open("", "_blank", "width=1200,height=800");
+        setLoading(false);
+
         win.document.write(allPagesHTML);
         win.document.close();
-        setTimeout(() => win.print(), 500);
+        setTimeout(() => {
+  win.focus();   // 🔥 IMPORTANT LINE
+  win.print();
+}, 500);
+
 
     } catch (err) {
         console.error("Print error:", err);
