@@ -52,6 +52,9 @@ import PdfViewer from "./pages/settings/help/PdfViewer";
 import ChangePassword from "./pages/settings/ChangePassword";
 
 
+import CategorySettings from "./pages/settings/CategorySettings";
+
+
 
 export default function App() {
   return (
@@ -96,6 +99,9 @@ export default function App() {
           path="/settings/profile"
           element={<PrivateRoute><ProfileSettings /></PrivateRoute>}
         />
+
+        <Route path="/settings/categories" element={<CategorySettings />} />
+
 
         <Route
           path="/settings/security"

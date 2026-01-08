@@ -43,11 +43,14 @@ export default function Pedhinamu() {
     const [step, setStep] = useState(1);
     const [totalHeirs, setTotalHeirs] = useState(0);
 
-    const [form, setForm] = useState({
-        mukhyaName: "",
-        mukhyaAge: "",
-        heirs: []
-    });
+const [form, setForm] = useState({
+    mukhyaName: "",
+    mukhyaAge: "",
+    heirs: [],
+
+   
+});
+
     // Loader for edit mode
     const [initialLoading, setInitialLoading] = useState(!!id);
 
@@ -149,6 +152,17 @@ const calculateAgeAtDeath = (dob, dod) => {
     return death > birth;
 };
 
+const requireDeathDate = (isDeceased, dodDisplay, name = "") => {
+    if (isDeceased && !dodDisplay) {
+        showError(
+            name
+                ? `${name} માટે મૃત્યુ તારીખ ફરજિયાત છે`
+                : "મૃત વ્યક્તિ માટે મૃત્યુ તારીખ ફરજિયાત છે"
+        );
+        return false;
+    }
+    return true;
+};
 
 
     const generateHeirs = (count) => {
@@ -313,20 +327,23 @@ for (let i = 0; i < totalHeirs; i++) {
             return;
         }
 
-        if (form.mukhyaIsDeceased && form.mukhyaDodDisplay) {
+        // 🔴 MUKHYA DEATH DATE REQUIRED
+if (!requireDeathDate(form.mukhyaIsDeceased, form.mukhyaDodDisplay, "મુખિયા")) {
+    return;
+}
 
+if (form.mukhyaIsDeceased && form.mukhyaDodDisplay) {
     if (!validateDob(form.mukhyaDodDisplay)) {
         showError(t("invalidDate"));
         return;
     }
 
     if (!isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)) {
-        showError(
-            "કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ."
-        );
+        showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
         return;
     }
 }
+
 
         // -----------------------------
         // VALIDATE HEIRS (UPDATED LOGIC)
@@ -351,6 +368,12 @@ for (let i = 0; i < totalHeirs; i++) {
                 showError(`${h.name}: ${t("સંબંધ પસંદ કરવો જરૂરી છે")}`);
                 return;
             }
+
+
+            // 🔴 HEIR DEATH DATE REQUIRED
+if (!requireDeathDate(h.isDeceased, h.dodDisplay, h.name)) {
+    return;
+}
 
             // DOB or Age required
             if (!h.dobDisplay && !h.age) {
@@ -383,11 +406,18 @@ for (let i = 0; i < totalHeirs; i++) {
     }
 }
 
+
             // -----------------------------
             // SPOUSE VALIDATION
             // -----------------------------
             if (h.subFamily?.spouse?.name?.trim()) {
                 const s = h.subFamily.spouse;
+
+                // 🔴 SPOUSE DEATH DATE REQUIRED
+if (!requireDeathDate(s.isDeceased, s.dodDisplay, s.name)) {
+    return;
+}
+
 
                 if (!s.relation?.trim()) {
                     showError(`${s.name}: ${t("spouseRelationRequired")}`);
@@ -430,6 +460,13 @@ for (let i = 0; i < totalHeirs; i++) {
             // CHILDREN VALIDATION
             // -----------------------------
             for (let c of h.subFamily.children || []) {
+
+
+                // 🔴 CHILD DEATH DATE REQUIRED
+if (!requireDeathDate(c.isDeceased, c.dodDisplay, c.name)) {
+    return;
+}
+
 
                 if (!c.name?.trim()) continue;
 
@@ -476,6 +513,13 @@ for (let i = 0; i < totalHeirs; i++) {
 
                 if (cs?.name?.trim()) {
 
+
+                    // 🔴 CHILD SPOUSE DEATH DATE REQUIRED
+if (cs && !requireDeathDate(cs.isDeceased, cs.dodDisplay, cs.name)) {
+    return;
+}
+
+
                     if (!cs.relation?.trim()) {
                         showError(`${cs.name}: ${t("spouseRelationRequired")}`);
                         return;
@@ -503,6 +547,13 @@ for (let i = 0; i < totalHeirs; i++) {
                 // GRANDCHILDREN VALIDATION
                 // -----------------------------
                 for (let gc of c.children || []) {
+
+
+                    // 🔴 GRANDCHILD DEATH DATE REQUIRED
+if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
+    return;
+}
+
 
                     if (!gc.name?.trim()) continue;
 
@@ -547,7 +598,9 @@ for (let i = 0; i < totalHeirs; i++) {
                 dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
                 dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
             },
-
+ // 🔽 ADD HERE
+    makanMilkatAkarniNo: form.makanMilkatAkarniNo || "",
+    any: form.any || "",
             heirs: form.heirs.map((h) => ({
                 name: h.name,
                 relation: h.relation,
@@ -998,19 +1051,47 @@ for (let i = 0; i < totalHeirs; i++) {
   rounded="xl"
 onClick={() => {
 
-  // 🔴 MUKHYA AGE VALIDATION (STEP-1)
-  const mukhyaAge = getMukhyaFinalAge();
-  if (mukhyaAge < 18) {
-    showError("મુખિયા ની ઉંમર ઓછામાં ઓછી ૧૮  વર્ષ હોવી જરૂરી છે");
+  // 🔴 1️⃣ DEATH DATE IS REQUIRED IF MUKHYA IS DEAD
+  if (form.mukhyaIsDeceased && !form.mukhyaDodDisplay) {
+    showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ દાખલ કરવી ફરજિયાત છે");
+    return; // ⛔ STOP HERE
+  }
+
+  // 🔴 2️⃣ INVALID DEATH DATE FORMAT
+  if (
+    form.mukhyaIsDeceased &&
+    form.mukhyaDodDisplay &&
+    !validateDob(form.mukhyaDodDisplay)
+  ) {
+    showError("મૃત્યુ તારીખ અમાન્ય છે");
     return;
   }
 
-  // existing validation
+  // 🔴 3️⃣ DEATH DATE MUST BE AFTER BIRTH DATE
+  if (
+    form.mukhyaIsDeceased &&
+    form.mukhyaDobDisplay &&
+    form.mukhyaDodDisplay &&
+    !isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)
+  ) {
+    showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
+    return;
+  }
+
+  // 🔴 4️⃣ MUKHYA AGE VALIDATION
+  const mukhyaAge = getMukhyaFinalAge();
+  if (mukhyaAge < 18) {
+    showError("મુખિયા ની ઉંમર ઓછામાં ઓછી ૧૮ વર્ષ હોવી જરૂરી છે");
+    return;
+  }
+
+  // 🔴 5️⃣ TOTAL HEIRS CHECK
   if (totalHeirs < 1) {
     showError("ઓછામાં ઓછો એક વારસદાર જરૂરી છે");
     return;
   }
 
+  // ✅ ALL OK → GO TO STEP 2
   setStep(2);
 }}
 
@@ -2202,6 +2283,16 @@ u[i].subFamily.children[ci].age =
                             </VStack>
                         </Box>
                     ))}
+
+                    <Divider my={6} />
+
+
+
+<VStack spacing={4} align="stretch">
+    {/* મકાનના મિલકત આકરણી નંબર */}
+
+</VStack>
+
 
                     <HStack mt={6}>
                         <Button

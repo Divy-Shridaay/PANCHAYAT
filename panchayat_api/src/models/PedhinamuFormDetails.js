@@ -70,6 +70,16 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
     mukkamAddress: String,
     jaminSurveyNo: String,
     jaminKhatano: String,
+    makanMilkatAkarniNo: {
+  type: String,
+  default: ""
+},
+
+any: {
+  type: String,
+  default: ""
+},
+
     reasonForPedhinamu: String,
 
     /* -------------------- Talati -------------------- */

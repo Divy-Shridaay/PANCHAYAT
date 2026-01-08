@@ -17,6 +17,8 @@ import { useToast } from "@chakra-ui/react";
 
 import * as d3 from "d3";
 
+
+
 /* -------------------------------------------------------
    CONVERT PEDHINAMU → HIERARCHICAL TREE
 -------------------------------------------------------- */
@@ -89,6 +91,8 @@ export default function PedhinamuView() {
     const navigate = useNavigate();
     const toast = useToast();
     const svgRef = useRef();
+    const zoomRef = useRef(null);
+
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -125,7 +129,7 @@ export default function PedhinamuView() {
 
         const estimatedWidth = Math.max(1800, data.heirs.length * 350);
         const width = estimatedWidth;
-        const height = 1500;
+        const height = 1100;
 
         const svg = d3.select(svgRef.current)
             .attr("width", width)
@@ -171,14 +175,8 @@ export default function PedhinamuView() {
         /* ----------------------------------------------
            ZOOM + PAN (PERSISTENT)
         ---------------------------------------------- */
-        const zoom = d3.zoom()
-            .scaleExtent([0.35, 2.8])
-            .on("zoom", (event) => {
-                container.attr("transform", event.transform);
-                transformRef.current = event.transform; // SAVE ZOOM POS!
-            });
+   
 
-        svg.call(zoom);
 
         /* ----------------------------------------------
            LAYOUT
@@ -186,6 +184,46 @@ export default function PedhinamuView() {
         const root = d3.hierarchy(treeData);
         const treeLayout = d3.tree().nodeSize([260, 180]);
         treeLayout(root);
+
+
+        // ---- TREE BOUNDS ----
+const nodes = root.descendants();
+
+const minX = d3.min(nodes, d => d.x);
+const maxX = d3.max(nodes, d => d.x);
+const minY = d3.min(nodes, d => d.y);
+const maxY = d3.max(nodes, d => d.y);
+
+const treeWidth = maxX - minX + 400;
+const treeHeight = maxY - minY + 400;
+
+// Dynamic min zoom so whole tree fits
+const minZoom = Math.min(
+  width / treeWidth,
+  height / treeHeight,
+  1
+);
+
+const zoom = d3.zoom()
+    .scaleExtent([minZoom * 0.4, 2.8])
+
+
+    .translateExtent([
+        [minX - 300, minY - 300],
+        [maxX + 300, maxY + 300]
+    ])
+    .on("zoom", (event) => {
+        container.attr("transform", event.transform);
+        transformRef.current = event.transform;
+    });
+
+    zoomRef.current = zoom;
+
+
+svg.call(zoom);
+svg.on("wheel.zoom", null);
+
+
         // 🔥 Remove vertical gap from marriage nodes
         root.descendants().forEach(d => {
             if (d.data.isMarriageNode) {
@@ -287,20 +325,38 @@ export default function PedhinamuView() {
         /* ----------------------------------------------
            AUTO-CENTER or RESTORE LAST CAMERA
         ---------------------------------------------- */
-        const initialScale = 0.62;
-        const centerX = width / 2 - root.x;
+     const initialTransform = d3.zoomIdentity
+    .translate(
+        width / 2 - (minX + maxX) / 2 * minZoom,
+        80
+    )
+    .scale(minZoom);
 
-        if (transformRef.current) {
-            // restore camera after scroll/refresh
-            svg.call(zoom.transform, transformRef.current);
-        } else {
-            // first time render
-            svg.call(
-                zoom.transform,
-                d3.zoomIdentity.translate(centerX, 70).scale(initialScale)
-            );
-        }
+
+      if (transformRef.current) {
+    svg.call(zoom.transform, transformRef.current);
+} else {
+    svg.call(zoom.transform, initialTransform);
+}
+
     }, [data]);
+
+      // 🔍 STEP 3: ZOOM BUTTON HANDLERS (PASTE HERE)
+    const zoomIn = () => {
+        if (!zoomRef.current) return;
+        d3.select(svgRef.current)
+            .transition()
+            .duration(300)
+            .call(zoomRef.current.scaleBy, 1.2);
+    };
+
+    const zoomOut = () => {
+        if (!zoomRef.current) return;
+        d3.select(svgRef.current)
+            .transition()
+            .duration(300)
+            .call(zoomRef.current.scaleBy, 0.8);
+    };
 
     /* ----------------------------------------------
        UI
@@ -354,16 +410,55 @@ export default function PedhinamuView() {
             {/* MAIN TREE CONTAINER */}
             <Box
                 bg="white"
+                    position="relative"   // 👈 STEP 4 (ADD THIS LINE)
                 p={6}
                 rounded="3xl"
                 shadow="xl"
                 border="1px solid #e2e8f0"
                 maxW="100%"
                 overflow="auto"
-                height="85vh"
+               height="68vh"
+
                 transition="0.25s ease"
                 _hover={{ shadow: "2xl" }}
             >
+
+                {/* 🔍 STEP 5: ZOOM CONTROLS */}
+<Box
+    position="fixed"
+    bottom="80px"
+    left="60px"
+    display="flex"
+    flexDirection="column"
+    gap={2}
+    zIndex={1000}
+>
+
+
+        <Button
+            size="sm"
+            onClick={zoomIn}
+            bg="green.600"
+            color="white"
+            _hover={{ bg: "green.700" }}
+            rounded="full"
+            fontSize="xl"
+        >
+            +
+        </Button>
+
+        <Button
+            size="sm"
+            onClick={zoomOut}
+            bg="green.600"
+            color="white"
+            _hover={{ bg: "green.700" }}
+            rounded="full"
+            fontSize="xl"
+        >
+            −
+        </Button>
+    </Box>
                 <svg ref={svgRef}></svg>
             </Box>
 

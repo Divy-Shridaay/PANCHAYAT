@@ -284,6 +284,9 @@ export const saveFullForm = async (req, res) => {
       mukkamAddress: body.mukkamAddress || "",
       jaminSurveyNo: body.jaminSurveyNo || "",
       jaminKhatano: body.jaminKhatano || "",
+      makanMilkatAkarniNo: body.makanMilkatAkarniNo || "",
+any: body.any || "",
+
       reasonForPedhinamu: body.reasonForPedhinamu || "",
 
       talatiName: body.talatiName || "",

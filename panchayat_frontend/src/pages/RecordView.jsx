@@ -276,9 +276,9 @@ ${isDead ? `
 
         return `
         <svg 
-            width="100%" 
-            height="100%"
-            viewBox="0 0 ${totalWidth} ${totalHeight}"
+             width="${totalWidth}" 
+  height="${totalHeight}"
+  viewBox="0 0 ${totalWidth} ${totalHeight}"
             xmlns="http://www.w3.org/2000/svg"
             style="max-width:100%;height:auto;display:block;margin:auto"
         >
@@ -326,8 +326,17 @@ const replacements = {
   talatiName: form?.talatiName || "",
   javadNo: form?.javadNo || "",
   totalHeirsCount: form?.totalHeirsCount || "",
+  // ✅ ADD THESE
+  jaminSurveyNo: form?.jaminSurveyNo || "",
+  jaminKhatano: form?.jaminKhatano || "",
+
+  makanMilkatAkarniNo: form?.makanMilkatAkarniNo || "",
+any: form?.any || "",
 
   mukhyoName: pedhinamu?.mukhya?.name || "",
+
+  reasonForPedhinamu: form?.reasonForPedhinamu || "",
+
 
   // 🔥 ADD THESE (THIS WAS MISSING)
 mukhyoPrefix: pedhinamu?.mukhya?.isDeceased ? "મૈયત શ્રી" : "શ્રી",
@@ -356,6 +365,34 @@ deathLine:
   userTaluko: user?.taluko || "",
   userJillo: user?.jillo || "",
 };
+
+
+
+
+// ✅ PROPERTY EXTRA ROWS (NO HANDLEBARS)
+let propertyExtraRows = "";
+
+if (form?.makanMilkatAkarniNo?.trim()) {
+  propertyExtraRows += `
+  <tr>
+    <td></td>
+    <td>મકાનના</td>
+    <td>મિલકત આકરણી નંબર</td>
+    <td class="center">${toGujaratiDigits(form.makanMilkatAkarniNo)}</td>
+  </tr>`;
+}
+
+if (form?.any?.trim()) {
+  propertyExtraRows += `
+  <tr>
+    <td></td>
+    <td>અન્ય</td>
+    <td></td>
+    <td class="center">${form.any}</td>
+  </tr>`;
+}
+
+replacements.propertyExtraRows = propertyExtraRows;
 
     console.log('userTaluko:', replacements.userTaluko);
     console.log('userJillo:', replacements.userJillo);
@@ -590,6 +627,9 @@ deathLine:
     printWindow.document.write(htmlTemplate);
     await printWindow.document.fonts.ready;
     printWindow.document.close();
+    printWindow.focus();
+printWindow.print();
+
 
     console.log('✅ PDF generation completed successfully');
 
@@ -901,4 +941,4 @@ description: "PDF જનરેટ કરવામાં નિષ્ફળતા
             />
         </Box>
     );
-    }
+    }           

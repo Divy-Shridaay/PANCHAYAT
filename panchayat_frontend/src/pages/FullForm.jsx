@@ -71,6 +71,9 @@ export default function FullForm() {
     mukkamAddress: "",
     jaminSurveyNo: "",
     jaminKhatano: "",
+    makanMilkatAkarniNo: "",
+any: "",
+
     reasonForPedhinamu: "",
     panch: [],
     talatiName: "",
@@ -1059,6 +1062,35 @@ const res = await fetch(
             onChange={(e) => handleChange("mukkamAddress", e.target.value)}
           />
         </FormControl>
+
+
+        {/* 🔽 ADDITIONAL PROPERTY DETAILS (OPTIONAL) */}
+<HStack spacing={6} mt={4}>
+  <FormControl>
+    <FormLabel fontWeight="600">
+      મકાનના મિલકત આકરણી નંબર
+    </FormLabel>
+    <Input
+      {...inputStyle}
+      value={form.makanMilkatAkarniNo || ""}
+      onChange={(e) =>
+        handleChange("makanMilkatAkarniNo", e.target.value)
+      }
+      
+    />
+  </FormControl>
+
+  <FormControl>
+    <FormLabel fontWeight="600">અન્ય</FormLabel>
+    <Input
+      {...inputStyle}
+      value={form.any || ""}
+      onChange={(e) => handleChange("any", e.target.value)}
+    
+    />
+  </FormControl>
+</HStack>
+
 
         <HStack spacing={6}>
           <FormControl isRequired>

@@ -11,10 +11,10 @@ import {
     useToast,
     Flex,
     Collapse,
-    Text,
+    
     HStack,
-    IconButton,
-    Icon,
+    
+    
 } from "@chakra-ui/react";
 import CashMelReport from "./CashMelReport.jsx";
 import * as XLSX from "xlsx";
@@ -114,13 +114,10 @@ const fileInputRef = useRef(null);
 
     const [customCategories, setCustomCategories] = useState({ aavak: [], javak: [] });
     const [banks, setBanks] = useState([]);
-    const [showAddCategory, setShowAddCategory] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState("");
-    const [newCategoryType, setNewCategoryType] = useState("aavak");
+ 
     const [showAddBank, setShowAddBank] = useState(false);
     const [newBankName, setNewBankName] = useState("");
-    const [editingCatId, setEditingCatId] = useState(null);
-    const [editingCatName, setEditingCatName] = useState("");
+
     // const [showBulkUpload, setShowBulkUpload] = useState(false);
     // const [showReports, setShowReports] = useState(false);
 
@@ -238,31 +235,7 @@ const fileInputRef = useRef(null);
         }
     }, [id, API_BASE, toast]);
 
-    const createCategoryApi = async (name, type) => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${API_BASE}/categories`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    ...(token && { Authorization: `Bearer ${token}` }),
-                },
-                body: JSON.stringify({ name, type }),
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || 'Create failed');
-            }
-            await fetchCategories();
-            toast({ title: 'કેટેગરી સફળતાપૂર્વક ઉમેરાઈ છે', status: 'success', duration: 2000 });
-            return true;
-        } catch (err) {
-            console.error(err);
-            toast({ title: 'કેટેગરી સેવ થઈતી નથી', status: 'error' });
-            return false;
-        }
-    };
-
+   
     const createBankApi = async (name) => {
         try {
             const token = localStorage.getItem("token");
@@ -288,57 +261,8 @@ const fileInputRef = useRef(null);
         }
     };
 
-    const updateCategoryApi = async (id, name) => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${API_BASE}/categories/${id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    ...(token && { Authorization: `Bearer ${token}` }),
-                },
-                body: JSON.stringify({ name }),
-            });
-            if (!res.ok) throw new Error('Update failed');
-            await fetchCategories();
-            toast({ title: 'સુધારો સફળતાપૂર્વક થયો', status: 'success', duration: 2000 });
-            return true;
-        } catch (err) {
-            console.error(err);
-            toast({ title: 'સુધારવામાં ભૂલ', status: 'error' });
-            return false;
-        }
-    };
-
-    const deleteCategoryApi = async (id) => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${API_BASE}/categories/${id}`, { 
-                method: 'DELETE',
-                headers: {
-                    ...(token && { Authorization: `Bearer ${token}` }),
-                }
-            });
-            if (!res.ok) throw new Error('Delete failed');
-            await fetchCategories();
-            toast({ title: 'કેટેગરી હટાવી દીધી', status: 'info', duration: 2000 });
-            return true;
-        } catch (err) {
-            console.error(err);
-            toast({ title: 'હટાવવામાં ભૂલ', status: 'error' });
-            return false;
-        }
-    };
-
-    const addCustomCategory = async () => {
-        if (!newCategoryName.trim()) return;
-        const ok = await createCategoryApi(newCategoryName.trim(), newCategoryType);
-        if (ok) {
-            setNewCategoryName("");
-            setShowAddCategory(false);
-        }
-    };
-
+  
+  
  
 
   const handleExcelFileChange = async (e) => {
@@ -676,163 +600,32 @@ const isCategoryValidForType = (type, category) => {
                     </FormControl>
 
                     {/* CATEGORY */}
-                   <FormControl isRequired>
-    <FormLabel fontWeight="600">{t("selectCategory")}</FormLabel>
-    <HStack align="start">
-        <Select
-            size="lg"
-            bg="gray.100"
-            value={form.category}
-            isDisabled={!form.vyavharType}
-            onChange={(e) => handleChange("category", e.target.value)}
-        >
-            <option value="">{t("selectCategory")}</option>
+                 <FormControl isRequired>
+  <FormLabel fontWeight="600">{t("selectCategory")}</FormLabel>
 
-            {/* AAVAK (આવક) */}
-            {form.vyavharType === "aavak" && (
-                <>
-                   
-
-                    {customCategories.aavak.map((c) => (
-                        <option key={c._id} value={c.name}>
-                            {c.name}
-                        </option>
-                    ))}
-                </>
-            )}
-
-            {/* JAVAK (જાવક) */}
-            {form.vyavharType === "javak" && (
-                <>
-                   
-                    {customCategories.javak.map((c) => (
-                        <option key={c._id} value={c.name}>
-                            {c.name}
-                        </option>
-                    ))}
-                </>
-            )}
-        </Select>
-
-        <Button size="sm" onClick={() => setShowAddCategory((s) => !s)}>
-            {t("addcategory")}
-        </Button>
-    </HStack>
-
-    <Collapse in={showAddCategory} animateOpacity>
-        <HStack spacing={3} mt={2} align="start">
-            <Select
-                width="160px"
-                value={newCategoryType}
-                onChange={(e) => setNewCategoryType(e.target.value)}
-            >
-                <option value="aavak">આવક</option>
-                <option value="javak">જાવક</option>
-            </Select>
-
-            <Input
-    placeholder="નવું કેટેગરી નામ"
-    value={newCategoryName}
-    maxLength={50}               // ⭐ MAX 50 characters
-    onChange={(e) => {
-        const val = e.target.value;
-
-        // ⭐ Prevent leading spaces + limit min 1 char
-        if (val.length === 0) {
-            setNewCategoryName("");
-            return;
-        }
-
-        // ⭐ Allow only if length <= 50
-        if (val.length <= 50) {
-            setNewCategoryName(val);
-        }
-    }}
+  <Select
+    size="lg"
     bg="gray.100"
-/>
+    value={form.category}
+    isDisabled={!form.vyavharType}
+    onChange={(e) => handleChange("category", e.target.value)}
+  >
+    <option value="">{t("selectCategory")}</option>
 
-            <Button colorScheme="blue" onClick={addCustomCategory}>ઉમેરો</Button>
-        </HStack>
+    {form.vyavharType === "aavak" &&
+      customCategories.aavak.map((c) => (
+        <option key={c._id} value={c.name}>
+          {c.name}
+        </option>
+      ))}
 
-        <Box mt={3}>
-            <Text fontWeight={600} mb={2}>
-                અધિક સમૂહ: {newCategoryType === "aavak" ? "આવક" : "જાવક"}
-            </Text>
-
-            <Box>
-                {(customCategories[newCategoryType] || []).map((c) => (
-                    <HStack key={c._id} spacing={3} mb={2}>
-                        {editingCatId === c._id ? (
-                            <>
-                                <Input
-                                    size="sm"
-                                    bg="gray.100"
-                                    value={editingCatName}
-                                    onChange={(e) => setEditingCatName(e.target.value)}
-                                />
-                                <Button
-                                    size="sm"
-                                    colorScheme="green"
-                                    onClick={async () => {
-                                        if (!editingCatName.trim()) return;
-                                        const ok = await updateCategoryApi(
-                                            c._id,
-                                            editingCatName.trim()
-                                        );
-                                        if (ok) {
-                                            setEditingCatId(null);
-                                            setEditingCatName("");
-                                        }
-                                    }}
-                                >
-                                    Save
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => {
-                                        setEditingCatId(null);
-                                        setEditingCatName("");
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Text flex="1">{c.name}</Text>
-                                <Button
-                                    size="sm"
-                                    onClick={() => {
-                                        setEditingCatId(c._id);
-                                        setEditingCatName(c.name);
-                                    }}
-                                >
-                                    Edit
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    colorScheme="red"
-                                    onClick={async () => {
-                                           if (!window.confirm("શું તમે આ કેટેગરી કાઢી નાખવા માંગો છો?")) return;
-
-                                        await deleteCategoryApi(c._id);
-                                    }}
-                                >
-                                    Delete
-                                </Button>
-                            </>
-                        )}
-                    </HStack>
-                ))}
-
-                {(customCategories[newCategoryType] || []).length === 0 && (
-                    <Text fontSize="sm" color="gray.500">
-                        No custom categories
-                    </Text>
-                )}
-            </Box>
-        </Box>
-    </Collapse>
+    {form.vyavharType === "javak" &&
+      customCategories.javak.map((c) => (
+        <option key={c._id} value={c.name}>
+          {c.name}
+        </option>
+      ))}
+  </Select>
 </FormControl>
 
 

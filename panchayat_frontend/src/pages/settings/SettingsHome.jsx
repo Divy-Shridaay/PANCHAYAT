@@ -9,6 +9,8 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { FiUser, FiHelpCircle, FiShield, FiArrowLeft } from "react-icons/fi";
+import { FiList } from "react-icons/fi";
+
 
 /* Card exactly like Pedhinamu */
 const Card = ({ icon: Icon, title, subtitle, onClick }) => (
@@ -93,7 +95,17 @@ export default function SettingsHome() {
           subtitle="પાસવર્ડ અને સુરક્ષા વિકલ્પો"
           onClick={() => navigate("/settings/security")}
         />
+
+        <Card
+  icon={FiList}
+  title="કેટેગરી સેટિંગ્સ"
+  subtitle="આવક અને જાવક કેટેગરી મેનેજ કરો"
+  onClick={() => navigate("/settings/categories")}
+/>
+
       </SimpleGrid>
     </Box>
+
+    
   );
 }
