@@ -6,7 +6,9 @@ import { useNavigate } from "react-router-dom";
  * Works with or without .env
  */
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://api.shridaay.com";   // 👈 YOUR LIVE BACKEND URL
+
 
 /**
  * 🔧 Safely join base URL + path

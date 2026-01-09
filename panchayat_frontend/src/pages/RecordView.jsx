@@ -53,6 +53,21 @@ export default function RecordView() {
 
     const { pedhinamu, form } = data;
 
+    // -------------------------------
+// MULTIPLE WIFE LINE LOGIC
+// -------------------------------
+// -------------------------------
+// MULTIPLE WIFE LINE (CORRECT LOGIC)
+// -------------------------------
+const wifeRelation = pedhinamu?.mukhya?.spouse?.relation;
+
+const multipleWifeLine =
+  wifeRelation === "second_wife" ||
+  wifeRelation === "third_wife"
+    ? "અને એકથી વધુ પત્ની હોય તો તેમના તમામ વારસદારોનો સમાવેશ કરવામાં આવેલ છે"
+    : "નો સમાવેશ કરવામાં આવેલ છે";
+
+
     // Format +91 99999 99999 (Display only)
     const displayMobile = (num) => {
         if (!num) return "-";
@@ -323,6 +338,8 @@ const handlePedhinamuPrint = async () => {
 const replacements = {
   applicantName: form?.applicantName || "",
   mukkamAddress: form?.mukkamAddress || "",
+  multipleWifeLine: multipleWifeLine,
+
   talatiName: form?.talatiName || "",
   javadNo: form?.javadNo || "",
   totalHeirsCount: form?.totalHeirsCount || "",

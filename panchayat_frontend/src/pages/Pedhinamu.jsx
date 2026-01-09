@@ -30,6 +30,7 @@ export default function Pedhinamu() {
             isClosable: true,
             position: "top",
         });
+const isEmpty = (v) => v === "" || v === null || v === undefined;
 
     const showError = (msg) =>
         toast({
@@ -45,7 +46,9 @@ export default function Pedhinamu() {
 
 const [form, setForm] = useState({
     mukhyaName: "",
-    mukhyaAge: "",
+   mukhyaBirthAge: "",   // for જન્મ તારીખ / ઉમર
+mukhyaDeathAge: "",   // for મૃત્યુ તારીખ / ઉમર
+
     heirs: [],
 
    
@@ -68,10 +71,29 @@ const [form, setForm] = useState({
 
     // ✅ FINAL AGE OF MUKHYA (DOB first, else manual age)
 const getMukhyaFinalAge = () => {
-    if (form.mukhyaDob) {
-        return Number(calculateAge(form.mukhyaDob));
+  // DEAD → calculate from dates OR use manual death age
+  if (form.mukhyaIsDeceased) {
+    if (form.mukhyaDeathAge) {
+      return Number(form.mukhyaDeathAge);
     }
-    return Number(form.mukhyaAge || 0);
+
+    if (form.mukhyaDob && form.mukhyaDod) {
+      return Number(calculateAgeAtDeath(form.mukhyaDob, form.mukhyaDod));
+    }
+
+    return 0;
+  }
+
+  // ALIVE → birth age OR DOB
+  if (form.mukhyaBirthAge) {
+    return Number(form.mukhyaBirthAge);
+  }
+
+  if (form.mukhyaDob) {
+    return Number(calculateAge(form.mukhyaDob));
+  }
+
+  return 0;
 };
 
 
@@ -312,25 +334,50 @@ for (let i = 0; i < totalHeirs; i++) {
         // -----------------------------
         // MAIN PERSON VALIDATION
         // -----------------------------
-        if (!form.mukhyaDobDisplay && !form.mukhyaAge) {
-            showError(t("dobOrAgeRequired"));
-            return;
-        }
+       // ✅ IF DEAD → death date OR age is compulsory
 
         if (form.mukhyaDobDisplay && !validateDob(form.mukhyaDobDisplay)) {
             showError(t("invalidDate"));
             return;
         }
 
-        if (form.mukhyaAge && !validateAge(form.mukhyaAge)) {
-            // showError(t("invalidAge"));
-            return;
-        }
+       
 
-        // 🔴 MUKHYA DEATH DATE REQUIRED
-if (!requireDeathDate(form.mukhyaIsDeceased, form.mukhyaDodDisplay, "મુખિયા")) {
+
+        // 🔴 ALIVE → DOB or AGE is compulsory
+// 🟢 ALIVE VALIDATION (FINAL RULE)
+if (!form.mukhyaIsDeceased) {
+
+  // ❌ both empty → error
+  if (
+    isEmpty(form.mukhyaDobDisplay) &&
+    isEmpty(form.mukhyaBirthAge)
+  ) {
+    showError("હયાત વ્યક્તિ માટે જન્મ તારીખ અથવા ઉમર ફરજિયાત છે");
     return;
+  }
+
+  // ❌ DOB entered but invalid → error
+  if (
+    !isEmpty(form.mukhyaDobDisplay) &&
+    !validateDob(form.mukhyaDobDisplay)
+  ) {
+    showError("માન્ય જન્મ તારીખ દાખલ કરો (DD/MM/YYYY)");
+    return;
+  }
 }
+
+
+// ✅ DEAD → death DATE or death AGE required
+if (
+  form.mukhyaIsDeceased &&
+  isEmpty(form.mukhyaDodDisplay) &&
+  isEmpty(form.mukhyaDeathAge)
+) {
+  showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
+  return;
+}
+
 
 if (form.mukhyaIsDeceased && form.mukhyaDodDisplay) {
     if (!validateDob(form.mukhyaDodDisplay)) {
@@ -585,19 +632,35 @@ if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
             }
         }
 
+
+
+        // -----------------------------
+// COUNT MUKHIYA WIVES
+// -----------------------------
+const mukhiyaWifeCount = form.heirs.filter((h) =>
+  ["wife", "first_wife", "second_wife", "third_wife"].includes(h.relation)
+).length;
+
+const hasMultipleWives = mukhiyaWifeCount > 1;
+
         // -----------------------------
         // BUILD PAYLOAD AFTER VALIDATION
         // -----------------------------
         const payload = {
-            mukhya: {
-                name: form.mukhyaName,
-                age: form.mukhyaAge,
-                dob: form.mukhyaDob || "",
-                dobDisplay: form.mukhyaDobDisplay || "",
-                isDeceased: form.mukhyaIsDeceased || false,
-                dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
-                dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
-            },
+          mukhya: {
+  name: form.mukhyaName,
+  age: form.mukhyaIsDeceased
+    ? form.mukhyaDeathAge
+    : form.mukhyaBirthAge,
+  dob: form.mukhyaDob || "",
+  hasMultipleWives,
+
+  dobDisplay: form.mukhyaDobDisplay || "",
+  isDeceased: form.mukhyaIsDeceased || false,
+  dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
+  dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
+},
+
  // 🔽 ADD HERE
     makanMilkatAkarniNo: form.makanMilkatAkarniNo || "",
     any: form.any || "",
@@ -847,130 +910,142 @@ if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
                             />
                         </FormControl>
 
-                        <FormControl>
-                            <FormLabel fontWeight="600">{t("birthDateAge")}</FormLabel>
+                       {/* ALIVE / DEAD — MOVED UP */}
+<FormControl>
+  <FormLabel fontWeight="600">{t("aliveDead")}</FormLabel>
+  <Select
+    size="lg"
+    bg="gray.100"
+    value={form.mukhyaIsDeceased ? "dead" : "alive"}
+   onChange={(e) => {
+  const isDead = e.target.value === "dead";
 
-                            <HStack spacing={3} align="center">
+  setForm({
+    ...form,
+    mukhyaIsDeceased: isDead,
 
-                                {/* DATE INPUT */}
-                              <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  value={form.mukhyaDobDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
+    // 🔁 CLEAR BIRTH FIELDS WHEN DEAD
+    mukhyaDob: isDead ? "" : form.mukhyaDob,
+    mukhyaDobDisplay: isDead ? "" : form.mukhyaDobDisplay,
+    mukhyaBirthAge: isDead ? "" : form.mukhyaBirthAge,
 
-    if (display.length === 10 && !validateDob(display)) {
-        showError(t("invalidDate"));
-        return;
-    }
-
-    const iso = convertToISO(display);
-
-    setForm({
-        ...form,
-        mukhyaDobDisplay: display,
-        mukhyaDob: iso,
-        mukhyaAge: form.mukhyaIsDeceased
-            ? form.mukhyaDod
-                ? calculateAgeAtDeath(iso, form.mukhyaDod)
-                : ""
-            : iso
-            ? calculateAge(iso)
-            : ""
-    });
+    // 🔁 CLEAR DEATH FIELDS WHEN ALIVE
+    mukhyaDod: !isDead ? "" : form.mukhyaDod,
+    mukhyaDodDisplay: !isDead ? "" : form.mukhyaDodDisplay,
+    mukhyaDeathAge: !isDead ? "" : form.mukhyaDeathAge,
+  });
 }}
+
+  >
+    <option value="alive">{t("alive")}</option>
+    <option value="dead">{t("deceased")}</option>
+  </Select>
+</FormControl>
+
+{/* BIRTH DATE / AGE */}
+<FormControl>
+  <FormLabel fontWeight="600">{t("birthDateAge")}</FormLabel>
+
+  <HStack spacing={3} align="center">
+    <Input
+      type="text"
+      placeholder="DD/MM/YYYY"
+      size="lg"
+      bg="gray.100"
+      value={form.mukhyaDobDisplay || ""}
+      onChange={(e) => {
+  const display = formatDisplayDate(e.target.value);
+
+  if (display.length === 10 && !validateDob(display)) {
+    showError(t("invalidDate"));
+    return;
+  }
+
+  const iso = convertToISO(display);
+
+  setForm({
+  ...form,
+  mukhyaDobDisplay: display,
+  mukhyaDob: iso,
+  mukhyaBirthAge:
+    !form.mukhyaIsDeceased && iso
+      ? calculateAge(iso)
+      : "",
+});
+
+}}
+
+    />
+
+    <Text fontWeight="bold" color="green.700">
+      {t("orText")}
+    </Text>
+
+   <Input
+  size="lg"
+  width="120px"
+  bg="gray.100"
+  placeholder={t("age")}
+  value={form.mukhyaBirthAge}
+  onChange={(e) => {
+    const v = e.target.value;
+    if (v && !/^[0-9]{1,3}$/.test(v)) return;
+    setForm({ ...form, mukhyaBirthAge: v });
+  }}
 />
 
-{ 
-                               <Text fontWeight="bold" color="green.700">
-  {t("orText")}
-</Text> }
+  </HStack>
+</FormControl>
 
+{/* DEATH DATE / AGE — ONLY WHEN DEAD */}
+{form.mukhyaIsDeceased && (
+  <FormControl>
+    <FormLabel fontWeight="600">{t("deathDate")}</FormLabel>
+
+    <HStack spacing={3} align="center">
+      <Input
+        type="text"
+        placeholder="DD/MM/YYYY"
+        size="lg"
+        bg="gray.100"
+        value={form.mukhyaDodDisplay || ""}
+        onChange={(e) => {
+          const display = formatDisplayDate(e.target.value);
+          const iso = convertToISO(display);
+
+        setForm({
+  ...form,
+  mukhyaDodDisplay: display,
+  mukhyaDod: iso,
+  mukhyaDeathAge:
+    form.mukhyaDob && iso
+      ? calculateAgeAtDeath(form.mukhyaDob, iso)
+      : "",
+});
+
+        }}
+      />
+
+      <Text fontWeight="bold" color="green.700">
+        {t("orText")}
+      </Text>
 <Input
   size="lg"
   width="120px"
   bg="gray.100"
   placeholder={t("age")}
-  value={form.mukhyaAge}
+  value={form.mukhyaDeathAge}
   onChange={(e) => {
-    const value = e.target.value;
-
-    if (value && !/^[0-9]{1,3}$/.test(value)) {
-      return;
-    }
-
-    setForm({ ...form, mukhyaAge: value });
+    const v = e.target.value;
+    if (v && !/^[0-9]{1,3}$/.test(v)) return;
+    setForm({ ...form, mukhyaDeathAge: v });
   }}
 />
 
+    </HStack>
+  </FormControl>
+)}
 
-                            </HStack>
-                        </FormControl>
-                        <FormControl>
-                            <FormLabel fontWeight="600">{t("aliveDead")}</FormLabel>
-                            <Select
-                                size="lg"
-                                bg="gray.100"
-                                value={form.mukhyaIsDeceased ? "dead" : "alive"}
-                               onChange={(e) => {
-    const isDead = e.target.value === "dead";
-
-    setForm({
-        ...form,
-        mukhyaIsDeceased: isDead,
-        mukhyaAge: isDead
-            ? form.mukhyaDob && form.mukhyaDod
-                ? calculateAgeAtDeath(form.mukhyaDob, form.mukhyaDod)
-                : ""
-            : form.mukhyaDob
-            ? calculateAge(form.mukhyaDob)
-            : ""
-    });
-}}
-
-                            >
-                                <option value="alive">{t("alive")}</option>
-                                <option value="dead">{t("deceased")}</option>
-                            </Select>
-                        </FormControl>
-                        {/* If mukhya is deceased, show death-date input */}
-                        {form.mukhyaIsDeceased && (
-                            <FormControl>
-                                <FormLabel fontWeight="600">{t("deathDate")}</FormLabel>
-
-                               <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  value={form.mukhyaDodDisplay || ""}
-  onChange={(e) => {
-      const display = formatDisplayDate(e.target.value);
-
-      if (display.length === 10 && !validateDob(display)) {
-          showError(t("invalidDate"));
-          return;
-      }
-
-      const iso = convertToISO(display);
-
-      setForm({
-          ...form,
-          mukhyaDodDisplay: display,
-          mukhyaDod: iso,
-          mukhyaAge:
-              form.mukhyaDob && iso
-                  ? calculateAgeAtDeath(form.mukhyaDob, iso)
-                  : ""
-      });
-  }}
-/>
-
-                            </FormControl>
-                        )}
 
                         <FormControl>
                             <FormLabel fontWeight="600">{t("totalHeirs")}</FormLabel>
@@ -1051,11 +1126,48 @@ if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
   rounded="xl"
 onClick={() => {
 
-  // 🔴 1️⃣ DEATH DATE IS REQUIRED IF MUKHYA IS DEAD
-  if (form.mukhyaIsDeceased && !form.mukhyaDodDisplay) {
-    showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ દાખલ કરવી ફરજિયાત છે");
-    return; // ⛔ STOP HERE
+
+    // 🔴 NAME REQUIRED (STEP 1)
+if (!form.mukhyaName || !form.mukhyaName.trim()) {
+  showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
+  return;
+}
+
+
+
+
+    // 🔴 ALIVE → DOB or AGE is compulsory
+// 🟢 ALIVE VALIDATION (FINAL RULE)
+if (!form.mukhyaIsDeceased) {
+
+  // ❌ both empty → error
+  if (
+    isEmpty(form.mukhyaDobDisplay) &&
+    isEmpty(form.mukhyaBirthAge)
+  ) {
+    showError("હયાત વ્યક્તિ માટે જન્મ તારીખ અથવા ઉમર ફરજિયાત છે");
+    return;
   }
+
+  // ❌ DOB entered but invalid → error
+  if (
+    !isEmpty(form.mukhyaDobDisplay) &&
+    !validateDob(form.mukhyaDobDisplay)
+  ) {
+    showError("માન્ય જન્મ તારીખ દાખલ કરો (DD/MM/YYYY)");
+    return;
+  }
+}
+
+if (
+  form.mukhyaIsDeceased &&
+  isEmpty(form.mukhyaDodDisplay) &&
+  isEmpty(form.mukhyaDeathAge)
+) {
+  showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
+  return;
+}
+
 
   // 🔴 2️⃣ INVALID DEATH DATE FORMAT
   if (
@@ -1078,12 +1190,20 @@ onClick={() => {
     return;
   }
 
-  // 🔴 4️⃣ MUKHYA AGE VALIDATION
-  const mukhyaAge = getMukhyaFinalAge();
-  if (mukhyaAge < 18) {
+
+// 🔴 MINIMUM 18 AGE VALIDATION (FINAL & CORRECT)
+if (
+  !form.mukhyaIsDeceased ||        // alive
+  form.mukhyaDeathAge              // dead + age entered
+) {
+  const age = getMukhyaFinalAge();
+
+  if (age && age < 18) {
     showError("મુખિયા ની ઉંમર ઓછામાં ઓછી ૧૮ વર્ષ હોવી જરૂરી છે");
     return;
   }
+}
+
 
   // 🔴 5️⃣ TOTAL HEIRS CHECK
   if (totalHeirs < 1) {

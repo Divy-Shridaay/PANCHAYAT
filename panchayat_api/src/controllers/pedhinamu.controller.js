@@ -34,6 +34,7 @@ export const createPedhinamu = async (req, res) => {
         name: d.mukhya.name,
         age: d.mukhya.age,
         dob: d.mukhya.dob || "",
+          hasMultipleWives: d.hasMultipleWives || false,
         dobDisplay: d.mukhya.dobDisplay || "",
         isDeceased: d.mukhya.isDeceased || false,
         dod: d.mukhya.dod || "",
