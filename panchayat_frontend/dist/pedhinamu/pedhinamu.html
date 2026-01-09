@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>પેઢીનામું પ્રમાણપત્ર</title>
+
+    <!-- Gujarati print-style font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Gujarati:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Serif Gujarati', serif;
+            font-size: 15px;
+            line-height: 1.6;
+            padding: 25px 40px;
+            color: #000;
+        }
+
+        h1,
+        h2,
+        h3 {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            margin-bottom: 12px;
+        }
+
+        table td,
+        table th {
+            border: 1px solid #444;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        .placeholder-photo {
+            width: 120px;
+            height: 140px;
+            background: #eee;
+            border: 1px solid #000;
+        }
+
+        /* -------------------------
+           SVG TREE CONTAINER (FULL WIDTH)
+        -------------------------- */
+        .tree-container {
+            width: auto !important;
+            max-width: none !important;
+            overflow: visible !important;
+            padding: 0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+       svg {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: visible !important;
+}
+
+
+
+        p {
+    margin: 4px 0;
+}
+
+
+        /* -------------------------
+           PRINT SAFE
+        -------------------------- */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 14mm 12mm 14mm 12mm;
+            }
+
+            svg {
+                width: 190mm !important;
+                /* A4 printable width */
+                height: auto !important;
+                max-width: 190mm !important;
+                transform: none !important;
+                /* remove shrink */
+                overflow: visible !important;
+                display: block;
+                margin: 0 auto;
+            }
+
+            .tree-break {
+    page-break-before: auto !important;
+  }
+
+
+  .tree-block {
+    page-break-inside: avoid;
+  }
+
+
+
+            svg text {
+                paint-order: stroke;
+                stroke: white;
+                stroke-width: 1px;
+            }
+
+            body,
+            .tree-container {
+                overflow: visible !important;
+                page-break-inside: avoid !important;
+            }
+
+
+
+            .u-line {
+    display: inline-block;
+    padding: 0 4px;
+    border-bottom: 1.5px solid #000;
+    line-height: 1.4;
+}
+
+.page-break {
+    page-break-before: always;
+}
+
+
+        }
+    </style>
+</head>
+
+<body>
+    <h2>પેઢીનામું મેળવવા બાબત </h2>
+    <br>
+    <div style="text-align: right; margin-bottom: 6px;">
+        <p style="display: inline-block; text-align: left;">
+            અરજદારનુ નામ :<b><u> {{applicantName}} </u></b><br>
+            સરનામુ :<b><u> {{mukkamAddress}} </u></b><br>
+            મોબાઇલ :<b><u> {{applicantMobile}} </u></b><br>
+            તારીખ :<b><u> {{applicationDate}} </u></b><br>
+            <!-- gam:{{appName}} -->
+        </p>
+    </div>
+
+    <p>
+        પ્રતિ,<br>
+        શ્રી તલાટી કમ મંત્રીશ્રી,<br>
+       <u><b>{{taluko}} </b></u> ગ્રામ પંચાયત<br>
+        તાલુકો :<u><b> {{userTaluko}}</b></u><br>
+જિલ્લો : <u><b>{{userJillo}}</b></u>
+
+    </p>
+
+    <br>
+
+    <p><b>વિષય :-</b> પેઢીનામું મેળવવા બાબત</p>
+
+    <p>
+        <b>સંદર્ભ :-</b><br>
+        (૧) મહેસુલ વિભાગના તા.૧૪/૦૫/૨૦૧૪ ના પરીપત્ર ક્રમાંક :- હક૫/૧૦૨૦૧૪/૭૫૬/જ અનુસંધાને<br>
+     (૨) નોટરી શ્રી <b><u>{{notaryName}}</u></b> રૂબરૂ ના સોગંદનામા&nbsp;
+<span class="nowrap-line">
+    સીરીયલ ક્રમાંક :- <b><u>{{notarySerialNo}}</u></b>,
+    બુક નં. :- <b><u>{{notaryBookNo}}</u></b>,
+    પેજ નં. :- <b><u>{{notaryPageNo}}</u></b>,
+    તા. :- <b><u>{{notaryDate}}</u></b>
+</span>
+થી સોગંદનામા ના આધારે
+    </p>
+    <p>
+        સવિનય ઉપરોકત વિષય અને સંદર્ભ અન્વયે અમો અરજદારશ્રી  <b><u>{{applicantName}}</u></b> ,
+       <b><u> રહેવાસી િ. {{mukkamAddress}}  </u></b>,
+       
+
+
+      <b><u>તા. {{userTaluko}}</u></b>, <b><u>જી. {{userJillo}}</u></b>,  નીચેના કામે અમારે પેઢીનામાની જરૂરિયાત હોઇ
+        પેઢીનામુ બનાવી આપવા વિનંતી છે.
+    </p>
+
+
+    <br>
+
+    <!-- <p>
+        હું અરજદાર <b><u>{{applicantName}} </u></b> સરનામું <b><u>{{mukkamAddress}}</b></u> ઉપરોક્ત
+        વિષયક પેઢીનામું મેળવવાની જરૂર હોવાથી રજૂઆત કરું છું.
+    </p> -->
+
+    <h3>જમીન / મિલકત વિગત</h3>
+
+    <!-- <table>
+        <tr>
+            <th>ગામ</th>
+            <th>સર્વે નં.</th>
+            <th>ખાતા નં.</th>
+            <th>વિગત</th>
+        </tr>
+       
+        <tr>
+            <td>{{mukkamAddress}}</td>
+            <td>{{jaminSurveyNo}}</td>
+            <td>{{jaminKhatano}}</td>
+            <td>{{reasonForPedhinamu}}</td>
+        </tr>
+    </table> -->
+
+   
+
+
+<table>
+  <tr>
+    <th style="width:10%;">અનુ નંબર</th>
+    <th style="width:25%;">ગામનું નામ<br>તથા તાલુકો</th>
+    <th colspan="3">કામની વિગત</th>
+  </tr>
+
+  <!-- ROW 1 -->
+  <tr>
+    <td rowspan="4" class="center">૪૮</td>
+    <td rowspan="2">
+      ગામ. {{taluko}}<br>
+      તા. {{userTaluko}}
+    </td>
+    <td>જમીન</td>
+    <td>ખાતા નં.</td>
+    <td class="center">{{jaminKhatano}}</td>
+  </tr>
+
+  <!-- ROW 2 -->
+  <tr>
+    <td></td>
+    <td>સર્વે નં.</td>
+    <td class="center">{{jaminSurveyNo}}</td>
+  </tr>
+
+  <!-- ROW 3 -->
+  <tr>
+    <td rowspan="2">જી. {{userJillo}}</td>
+    <td>મકાનના</td>
+    <td>મિલકત આકરણી નંબર</td>
+    <td class="center">{{makanMilkatAkarniNo}}</td>
+  </tr>
+
+  <!-- ROW 4 -->
+  <tr>
+    <td>અન્ય</td>
+    <td></td>
+    <td class="center">{{any}}</td>
+  </tr>
+</table>
+
+
+
+
+
+<p>
+    ઉપરની વિગતે અમારે 
+    <b><u>{{reasonForPedhinamu}}</u></b>
+    ના કામે પેઢીનામાની જરૂરિયાત હોવાથી નીચે જણાવ્યા મુજબ 
+    અમે સીધી લીટીના વારસદારો હોઈ 
+    {{mukhyoPrefix}} <u><b>{{mukhyoName}}</b></u>
+    <u><b>{{deathLine}}</b></u>,
+    <u><b>રે. {{mukkamAddress}}</b></u>
+    ના નામે વારસદારોનું પેઢીનામું અમારા જણાવ્યા મુજબ 
+    નીચે મુજબ હોવાનું બનાવી આપવા વિનંતી છે.
+</p>
+
+
+
+    <!-- <h3>વારસદારોની યાદી</h3> -->
+
+    <!-- <table>
+        <tr>
+            <th>નામ</th>
+            <th>ઉમર</th>
+            <th>સંબંધ</th>
+        </tr>
+        {{heirsTable}}
+    </table> -->
+
+
+    <!-- <p>
+        આજ રાજ તલાટી કમ મંત્રી વડસર તા કલોલ ના ઓ ધ્વારા વડસર ગ્રામ પંચાયત કચેરીએ રૂબરૂ બોલાવવાથી હાજર થઇ આ પેઢીનામુ લખાવીએ છીએ કે, અરજદારશ્રી <u>{{applicantName}}</u> રે. <u>{{mukkamAddress}}</u> ની તારીખ <b><u> {{applicationDate}} </u></b> ની અરજી તથા <b><u>{{notaryDate}}</u></b> ના સોગંદનામા આઘારે પેઢીનામુ મેળવવા માગણી કરેલ છે. જે અરજી અને સોગંદનામા આઘારે તેમજ અમારી જાણ માહીતી મુજબ મૈયત શ્રી પટેલ રામાભાઈ રણછોડદાસ ના વારસદારોનુ પેઢીનામુ લખાવીએ છીએ જે નીચે મુજબ છે.
+    </p> -->
+
+ 
+
+    <br><br>
+
+    <!-- <p>
+        તારીખ : {{applicationDate}} <br>
+        અરજદારની સહી : ___________________
+    </p> -->
+
+   <div class="page-break"></div>
+
+<div class="tree-block">
+    <h2 class="tree-title">પેઢીનામું (પેઢીઆંબા)</h2>
+
+    <div class="tree-container">
+        {{familyTreeHtml}}
+    </div>
+</div>
+
+
+    <br><br>
+
+       <p>
+ઉપર જણાવેલ પેઢીનામું અમોએ અમારી જાણ અને માહિતી મુજબ લખાવેલ છે. આ પેઢીનામામાં જણાવેલ વારસદારો પૈકી અન્ય કોઈ કાયદેસરના વારસદારોના નામ/નામો છુપાવેલ નથી. પરણીત/અપરણીત દીકરા કે દીકરીઓનો પણ સમાવેશ કરવામાં આવેલ છે. આ પેઢીનામામાં સીધી લીટીના વારસદારો સિવાય અન્ય કોઈ ખોટા વારસદારો દાખલ કરવામાં આવેલ નથી. આ સાથે સંદર્ભ-૨ માં જણાવેલ સોગંદનામું પણ અમોએ રજૂ કરેલ છે. ખોટું પેઢીનામું લખાવવું કે ખોટું પેઢીનામું બનાવવું એ ફોજદારી ગુન્હો બને છે, તેની અમોને સંપૂર્ણ સમજ અને જાણ છે. આ પેઢીનામા બાબતે ભવિષ્યમાં કોઈ વારસદાર કે કોર્ટ કચેરીનો પ્રશ્ન અથવા તકરાર ઉપસ્થિત થશે તો આ પેઢીનામાના વારસદારો જાહેર કરવા બાબતે અમારી સંપૂર્ણ જવાબદારી રહેશે. ઉપરની વિગતે અમારી અરજી તથા સોગંદનામાના આધારે અમોને પેઢીનામું બનાવી આપવા વિનંતી છે.
+</p>
+
+
+    <!-- <p>
+        આયખિયા મુજબ ઉપરોક્ત પેઢીનામું અમારી જાણ અને માહિતી મુજબ યોગ્ય છે.
+        વારસદારોની યાદી ઉપર દર્શાવેલ ક્રમ પ્રમાણે સાચી છે.
+    </p> -->
+
+    <br>
+
+
+   <p><b> બિડાણ: -</b></p>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px;">
+
+    <!-- Left side UL -->
+    <ul style="margin:0; padding-left:20px;">
+        <li>સોગંદનામાની નકલ</li>
+        <li>જરૂરી ૭/૧૨, ૮-અ</li>
+        <li>અરજદારનો ઓળખ અંગેનો પુરાવો</li>
+        <li>મૈયાતનો દાખલો</li>
+        <li>પંચોના ઓળખ અંગેના પુરાવા</li>
+    </ul>
+
+    <!-- Right side Signature -->
+    <div style="text-align:right; min-width:250px;">
+        <!-- તારીખ : {{applicationDate}} <br><br> -->
+        અરજદારની સહી : ___________________
+    </div>
+
+</div>
+
+<br><br><br>
+
+<p>
+    ગુજરાત સરકાર મહેસુલ વિભાગના ૫રી૫ત્ર ક્રમાક હકપ/૧૦૨૦૧૪/૭૫૬/જ તા. ૧૪/૦૫/૨૦૧૪ મુજબનુ
+</p>
+
+<br> <br>
+
+    <div class="page-break"></div>
+    <h2> પેઢીનામું </h2>
+
+    <h3> અમો નીચેના પંચો </h3>
+
+    <table>
+        <tr>
+            <th>નામ</th>
+            <th>ઉમર</th>
+            <th>ધંધો</th>
+            <th>રહેવાસી </th>
+        </tr>
+        {{panchTable}}
+    </table>
+
+    <br>
+
+   <p>
+આજ રોજ તલાટી કમ મંત્રી <u><b>{{taluko}}</b>,</u><u><b> તા. {{userTaluko}}</b></u> ના ઓ દ્વારા 
+<u><b>{{taluko}}</b></u> ગ્રામ પંચાયત કચેરીએ રૂબરૂ બોલાવવાથી હાજર થઈ આ પેઢીનામું લખાવીએ છીએ કે 
+અરજદારશ્રી <b><u>{{applicantName}}</u></b>, 
+<u><b> રે. {{mukkamAddress}}</b></u>,  
+<u><b> તા. {{userTaluko}}</b></u>,  
+<u><b> જી. {{userJillo}}</b></u>, 
+ની તારીખ <b><u>{{applicationDate}}</u></b> ની અરજી તથા 
+<b><u>{{notaryDate}}</u></b> ના સોગંદનામાના આધારે પેઢીનામું મેળવવા માગણી કરેલ છે. 
+જે અરજી અને સોગંદનામાના આધારે તેમજ અમારી જાણ અને માહિતી મુજબ 
+{{mukhyoPrefix}} <u><b>{{mukhyoName}}</b></u>{{deathLine}} 
+ના વારસદારોનું પેઢીનામું નીચે મુજબ લખાવીએ છીએ.
+</p>
+
+
+
+
+    <br><br>
+
+    <!-- <h3>પંચોની સહી</h3>
+    {{panchSignatureBlocks}} -->
+
+    <br><br>
+
+    <h3 class="section-title">વિગતવાર પેઢીઆંબા</h3>
+
+    <div class="tree-container">
+        <div class="tree">
+            {{familyTreeHtml}}
+        </div>
+    </div>
+
+  <p>
+ઉપર મુજબનું પેઢીનામું અમોએ અમારી જાણ અને માહિતી મુજબ લખાવેલ છે. આ પેઢીનામામાં કોઈ સીધી લીટીના કાયદેસર વારસદારો રહી જતા નથી તેમજ કોઈ ખોટા વારસદારો દાખલ કરવામાં આવેલ નથી. આ પેઢીનામામાં હયાત, મૈયત, પરણીત, અપરણીત દીકરીઓ તથા સગીરના  વારસદારો {{multipleWifeLine}}
+. પેઢીનામામાં ખોટું પેઢીનામું લખાવવું કે અધૂરા વારસો દર્શાવવું એ ફોજદારી ગુન્હો બને છે અને તેની સંપૂર્ણ જવાબદારી અમારી બને છે તે અમે જાણીએ છીએ. તેમ છતાં આ પેઢીનામા બાબતે ભવિષ્યમાં કોઈ પ્રશ્ન, વિવાદ, કોર્ટ કેસ કે તકરાર ઉપસ્થિત થશે તો અમો પંચો તથા અરજદાર સંપૂર્ણ જવાબદાર રહીશું, જે અમોને બંધનકારક છે. ઉપર મુજબનું પેઢીનામું અમોએ સુઝ-બુદ્ધિથી, બીનકેફ સ્થિતિમાં, અક્કલ-હોશિયારીથી અને કોઈપણ જાતના દબાણ, લોભ અથવા લાલચ રાખ્યા સિવાય લખાવેલ છે. આ પેઢીનામું વાંચી, વંચાવી, સાંભળી અને સંપૂર્ણ રીતે વિચાર કર્યા બાદ નીચે સહી કરવામાં આવી છે. તે બરોબર છે તે બદલ અમોએ નીચે સહી કરી છે, જે અમને કબુલ અને મંજુર છે.
+</p>
+
+
+
+
+
+    <br><br><br>
+
+
+    <div class="page-break"></div>
+
+<h2>પંચોની ઓળખ / ફોટા</h2>
+<br>
+
+{{panchPhotoBlocks}}
+
+
+   
+
+
+    <div class="page-break"></div>
+    <h2>અરજદારનો તલાટી કમ મંત્રી રૂબરૂ જવાબ</h2>
+
+ <p>
+    આથી હું નીચે સહી કરનાર અરજદારશ્રી 
+    <u><b>{{applicantName}}</b></u> ,
+   
+    <u><b>  રે. {{mukkamAddress}}</b></u> ,આજ રોજ તલાટી કમ મંત્રી ગ્રામ પંચાયત 
+    
+    <u><b>  તા.{{userTaluko}}</b></u> ,
+    રૂબરૂ હાજર થઈ અમારો જવાબ લખાવીએ છીએ કે
+    અમોએ તા. 
+    <b><u>{{applicationDate}}</u></b> 
+    ના રોજ પેઢીનામું બનાવવા અરજી આપેલ તેના અનુસંધાનમાં જણાવેલ તમામ વારસદારોની હકીકત સત્ય છે.
+    અરજી અને સોગંદનામામાં જણાવેલ તમામ વારસદારો સીધી લીટીના છે.
+    કોઈ વારસદાર રહી જવા પામતા નથી.
+    ખોટા વારસદાર દાખલ કરવા કે અસલ વારસદાર નહીં બતાવવા તે ફોજદારી ગુન્હો બને છે.
+    તેની અમને સમજ અને જાણ છે.
+    સદર પેઢીનામામાં હયાત, મૈયત, પરણીત, અપરણીત દીકરીઓ અને સગીર {{multipleWifeLine}}.
+
+    અરજી સાથે રજૂ કરેલ તમામ રેકર્ડ અને પુરાવા મેં રજૂ કરેલ છે.
+    આ બાબતે સંપૂર્ણ જવાબદારી અમારી રહેશે.
+    આ પેઢીનામા બાબતે ભવિષ્યમાં કોઈ પ્રશ્ન, વિવાદ, કોર્ટ કેસ કે તકરાર ઉપસ્થિત થશે તો
+    સઘળી જવાબદારી અમારી રહેશે.
+    આ જવાબ રાજીખુશીથી, કોઈપણ જાતના દબાણ વગર, બિનકેફ સ્થિતિમાં લખાવેલ છે.
+    જે વાંચી, સાંભળી, સમજી અને વિચારીને નીચે સહી કરેલ છે.
+    જે અમોને કબૂલ મંજુર છે.
+</p>
+
+
+    <table>
+        <tr>
+            <td style="width:160px; text-align:center; vertical-align:top;">
+    {{applicantPhotoHtml}}
+</td>
+
+            <td>
+                <p>
+                    <b>અરજદાર :</b> {{applicantName}} <br>
+                    <b>સરનામું :</b> {{mukkamAddress}} <br>
+                    <b>મોબાઇલ :</b> {{applicantMobile}} <br>
+                    <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b> {{applicantAadhaar}}
+                </p>
+            </td>
+                        <td style="width:160px;">
+
+<b> અંગુઠા નો નિશાન</b>
+            </td>
+            <td style="width:160px;">
+<b>સહી</b>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <p>
+        હું અરજદાર ઉપર જણાવેલ માહિતી તથા દર્શાવેલ તમામ વારસદારોની યાદી મારી સંપૂર્ણ
+        જાણ અને સમજ મુજબ સાચી છે. ખોટી માહિતી આપવી ગુનાહિત કૃત્ય બને છે અને મારી
+        વિરૂદ્ધ કાનૂની કાર્યવાહી થશે તે મને જાણ છે.
+    </p>
+
+    
+
+    <br><br>
+
+    <p>
+        તારીખ : <b><u> {{applicationDate}} </u></b> <br>
+        સ્થળ : <u><b> {{taluko}}</b></u>
+    </p>
+
+    <h3>મારી રૂબરૂ ( )</h3>
+   <div style="width:100%; text-align:right;;">
+
+    <div style="display:inline-block; text-align:center;">
+        
+        <br>
+        તલાટી કમ મંત્રી
+        <br>
+        {{taluko}} ગ્રામ પંચાયત
+        <br>
+        તા. <u><b>{{userTaluko}}</b></u> જી. <u><b>{{userJillo}}</b></u>
+    </div>
+
+</div>
+
+<p >શેરો   </p>
+
+<p>
+    <ul>
+        <li>
+            અરજદાર શ્રીની અરજી, સોગંદનામું અને રજૂ થયેલ પુરાવા તેમજ પંચો રૂબરૂ થયેલ પેઢીનામાના આધારે આ પેઢીનામું બનાવવામાં આવેલ છે.
+            આ પેઢીનામાનો ઉપયોગ સરકારી/અર્ધ સરકારી કામ સારૂં જ કરવાનો રહેશે.
+        </li>
+
+        <li>
+            આ પેઢીનામું વારસાઈ પ્રમાણપત્ર કે પ્રોબેટ નથી. આ પેઢીનામાનો કોઈ પણ કોર્ટના કામમાં ઉપયોગ કરી શકાશે નહીં.
+            કોર્ટના કામે વારસાઈ પ્રમાણપત્ર સક્ષમ અધિકારી પાસેથી મેળવવાનું રહેશે.
+        </li>
+
+<li>
+  આ પેઢીનામું અરજદારોએ નોટરી શ્રી 
+  <b><u>{{notaryName}}</u></b> 
+  રૂબરૂ સોગંદનામા&nbsp;
+
+  <span style="white-space: nowrap;">
+    સીરીયલ ક્રમાંક :
+    <b><u>{{notarySerialNo}}</u></b>,
+    બુક નં. :
+    <b><u>{{notaryBookNo}}</u></b>,
+    પેજ નં. :
+    <b><u>{{notaryPageNo}}</u></b>,
+    તારીખ :
+    <b><u>{{notaryDate}}</u></b>
+  </span>
+
+  ના સોગંદનામામાં ઉપર રજૂ કરેલ હકીકત તથા અરજદારના વિશ્વાસુ અને
+  પરિચિત સાક્ષીઓ સમજી સ્વીકારેલ હકીકત માત્ર છે.
+</li>
+
+
+        <li>
+            મિલકત તબદીલ / નાણાં વ્યવહાર / કોર્ટ કચેરીના કામે યોગ્ય સક્ષમ  અધિકારીશ્રી અથવા નામદાર કોર્ટ દ્વારા
+            ઇલાયદા વારસાઈ પ્રમાણપત્ર મેળવી આગળની કાર્યવાહી કરવાની રહેશે.
+        </li>
+
+        <li>
+            સોગંદ ઉપર ખોટી વિગત જાહેર કરવી, જાણીબુજીને સરકારી તંત્રને તથા ફરજ પરના સરકારી અધિકારી/કર્મચારીને
+            ગેરમાર્ગે દોરવા તથા ખોટી વિગતો રજૂ કરવી તે ભારતીય દંડ સંહિતાની (આઈ.પી.સી) કલમ
+            ૧૯૨, ૧૯૫, ૧૯૬, ૧૯૭ અને ૧૯૮ મુજબ દંડ અને સજાને પાત્ર રહેશે.
+            તે હું જાહેર કરું છું.
+        </li>
+
+        <li>
+            આ પેઢીનામું સરકારશ્રીના વખતો વખતના ઠરાવ, પરિપત્રો, યાદી વિગેરે ધ્યાને લઈ તે મુજબના નામો
+            વારસાઈના કામે દાખલ કરી શકાશે. વારસદાર પૈકી કોઈ મૈયત થયેલ હોય તો તેનું પેઢીનામું
+            અલગથી લાગુ કચેરીમાંથી મેળવી રજૂ કરવાનું રહેશે.
+            આ પેઢીનામા બાબતે કોઈ પ્રશ્ન, તકરાર અથવા કોર્ટ કેસ ઉપસ્થિત થાય તો
+            સઘળી જવાબદારી અરજદારશ્રી તથા પંચોની રહેશે.
+        </li>
+    </ul>
+</p>
+
+ <p>
+       તારીખ:<b><u> {{applicationDate}} </u></b> <br>
+        સ્થળ : <u><b> {{taluko}}</b></u>
+    </p>
+
+     <h3>મારી રૂબરૂ ( )</h3>
+   <div style="width:100%; text-align:right;;">
+
+    <div style="display:inline-block; text-align:center;">
+        
+        <br>
+        તલાટી કમ મંત્રી
+        <br>
+        {{taluko}} ગ્રામ પંચાયત
+        <br>
+        તા. <u><b>{{userTaluko}}</b></u> જી. <u><b>{{userJillo}}</b></u>
+    </div>
+
+</div>
+
+
+   
+    <!-- <h2>ટીકા અને નોંધો</h2>
+
+    <p>
+        ૧. અરજદાર દ્વારા રજૂ કરાયેલ સોગંદનામા અને દસ્તાવેજો આધારે પેઢીનામું તૈયાર કરવામાં આવ્યું છે.<br>
+        ૨. પેઢીનામું વારસાઈ હક અથવા કાયદાકીય માલિકીનો પુરાવો નથી.<br>
+        ૩. રજૂ થયેલ દસ્તાવેજોની જવાબદારી અરજદારની રહેશે.<br>
+        ૪. જાણપૂર્વક ખોટું પેઢીનામું રજૂ કરવાથી કાનૂની કાર્યવાહી થશે.<br>
+        ૫. ગામ પંચાયતનો નિર્ણય અંતિમ રહેશે.<br>
+        ૬. તલાટી કમ મંત્રીશ્રીના હસ્તાક્ષર વગર પ્રમાણિત ગણાશે નહીં.
+    </p>
+
+    <br><br> -->
+
+    <!-- <h3>પાવતી</h3>
+
+    <table>
+        <tr>
+            <td>જાવક નં.</td>
+            <td>{{javadNo}}</td>
+        </tr>
+        <tr>
+            <td>અરજદારનું નામ</td>
+            <td>{{applicantName}}</td>
+        </tr>
+        <tr>
+            <td>કુલ વારસદારો</td>
+            <td>{{totalHeirsCount}}</td>
+        </tr>
+        <tr>
+            <td>તલાટી કમ મંત્રી</td>
+            <td>{{talatiName}}</td>
+        </tr>
+    </table>
+
+    <br><br>
+
+    <p>
+        સ્થળ : {{mukkamAddress}} <br>
+        તારીખ : {{notaryDate}} <br>
+        સહી / મુદ્રા : ____________________
+    </p> -->
+
+</body>
+
+</html>

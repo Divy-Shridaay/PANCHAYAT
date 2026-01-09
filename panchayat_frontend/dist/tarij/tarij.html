@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8" />
+<title>તરીજ પત્રક</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;700&display=swap');
+
+body {
+    font-family: "Noto Sans Gujarati", sans-serif;
+    margin: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 6px;
+    text-align: left;
+}
+
+th {
+    background: #f2f2f2;
+    font-weight: bold;
+    text-align: center;
+}
+
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+h2, h3 {
+    text-align: center;
+    margin: 5px 0;
+    padding: 6px;
+}
+
+/* ✅ UNDERLINE STYLE */
+.u {
+    display: inline-block;
+    border-bottom: 2px solid #000;
+    padding: 0 6px 2px 6px;
+    font-weight: 600;
+}
+
+@media print {
+    body { margin: 10px; }
+    table { font-size: 11px; }
+}
+</style>
+</head>
+
+<body>
+
+<h2>પંચાયતના હિસાબનો નમૂનો – ૩</h2>
+
+<h3>
+    પંચાયત
+    <span class="u"> આવક </span>
+    –
+    <span class="u"> જાવક </span>
+    નો વાર્ષિક તરીજ
+    <span class="u">{{yearRange}}</span>
+    નો હિસાબ
+</h3>
+
+<h3>
+    <span class="u">{{taluko}}</span>
+</h3>
+
+<h3>
+    માસ :
+    <span class="u">{{dateRange}}</span>
+</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 8%;">ક્રમ નં.</th>
+            <th style="width: 42%;">આવકનો વિગત</th>
+            <th style="width: 15%;" class="text-right">રકમ</th>
+            <th style="width: 8%;">ક્રમ નં.</th>
+            <th style="width: 42%;">જાવકનો વિગત</th>
+            <th style="width: 15%;" class="text-right">રકમ</th>
+        </tr>
+
+        <tr>
+            <th></th>
+            <th>ઉઘડતી શિલક</th>
+            <th class="text-right">{{openingBalance}}</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {{tableRows}}
+
+        <tr>
+            <th></th>
+            <th>કુલ આવક :-</th>
+            <th class="text-right">{{totalAavak}}</th>
+            <th></th>
+            <th>કુલ જાવક :-</th>
+            <th class="text-right">{{totalJavak}}</th>
+        </tr>
+    </tbody>
+</table>
+
+<table style="margin-top: 10px;">
+    <thead>
+        <tr>
+            <th>ઉઘડતી શિલક</th>
+            <th class="text-right">{{openingBalance}}</th>
+            <th>કુલ રકમ</th>
+            <th class="text-right">{{totalWithOpening}}</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <th>કુલ આવક :-</th>
+            <th class="text-right">{{totalAavak}}</th>
+            <th>કુલ જાવક :-</th>
+            <th class="text-right">{{totalJavak}}</th>
+        </tr>
+
+        <tr>
+            <th>કુલ રકમ</th>
+            <th class="text-right">{{totalWithOpening}}</th>
+            <th>બંધ શિલક</th>
+            <th class="text-right">{{closingBalance}}</th>
+        </tr>
+    </tbody>
+</table>
+
+<div style="margin-top: 40px;">
+    <table style="border:none;width:100%;">
+        <tr>
+            <td style="border:none;width:50%;">
+                <p>તલાટીની સહી: _____________________</p>
+            </td>
+            <td style="border:none;width:50%;text-align:right;">
+                <p>સરપંચની સહી: _____________________</p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>
