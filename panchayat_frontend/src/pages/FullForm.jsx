@@ -19,7 +19,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import CameraCapture from "../components/CameraCapture";
 import { apiFetch } from "../utils/api.js";
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 const gujaratiToEnglishDigits = (str) => {
   return str.replace(/[૦-૯]/g, (d) => "૦૧૨૩૪૫૬૭૮૯".indexOf(d));
