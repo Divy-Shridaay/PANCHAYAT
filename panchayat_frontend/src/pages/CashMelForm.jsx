@@ -21,6 +21,7 @@ import * as XLSX from "xlsx";
 import { FiArrowLeft } from "react-icons/fi";
 import { useRef } from "react";
 
+
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiPrinter } from "react-icons/fi";
@@ -89,7 +90,12 @@ const CashMelForm = () => {
     const { t } = useTranslation();
     const toast = useToast();
     const navigate = useNavigate();
-    const { id } = useParams();
+   const { id } = useParams();
+const isEditMode = Boolean(id); // ✅ edit mode flag
+const [submitLoading, setSubmitLoading] = useState(false);     // for single entry submit
+const [bulkLoading, setBulkLoading] = useState(false);
+
+    
     const user = JSON.parse(localStorage.getItem("user") || "null");
     const [excelFile, setExcelFile] = useState(null);
 const fileInputRef = useRef(null);
@@ -318,11 +324,11 @@ const cancelExcelUpload = () => {
     fileInputRef.current.value = "";
   }
 
-  toast({
-    title: "Excel અપલોડ રદ કરવામાં આવ્યો",
-    status: "warning",
-    duration: 2000,
-  });
+//   toast({
+//     title: "Excel અપલોડ રદ કરવામાં આવ્યો",
+//     status: "warning",
+//     duration: 2000,
+//   });
 };
 
 
@@ -352,10 +358,10 @@ const cancelExcelUpload = () => {
         }
     };
 
- const uploadExcelToServer = async () => {
+const uploadExcelToServer = async () => {
     if (!form.excelFile) {
-        toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
-        return;
+      toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
+      return;
     }
 
     const fd = new FormData();
@@ -363,120 +369,133 @@ const cancelExcelUpload = () => {
 
     const token = localStorage.getItem("token");
     if (!token) {
-        toast({ title: "લૉગિન જરૂરી છે", status: "error" });
-        return;
+      toast({ title: "લૉગિન જરૂરી છે", status: "error" });
+      return;
     }
 
-    setLoading(true);
+    setBulkLoading(true);
+
     try {
-        const res = await fetch(`${API_BASE}/cashmel/upload-excel`, {
-            method: "POST",
-            body: fd,
-            headers: {
-                Authorization: `Bearer ${token}`, // ✅ IMPORTANT
-            },
-        });
+      const res = await fetch(`${API_BASE}/cashmel/upload-excel`, {
+        method: "POST",
+        body: fd,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        if (!res.ok) {
-            const txt = await res.text();
-            throw new Error(txt || "Upload failed");
-        }
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Upload failed");
+      }
 
-        toast({ title: "Excel સફળતાપૂર્વક અપલોડ થઈ ગયું!", status: "success" });
+      toast({
+        title: "Excel સફળતાપૂર્વક અપલોડ થઈ ગયું!",
+        status: "success",
+        duration: 4000,
+      });
+
+      // Reset for next upload
+      cancelExcelUpload();
+
     } catch (err) {
-        console.error(err);
-        toast({ title: "અપલોડમાં ભૂલ", description: err.message, status: "error" });
+      console.error(err);
+      toast({
+        title: "અપલોડમાં ભૂલ",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+      });
+    } finally {
+      setBulkLoading(false);
     }
+  };
 
-    setLoading(false);
-};
-
-
-const isCategoryValidForType = (type, category) => {
+  const isCategoryValidForType = (type, category) => {
     if (!type || !category) return false;
-
-    const list =
-        type === "aavak"
-            ? customCategories.aavak
-            : customCategories.javak;
-
+    const list = type === "aavak" ? customCategories.aavak : customCategories.javak;
     return list.some((c) => c.name === category);
-};
+  };
 
-
-
-    /* ------------------ Submit --------------------- */
-    const handleSubmit = async () => {
-      if (
-    !form.date ||
-    !form.name ||
-    !form.receiptPaymentNo ||
-    !form.vyavharType ||
-    !form.category ||
-    !isCategoryValidForType(form.vyavharType, form.category) ||
-    !form.amount ||
-    !form.paymentMethod ||
-    (form.paymentMethod === "bank" && !form.bank)
-) {
-    toast({
-        title: "કૃપા કરીને યોગ્ય કેટેગરી પસંદ કરો",
-        description: "વ્યવહાર પ્રકાર મુજબ કેટેગરી ફરજિયાત છે",
+  const handleSubmit = async () => {
+    if (
+      !form.date ||
+      !form.name ||
+      !form.receiptPaymentNo ||
+      !form.vyavharType ||
+      !form.category ||
+      !isCategoryValidForType(form.vyavharType, form.category) ||
+      !form.amount ||
+      !form.paymentMethod ||
+      (form.paymentMethod === "bank" && !form.bank)
+    ) {
+      toast({
+        title: "કૃપા કરીને બધા જરૂરી ફીલ્ડ ભરો",
         status: "error",
         duration: 3000,
         position: "top",
-    });
-    return;
-}
+      });
+      return;
+    }
 
+    setSubmitLoading(true);
 
-        setLoading(true);
-        try {
-            const fd = new FormData();
-            fd.append("date", form.date);
-            fd.append("name", form.name);
-            fd.append("receiptPaymentNo", form.receiptPaymentNo); // English digits में है
-            fd.append("vyavharType", form.vyavharType);
-            fd.append("category", form.category);
-            fd.append("amount", form.amount); // English digits में है
-            fd.append("paymentMethod", form.paymentMethod);
-            if (form.paymentMethod === "bank") fd.append("bank", form.bank);
-            fd.append("ddCheckNum", form.ddCheckNum);
-            fd.append("remarks", form.remarks);
-            if (form.excelFile) fd.append("excel", form.excelFile);
+    try {
+      const fd = new FormData();
+      fd.append("date", form.date);
+      fd.append("name", form.name);
+      fd.append("receiptPaymentNo", form.receiptPaymentNo);
+      fd.append("vyavharType", form.vyavharType);
+      fd.append("category", form.category);
+      fd.append("amount", form.amount);
+      fd.append("paymentMethod", form.paymentMethod);
+      if (form.paymentMethod === "bank") fd.append("bank", form.bank);
+      fd.append("ddCheckNum", form.ddCheckNum);
+      fd.append("remarks", form.remarks);
+      if (form.excelFile) fd.append("excel", form.excelFile);
 
-            const url = `${API_BASE}/cashmel${id ? '/' + id : ''}`;
-            const token = localStorage.getItem("token");
-            const res = await fetch(url, { 
-                method: "POST", 
-                body: fd,
-                headers: {
-                    ...(token && { Authorization: `Bearer ${token}` }),
-                }
-            });
+      const url = `${API_BASE}/cashmel${id ? "/" + id : ""}`;
+      const token = localStorage.getItem("token");
 
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || "Failed");
-            }
+      const res = await fetch(url, {
+        method: "POST",
+        body: fd,
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      });
 
-            toast({ title: "સફળતાપૂર્વક સેવ થયું!", status: "success", duration: 3000 });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed");
+      }
 
-            // Reset form only for new entries, navigate back for updates
-            if (id) {
-                navigate("/cashmel/details");
-            } else {
-                setForm({
-                    date: "", dateDisplay: "", name: "", receiptPaymentNo: "",
-                    vyavharType: "", category: "", amount: "", paymentMethod: "", bank: "", ddCheckNum: "", remarks: "", excelFile: null, excelData: []
-                });
-            }
+      toast({ title: "સફળતાપૂર્વક સેવ થયું!", status: "success", duration: 3000 });
 
-        } catch (err) {
-            console.error(err);
-            toast({ title: "ડેટા સેવ કરવામાં ભૂલ", status: "error" });
-        }
-        setLoading(false);
-    };
+      if (id) {
+        navigate("/cashmel/details");
+      } else {
+        setForm({
+          date: "",
+          dateDisplay: "",
+          name: "",
+          receiptPaymentNo: "",
+          vyavharType: "",
+          category: "",
+          amount: "",
+          paymentMethod: "",
+          bank: "",
+          ddCheckNum: "",
+          remarks: "",
+          excelFile: null,
+          excelData: [],
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({ title: "ડેટા સેવ કરવામાં ભૂલ", status: "error" });
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
 
     /* ==================== UI ==================== */
     return (
@@ -759,127 +778,117 @@ const isCategoryValidForType = (type, category) => {
                         {t("submit")}
                     </Button>
 
-                   {/* Bulk Upload & Reports Buttons */}
-<HStack spacing={4} width="100%" pt={2}>
-  <Button
-    size="md"
-    colorScheme="teal"
-    onClick={() =>
-      setActiveSection(activeSection === "bulk" ? null : "bulk")
-    }
-  >
-    Bulk Upload (Excel)
-  </Button>
+                  {!isEditMode && (
+            <HStack spacing={4} width="100%" pt={2}>
+              <Button
+                size="md"
+                colorScheme="teal"
+                onClick={() => setActiveSection(activeSection === "bulk" ? null : "bulk")}
+              >
+                Bulk Upload (Excel)
+              </Button>
 
-  <Button
-    size="md"
-    colorScheme="purple"
-    onClick={() =>
-      setActiveSection(activeSection === "report" ? null : "report")
-    }
-  >
-    રિપોર્ટ્સ
-  </Button>
-</HStack>
+              <Button
+                size="md"
+                colorScheme="purple"
+                onClick={() => setActiveSection(activeSection === "report" ? null : "report")}
+              >
+                રિપોર્ટ્સ
+              </Button>
+            </HStack>
+          )}
 
-{/* ================= BULK UPLOAD SECTION ================= */}
-<Collapse in={activeSection === "bulk"} animateOpacity>
-  <Box mt={4} p={4} bg="gray.50" rounded="md">
-
-<VStack spacing={4} align="stretch">
-
-  {/* 🔹 Row 1 : Sample + File + Cancel */}
-  <HStack spacing={3} align="center">
-    <Button
-      colorScheme="blue"
-      onClick={downloadSampleExcel}
-      flex="1"
-      whiteSpace="normal"
-    >
-      સેમ્પલ એક્સેલ ડાઉનલોડ
-    </Button>
-
-    <Input
-      ref={fileInputRef}
-      type="file"
-      accept=".xlsx,.xls"
-      onChange={handleExcelFileChange}
-      isDisabled={!!form.excelFile}
-      flex="1"
-    />
-
-    {form.excelFile && (
-      <Button
-        colorScheme="red"
-        variant="outline"
-        onClick={cancelExcelUpload}
-      >
-        Cancel
-      </Button>
-    )}
-  </HStack>
-
-  {/* 🔹 Row 2 : Upload Button (center) */}
-  <HStack justify="center">
-    <Button
-      colorScheme="green"
-      onClick={uploadExcelToServer}
-      isLoading={loading}
-      isDisabled={!form.excelFile}
-      width="50%"
-    >
-      Upload to File
-    </Button>
-  </HStack>
-
-</VStack>
-
-
-
-
-    {form.excelData.length > 0 && (
-      <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              {Object.keys(form.excelData[0]).map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: 6,
-                    background: "#f1f1f1",
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {form.excelData.map((r, i) => (
-              <tr key={i}>
-                {Object.values(r).map((v, j) => (
-                  <td
-                    key={j}
-                    style={{
-                      border: "1px solid #eee",
-                      padding: 6,
-                    }}
+          {/* BULK UPLOAD SECTION */}
+          <Collapse in={activeSection === "bulk"} animateOpacity>
+            <Box mt={4} p={4} bg="gray.50" rounded="md">
+              <VStack spacing={4} align="stretch">
+                <HStack spacing={3} align="center">
+                  <Button
+                    colorScheme="blue"
+                    onClick={downloadSampleExcel}
+                    flex="1"
+                    whiteSpace="normal"
                   >
-                    {String(v)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Box>
-    )}
-  </Box>
-</Collapse>
+                    સેમ્પલ એક્સેલ ડાઉનલોડ
+                  </Button>
 
-{/* ================= REPORTS SECTION ================= */}
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleExcelFileChange}
+                    isDisabled={!!form.excelFile || bulkLoading}
+                    flex="1"
+                  />
+
+                  {form.excelFile && (
+                    <Button
+                      colorScheme="red"
+                      variant="outline"
+                      onClick={cancelExcelUpload}
+                      isDisabled={bulkLoading}
+                    >
+                      રદ કરો
+                    </Button>
+                  )}
+                </HStack>
+
+                <HStack justify="center">
+                  <Button
+                    colorScheme="green"
+                    onClick={uploadExcelToServer}
+                    isLoading={bulkLoading}
+                    isDisabled={!form.excelFile || bulkLoading}
+                    width="50%"
+                  >
+                    Upload Excel
+                  </Button>
+                </HStack>
+              </VStack>
+
+              {form.excelData.length > 0 && (
+                <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        {Object.keys(form.excelData[0] || {}).map((h) => (
+                          <th
+                            key={h}
+                            style={{
+                              border: "1px solid #ddd",
+                              padding: 6,
+                              background: "#f1f1f1",
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.excelData.map((r, i) => (
+                        <tr key={i}>
+                          {Object.values(r).map((v, j) => (
+                            <td
+                              key={j}
+                              style={{
+                                border: "1px solid #eee",
+                                padding: 6,
+                              }}
+                            >
+                              {String(v)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Box>
+              )}
+            </Box>
+          </Collapse>
+
+          {/* REPORT SECTION */}
 <Collapse in={activeSection === "report"} animateOpacity>
   <CashMelReport
     apiBase={API_BASE}

@@ -407,7 +407,7 @@ const paymentMethodGujarati = (method) => {
                       key={row._id}
                       _hover={{ bg: "gray.50" }}
                       cursor="pointer"
-                      onClick={() => navigate(`/cashmel/details/${row._id}`)}
+                      // onClick={() => navigate(`/cashmel/details/${row._id}`)}
                     >
                       <Td>{formatDateToGujarati(row.date)}</Td>
                       <Td>{row.name}</Td>
@@ -495,7 +495,7 @@ const paymentMethodGujarati = (method) => {
           </>
         )}
 
-        <Modal
+        {/* <Modal
           isOpen={isOpen}
           onClose={onClose}
           isCentered
@@ -573,7 +573,7 @@ const paymentMethodGujarati = (method) => {
               </Button>
             </ModalFooter>
           </ModalContent>
-        </Modal>
+        </Modal> */}
       </Box>
     );
   }
@@ -581,7 +581,7 @@ const paymentMethodGujarati = (method) => {
   // SINGLE ENTRY PAGE
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
-      <Flex justify="space-between" align="center" mb={10}>
+      {/* <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700" mr={2}>
           ✏️ {t("updateCashmel")}
         </Heading>
@@ -594,9 +594,9 @@ const paymentMethodGujarati = (method) => {
         >
           {t("goBack")}
         </Button>
-      </Flex>
+      </Flex> */}
 
-      <Box
+      {/* <Box
         bg="white"
         p={8}
         rounded="2xl"
@@ -683,9 +683,9 @@ const paymentMethodGujarati = (method) => {
         ) : (
           <Text>No data found</Text>
         )}
-      </Box>
+      </Box> */}
 
-      <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
+      {/* <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
         <ModalOverlay bg="rgba(0,0,0,0.45)" />
         <ModalContent
           rounded="2xl"
@@ -758,7 +758,7 @@ const paymentMethodGujarati = (method) => {
             </Button>
           </ModalFooter>
         </ModalContent>
-      </Modal>
+      </Modal> */}
     </Box>
   );
 };

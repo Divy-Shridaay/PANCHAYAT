@@ -114,6 +114,35 @@ export const uploadExcel = async (req, res, next) => {
     const skipped = [];
     const errors = [];
 
+    // ===============================
+    // 🔁 MAPPINGS (VERY IMPORTANT)
+    // ===============================
+    const vyavharTypeMap = {
+      "આવક": "aavak",
+      "જાવક": "javak",
+      "aavak": "aavak",
+      "javak": "javak",
+    };
+
+  const paymentMethodMap = {
+  "બેંક": "bank",
+  "રોકડ": "rokad",
+  "bank": "bank",
+  "rokad": "rokad",
+};
+
+
+    function mapVyavhar(val) {
+      return vyavharTypeMap[String(val || "").trim()] || "";
+    }
+
+    function mapPaymentMethod(val) {
+      return paymentMethodMap[String(val || "").trim()] || "";
+    }
+
+    // ===============================
+    // 📅 DATE PARSER
+    // ===============================
     function parseExcelDate(val) {
       if (!val) return null;
 
@@ -135,6 +164,9 @@ export const uploadExcel = async (req, res, next) => {
       return null;
     }
 
+    // ===============================
+    // 🔁 ROW LOOP
+    // ===============================
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
 
@@ -145,7 +177,14 @@ export const uploadExcel = async (req, res, next) => {
       const category = String(r.category || "").trim();
       const amount = Number(r.amount || 0);
 
-      // ✅ Required validation
+      // ✅ NEW FIELDS (FIX)
+      const paymentMethod = mapPaymentMethod(r.paymentMethod);
+      const bank = String(r.bank || "").trim();
+      const ddCheckNum = String(r.ddCheckNum || "").trim();
+
+      // ===============================
+      // ❗ REQUIRED VALIDATION
+      // ===============================
       if (!dateISO || !name || !vyavharType || !category || !amount) {
         errors.push({
           row: i + 2,
@@ -155,7 +194,21 @@ export const uploadExcel = async (req, res, next) => {
         continue;
       }
 
+      // ❗ BANK VALIDATION
+      if (paymentMethod === "bank") {
+        if (!bank || !ddCheckNum) {
+          errors.push({
+            row: i + 2,
+            reason: "Bank payment requires bank name & dd/check number",
+            raw: r,
+          });
+          continue;
+        }
+      }
+
+      // ===============================
       // 🔍 DUPLICATE CHECK
+      // ===============================
       const alreadyExists = await CashMel.findOne({
         panchayatId: req.user.gam,
         date: dateISO,
@@ -164,6 +217,9 @@ export const uploadExcel = async (req, res, next) => {
         vyavharType,
         category,
         amount,
+        paymentMethod,
+        bank,
+        ddCheckNum,
       });
 
       if (alreadyExists) {
@@ -172,10 +228,12 @@ export const uploadExcel = async (req, res, next) => {
           reason: "Duplicate entry",
           raw: r,
         });
-        continue; // ⛔ skip saving
+        continue;
       }
 
-      // ✅ Save new entry
+      // ===============================
+      // ✅ SAVE RECORD (FIXED)
+      // ===============================
       await CashMel.create({
         panchayatId: req.user.gam,
         date: dateISO,
@@ -184,11 +242,17 @@ export const uploadExcel = async (req, res, next) => {
         vyavharType,
         category,
         amount,
+        paymentMethod,
+        bank,
+        ddCheckNum,
       });
 
       saved.push(r);
     }
 
+    // ===============================
+    // 📤 RESPONSE
+    // ===============================
     return res.json({
       success: true,
       savedCount: saved.length,
@@ -202,6 +266,7 @@ export const uploadExcel = async (req, res, next) => {
     next(err);
   }
 };
+
 
 
 
