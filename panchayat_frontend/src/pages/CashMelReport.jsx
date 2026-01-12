@@ -261,7 +261,7 @@ const handlePrintReport = async () => {
 
             if (checkedRows.length === 0) {
                 toast({
-                    title: "ચેupક ઈશ્યૂ રેકોર્ડ નથી",
+                    title: "ચેક ઈશ્યૂ રેકોર્ડ નથી",
                     status: "warning",
                 });
                 setLoading(false);
