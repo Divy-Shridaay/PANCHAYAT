@@ -354,7 +354,6 @@ if (!hasValidRecords) {
     return;
 }
 
-
             if (allRecords.length === 0) {
                 toast({
                     title: "કોઈ રેકોર્ડ નથી",
@@ -586,6 +585,11 @@ if (!hasValidRecords) {
             const { income: cashIncome, expense: cashExpense } = getPeriodAccountFlow("cash", null);
             const cashClosing = cashOpening + cashIncome - cashExpense;
 
+            let totalOpening = cashOpening;
+            let totalIncome = cashIncome;
+            let totalExpense = cashExpense;
+            let totalClosing = cashClosing;
+
             accountTransferRows += `
 <tr>
     <td>${guj(srNo++)}</td>
@@ -601,6 +605,11 @@ if (!hasValidRecords) {
                 const { income: bankIncome, expense: bankExpense } = getPeriodAccountFlow("bank", bankName);
                 const bankClosing = bankOpening + bankIncome - bankExpense;
 
+                totalOpening += bankOpening;
+                totalIncome += bankIncome;
+                totalExpense += bankExpense;
+                totalClosing += bankClosing;
+
                 accountTransferRows += `
 <tr>
     <td>${guj(srNo++)}</td>
@@ -612,13 +621,21 @@ if (!hasValidRecords) {
 </tr>`;
             }
 
+            // Add total row
+            accountTransferRows += `
+<tr style="font-weight: bold; background: #f2f2f2;">
+    <td colspan="2" class="text-center">કુલ રકમ</td>
+    <td class="text-right">${guj(totalOpening)}</td>
+    <td class="text-right">${guj(totalIncome)}</td>
+    <td class="text-right">${guj(totalExpense)}</td>
+    <td class="text-right">${guj(totalClosing)}</td>
+</tr>`;
+
             /* ================= PRINT ================= */
             const templateRes = await fetch(templateFile);
             let htmlTemplate = await templateRes.text();
 
           const fyGujarati = getGujaratiFinancialYear(fromDate);
-
-
 
             htmlTemplate = htmlTemplate
                 .replace("{{taluko}}", talukoName)
@@ -639,10 +656,9 @@ if (!hasValidRecords) {
             win.document.write(htmlTemplate);
             win.document.close();
             setTimeout(() => {
-  win.focus();   // 🔥 IMPORTANT LINE
+  win.focus();
   win.print();
 }, 500);
-
 
             setLoading(false);
             return;
@@ -1014,6 +1030,18 @@ if (!hasValidRecords) {
     return (
         <Box mt={4} p={3} bg="gray.50" rounded="md">
             <HStack spacing={3} mb={3} flexWrap="wrap">
+
+                 <Select
+                    width="180px"
+                    value={report.type}
+                    onChange={(e) => handleReportChange("type", e.target.value)}
+                >
+                    <option value="aavak">આવક</option>
+                    <option value="javak">જાવક</option>
+                    <option value="checkIssue">ચેક ઈશ્યૂ</option>
+                    <option value="tarij">તારીજ પત્રક</option>
+                    <option value="rojmel">રોજમેળ</option>
+                </Select>
                     <DateInput
                         label="From  "
                         name="from"
@@ -1032,17 +1060,7 @@ if (!hasValidRecords) {
                         convertToISO={convertToISO}
                     />
 
-                <Select
-                    width="180px"
-                    value={report.type}
-                    onChange={(e) => handleReportChange("type", e.target.value)}
-                >
-                    <option value="aavak">આવક</option>
-                    <option value="javak">જાવક</option>
-                    <option value="checkIssue">ચેક ઈશ્યૂ</option>
-                    <option value="tarij">તારીજ પત્રક</option>
-                    <option value="rojmel">રોજમેળ</option>
-                </Select>
+               
 
                 <Button
                     colorScheme="green"

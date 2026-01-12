@@ -431,7 +431,7 @@ const uploadExcelToServer = async () => {
       (form.paymentMethod === "bank" && !form.bank)
     ) {
       toast({
-        title: "કૃપા કરીને બધા જરૂરી ફીલ્ડ ભરો",
+        title: "કૃપા કરીને બધી  જરૂરી ફીલ્ડ ભરો",
         status: "error",
         duration: 3000,
         position: "top",

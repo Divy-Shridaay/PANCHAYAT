@@ -81,28 +81,30 @@ td {
     margin: 0;
     padding: 0;
     width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
   .table-wrapper {
     overflow: visible !important;
     width: 100%;
-    transform: scale(0.95);  /* Scale down slightly */
-    transform-origin: top left;
+    /* Removed scale to avoid unnecessary shrinking */
   }
   
   table {
     width: 100% !important;
     table-layout: auto;
+    page-break-inside: avoid;
   }
   
   th, td {
-    font-size: 5.5px !important;
-    padding: 1px 1px !important;
-    line-height: 1;
+    font-size: 7px !important;  /* Increased from 5.5px for better readability, adjust if needed */
+    padding: 1px 2px !important;
+    line-height: 1.1;
     word-break: break-word;
     overflow-wrap: break-word;
     white-space: normal;
-    min-width: 12px;
+    min-width: 8px;  /* Reduced min-width for better fitting */
   }
   
   h3 {
@@ -117,13 +119,12 @@ td {
   
   .footer-section {
     margin-top: 10px;
-    transform: scale(0.95);
-    transform-origin: top left;
+    /* Removed scale */
   }
   
   .footer-table th,
   .footer-table td {
-    font-size: 7px;
+    font-size: 8px;  /* Adjusted for better look */
     padding: 2px;
   }
   
@@ -133,9 +134,7 @@ td {
   }
 }
 
-
 </style>
-
 
 </head>
 
