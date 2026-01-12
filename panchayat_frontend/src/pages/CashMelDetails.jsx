@@ -495,7 +495,7 @@ const paymentMethodGujarati = (method) => {
           </>
         )}
 
-        {/* <Modal
+        <Modal
           isOpen={isOpen}
           onClose={onClose}
           isCentered
@@ -573,7 +573,7 @@ const paymentMethodGujarati = (method) => {
               </Button>
             </ModalFooter>
           </ModalContent>
-        </Modal> */}
+        </Modal>
       </Box>
     );
   }

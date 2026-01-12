@@ -261,7 +261,7 @@ const handlePrintReport = async () => {
 
             if (checkedRows.length === 0) {
                 toast({
-                    title: "ચેupક ઈશ્યૂ રેકોર્ડ નથી",
+                    title: "ચેક ઈશ્યૂ રેકોર્ડ નથી",
                     status: "warning",
                 });
                 setLoading(false);
@@ -1015,7 +1015,7 @@ if (!hasValidRecords) {
         <Box mt={4} p={3} bg="gray.50" rounded="md">
             <HStack spacing={3} mb={3} flexWrap="wrap">
                     <DateInput
-                        label="From"
+                        label="From  "
                         name="from"
                         value={report.from}
                         onDateChange={handleReportChange}
@@ -1024,7 +1024,7 @@ if (!hasValidRecords) {
                     />
 
                     <DateInput
-                        label="To"
+                        label="To "
                         name="to"
                         value={report.to}
                         onDateChange={handleReportChange}
