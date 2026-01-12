@@ -16,6 +16,10 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
     applicantPhoto: String,
     applicationDate: String,
 
+
+    referenceNo: { type: String, default: "" },
+
+
     /* -------------------- Mukhya -------------------- */
     mukhyaName: String,
     mukhyaAge: String,

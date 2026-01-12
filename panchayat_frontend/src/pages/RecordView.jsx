@@ -148,6 +148,35 @@ const multipleWifeLine =
         return `${toGujaratiDigits(d)}/${toGujaratiDigits(m)}/${toGujaratiDigits(y)}`;
     };
 
+
+
+    function formatGujaratiDate(dateStr) {
+  if (!dateStr) return "";
+  if (dateStr.includes("/")) return toGujaratiDigits(dateStr);
+
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "";
+  return `${toGujaratiDigits(d.getDate())}/${toGujaratiDigits(d.getMonth() + 1)}/${toGujaratiDigits(d.getFullYear())}`;
+}
+
+function calculateAgeAtDeath(dob, dod) {
+  if (!dob || !dod) return "";
+
+  const birth = new Date(dob);
+  const death = new Date(dod);
+
+  if (isNaN(birth) || isNaN(death)) return "";
+
+  let age = death.getFullYear() - birth.getFullYear();
+  const m = death.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age > 0 ? toGujaratiDigits(age) : "";
+}
+
+
     function generateSvgTree(root) {
         const nodeWidth = 180;
         const nodeHeight = 75;
@@ -240,21 +269,43 @@ const multipleWifeLine =
     font-family="Noto Serif Gujarati"
 >${textName}</text>
 
-${isDead ? `
-<text 
-    x="${xCenter}" 
-    y="${yCenter + 8}"
-    text-anchor="middle"
-    font-size="14"
-    font-weight="700"
-    fill="#000000"
-    font-family="Noto Serif Gujarati"
->તારીખ: ${toGujaratiDigits(node.dodDisplay)}</text>
-` : ""}
+${isDead ? (() => {
+  const dob = formatGujaratiDate(node.dob);
+  const dod = formatGujaratiDate(node.dodDisplay || node.dod);
+
+  let secondLine = "";
+ if (dod) {
+  secondLine = `મૃત્યુ: ${dod}`;
+} else {
+  let ageAtDeath = calculateAgeAtDeath(node.dob, node.dod);
+
+  // 🔥 Fallback to stored age if no DOB+DOD
+  if (!ageAtDeath && node.age) {
+    ageAtDeath = toGujaratiDigits(node.age);
+  }
+
+  if (ageAtDeath) {
+    secondLine = `ઉંમર: ${ageAtDeath} વર્ષ`;
+  }
+}
+
+  return `
+  <text x="${xCenter}" y="${yCenter + 6}" text-anchor="middle"
+        font-size="13" font-weight="700" font-family="Noto Serif Gujarati">
+    ${dob ? `જન્મ: ${dob}` : ""}
+  </text>
+  <text x="${xCenter}" y="${yCenter + 24}" text-anchor="middle"
+        font-size="13" font-weight="700" font-family="Noto Serif Gujarati">
+    ${secondLine}
+  </text>
+  `;
+})() : ""}
+
 
 <text 
     x="${xCenter}" 
-    y="${isDead ? (yCenter + 28) : (yCenter + 10)}"
+  y="${isDead ? (yCenter + 44) : (yCenter + 10)}"
+
     text-anchor="middle"
     font-size="15"
     font-weight="700"
@@ -344,6 +395,8 @@ const replacements = {
   javadNo: form?.javadNo || "",
   totalHeirsCount: form?.totalHeirsCount || "",
   // ✅ ADD THESE
+    referenceNo: form?.referenceNo || "",
+
   jaminSurveyNo: form?.jaminSurveyNo || "",
   jaminKhatano: form?.jaminKhatano || "",
 
@@ -590,40 +643,48 @@ replacements.propertyExtraRows = propertyExtraRows;
         FAMILY TREE BUILDER (Dynamic)
     ----------------------------------------- */
 
-    function buildNode(person) {
-      if (!person) return null;
+  function buildNode(person) {
+  if (!person) return null;
 
-      const node = {
-        name: person.name,
-        age: person.age || "",
-        dodDisplay: person.dodDisplay || "",
-        relation: relationToGujarati(person.relation),
-        isDeceased: person.isDeceased || false,
-        isRoot: person.isRoot || false,
-        children: []
-      };
+  const node = {
+    name: person.name,
+    age: person.age || "",
     
+    // 🔥 THESE WERE MISSING
+    dob: person.dobDisplay || person.dob || "",
+    dod: person.dodDisplay || person.dod || "",
+    dodDisplay: person.dodDisplay || person.dod || "",
 
-      const spouse = person.spouse || person.subFamily?.spouse;
+    relation: relationToGujarati(person.relation),
+    isDeceased: person.isDeceased || false,
+    isRoot: person.isRoot || false,
+    children: []
+  };
 
-      if (spouse?.name?.trim()) {
-        node.children.push({
-          name: spouse.name,
-          age: spouse.age || "",
-          relation: relationToGujarati(spouse.relation),
-          isDeceased: spouse.isDeceased || false,
-          children: []
-        });
-      }
+  const spouse = person.spouse || person.subFamily?.spouse;
 
-      const personChildren = person.subFamily?.children || person.children || [];
+  if (spouse?.name?.trim()) {
+    node.children.push({
+      name: spouse.name,
+      age: spouse.age || "",
+      dob: spouse.dobDisplay || spouse.dob || "",
+      dod: spouse.dodDisplay || spouse.dod || "",
+      dodDisplay: spouse.dodDisplay || spouse.dod || "",
+      relation: relationToGujarati(spouse.relation),
+      isDeceased: spouse.isDeceased || false,
+      children: []
+    });
+  }
 
-      personChildren.forEach(c => {
-        node.children.push(buildNode(c));
-      });
+  const personChildren = person.subFamily?.children || person.children || [];
 
-      return node;
-    }
+  personChildren.forEach(c => {
+    node.children.push(buildNode(c));
+  });
+
+  return node;
+}
+
 
     const rootPerson = buildNode({
       ...pedhinamu.mukhya,

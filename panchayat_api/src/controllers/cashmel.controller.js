@@ -194,33 +194,17 @@ export const uploadExcel = async (req, res, next) => {
         continue;
       }
 
-      // ❗ BANK VALIDATION
-      if (paymentMethod === "bank") {
-        if (!bank || !ddCheckNum) {
-          errors.push({
-            row: i + 2,
-            reason: "Bank payment requires bank name & dd/check number",
-            raw: r,
-          });
-          continue;
-        }
-      }
-
-      // ===============================
-      // 🔍 DUPLICATE CHECK
-      // ===============================
       const alreadyExists = await CashMel.findOne({
-        panchayatId: req.user.gam,
-        date: dateISO,
-        name,
-        receiptPaymentNo,
-        vyavharType,
-        category,
-        amount,
-        paymentMethod,
-        bank,
-        ddCheckNum,
-      });
+  panchayatId: req.user.gam,
+  date: dateISO,
+  name,
+  receiptPaymentNo,
+  vyavharType,
+  category,
+  amount,
+  isDeleted: false
+});
+
 
       if (alreadyExists) {
         skipped.push({
@@ -231,21 +215,21 @@ export const uploadExcel = async (req, res, next) => {
         continue;
       }
 
-      // ===============================
-      // ✅ SAVE RECORD (FIXED)
-      // ===============================
-      await CashMel.create({
-        panchayatId: req.user.gam,
-        date: dateISO,
-        name,
-        receiptPaymentNo,
-        vyavharType,
-        category,
-        amount,
-        paymentMethod,
-        bank,
-        ddCheckNum,
-      });
+await CashMel.create({
+  panchayatId: req.user.gam,
+  date: dateISO,
+  name,
+  receiptPaymentNo,
+  vyavharType,
+  category,
+  amount,
+  paymentMethod: "rokad",
+  bank: "",
+  ddCheckNum: "",
+  remarks: "",
+  isDeleted: false
+});
+
 
       saved.push(r);
     }

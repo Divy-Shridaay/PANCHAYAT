@@ -12,7 +12,11 @@ import {
   VStack,
   Checkbox,
   Text,
+  Radio,
+  RadioGroup
 } from "@chakra-ui/react";
+
+
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -78,7 +82,7 @@ any: "",
     reasonForPedhinamu: "",
     panch: [],
     talatiName: "",
-    varasdarType: "alive",
+    varasdarType: "",
     totalHeirsCount: "",
     javadNo: "",
     mukhyaName: "",
@@ -154,13 +158,10 @@ useEffect(() => {
         });
       });
     });
-
-    const applicantName = savedForm.applicantName || mukhya.name || "";
-    const applicantSurname =
-      savedForm.applicantSurname ||
-      (mukhya.name ? mukhya.name.split(" ").slice(-1)[0] : "");
-    const applicantMobile = savedForm.applicantMobile || mukhya.mobile || "";
-    const applicantAadhaar = savedForm.applicantAadhaar || "";
+const applicantName = savedForm.applicantName || "";
+const applicantSurname = savedForm.applicantSurname || "";
+const applicantMobile = savedForm.applicantMobile || "";
+const applicantAadhaar = savedForm.applicantAadhaar || "";
 
     const mappedHeirs = heirs.map((h) => ({
       ...h,
@@ -270,7 +271,10 @@ useEffect(() => {
         date: toISO(p.dodDisplay || p.dod || ""),
       })),
 
-      varasdarType: deceasedList.length > 0 ? "deceased" : "alive",
+      varasdarType:
+  savedForm.varasdarType ||
+  (deceasedList.length > 0 ? "deceased" : "alive"),
+
 
       mukhyaName: mukhya.name || "",
       mukhyaAge: mukhya.age || "",
@@ -308,6 +312,7 @@ useEffect(() => {
   })();
 }, []);
 
+const hiddenDocuments = ["aadhaarCopy", "panchResolution"];
 
   const handleSave = async () => {
     const errors = [];
@@ -379,10 +384,12 @@ useEffect(() => {
         invalid[`panch_${i}_name`] = t("panchNameMissing");
       }
 
-      if (isEmpty(p.age)) {
-        errors.push(`${t("panchAgeMissing")} #${i + 1}`);
-        invalid[`panch_${i}_age`] = t("panchAgeMissing");
-      }
+   const ageNum = Number(p.age);
+
+if (!ageNum || ageNum < 18) {
+  errors.push(`પંચની ઉંમર 18 વર્ષથી વધુ હોવી જોઈએ #${i + 1}`);
+  invalid[`panch_${i}_age`] = "18+ required";
+}
 
       if (isEmpty(p.occupation)) {
         errors.push(`${t("panchOccupationMissing")} #${i + 1}`);
@@ -456,6 +463,13 @@ useEffect(() => {
       invalid.talatiName = t("requiredField");
     }
 
+
+    if (!form.varasdarType) {
+  errors.push("વારસદારનો પ્રકાર પસંદ કરો");
+  invalid.varasdarType = true;
+}
+
+    
     if (isEmpty(form.javadNo)) {
       errors.push(t("enterJavadNo"));
       invalid.javadNo = t("requiredField");
@@ -691,52 +705,34 @@ const res = await fetch(
 
 
   {/* Camera Capture */}
-  {!form.applicantPhotoFile && (
-  <Box mt={2}>
-   <CameraCapture
-  onCapture={(file) => {
-    // 🔥 Clear file upload photo first
-    handleChange("applicantPhotoFile", null);
-    handleChange("applicantPhotoPreview", null);
+ <Box mt={2}>
+  <CameraCapture
+    onCapture={(file, url) => {
+      handleChange("applicantPhotoFile", file);
+      handleChange("applicantPhotoPreview", url);
+    }}
+  />
+</Box>
 
-    // 🔥 Set camera photo
-    handleChange("applicantPhotoFile", file);
-    handleChange("applicantPhotoPreview", URL.createObjectURL(file));
-  }}
-/>
 
-  </Box>
-  )}
 
   {/* Preview + Remove */}
-  {form.applicantPhotoPreview && (
-    <Box mt={3}>
-      <img
-        src={form.applicantPhotoPreview}
-        alt="Applicant Photo"
-        style={{
-          width: "120px",
-          height: "120px",
-          objectFit: "cover",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-        }}
-      />
+{form.applicantPhotoPreview && (
+  <Box mt={2}>
+    <Button
+      size="sm"
+      colorScheme="red"
+      variant="outline"
+      onClick={() => {
+        handleChange("applicantPhotoFile", null);
+        handleChange("applicantPhotoPreview", null);
+      }}
+    >
+      ફોટો દૂર કરો
+    </Button>
+  </Box>
+)}
 
-      <Button
-        mt={2}
-        size="sm"
-        colorScheme="red"
-        variant="outline"
-        onClick={() => {
-          handleChange("applicantPhotoFile", null);
-          handleChange("applicantPhotoPreview", null);
-        }}
-      >
-        ફોટો દૂર કરો
-      </Button>
-    </Box>
-  )}
 </FormControl>
 
       </Box>
@@ -773,20 +769,21 @@ const res = await fetch(
 
         <FormControl isRequired>
           <FormLabel fontWeight="600">{t("age")}</FormLabel>
-         <Input
+    <Input
   {...inputStyle}
-  type="text"
-  inputMode="numeric"
-  pattern="[0-9]*"
+  type="number"
+  min={18}
+  max={120}
   borderColor={
     invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
   }
   value={p.age}
   onChange={(e) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
-    updatePanch(i, "age", value);
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    updatePanch(i, "age", val);
   }}
 />
+
 
         </FormControl>
       </HStack>
@@ -858,19 +855,17 @@ const res = await fetch(
 
 
         {/* Camera Capture */}
-        {!p.photoFile && (
-        <Box mt={2}>
-          <CameraCapture
-            onCapture={(file) => {
-              updatePanch(i, "photoFile", null);
-              updatePanch(i, "photoPreview", null);
 
-              updatePanch(i, "photoFile", file);
-              updatePanch(i, "photoPreview", URL.createObjectURL(file));
-            }}
-          />
-        </Box>
-        )}
+
+<Box mt={2}>
+  <CameraCapture
+    onCapture={(file, url) => {
+      updatePanch(i, "photoFile", file);
+      updatePanch(i, "photoPreview", url);
+    }}
+  />
+</Box>
+
 
         {/* Preview + Remove */}
         {p.photoPreview && (
@@ -1132,36 +1127,35 @@ const res = await fetch(
       <Heading {...sectionTitle}>{t("documents")}</Heading>
       <Box {...boxStyle}>
         <VStack align="start">
-          {Object.keys(form.documents).map((key) =>
-            key !== "otherDocument" ? (
-              <FormControl key={key} isRequired>
-                <Checkbox
-                  isChecked={form.documents[key]}
-                  onChange={(e) => updateDocument(key, e.target.checked)}
-                  colorScheme="green"
-                  borderColor={
-                    invalidFields[`doc_${key}`] ? "red.500" : undefined
-                  }
-                >
-                  {t(key)}
-                </Checkbox>
-              </FormControl>
-            ) : (
-              <FormControl key={key} mt={3}>
-                <FormLabel fontWeight="600">{t("otherDocument")}</FormLabel>
-                <Input
-                  {...inputStyle}
-                  borderColor={
-                    invalidFields.otherDocument ? "red.500" : "#CBD5E0"
-                  }
-                  value={form.documents.otherDocument}
-                  onChange={(e) =>
-                    updateDocument("otherDocument", e.target.value)
-                  }
-                />
-              </FormControl>
-            )
-          )}
+    {Object.keys(form.documents).map((key) => {
+  if (hiddenDocuments.includes(key)) return null;   // 🔥 REMOVE THESE
+
+  return key !== "otherDocument" ? (
+    <FormControl key={key} isRequired>
+      <Checkbox
+        isChecked={form.documents[key]}
+        onChange={(e) => updateDocument(key, e.target.checked)}
+        colorScheme="green"
+        borderColor={
+          invalidFields[`doc_${key}`] ? "red.500" : undefined
+        }
+      >
+        {t(key)}
+      </Checkbox>
+    </FormControl>
+  ) : (
+    <FormControl key={key} mt={3}>
+      <FormLabel fontWeight="600">{t("otherDocument")}</FormLabel>
+      <Input
+        {...inputStyle}
+        borderColor={invalidFields.otherDocument ? "red.500" : "#CBD5E0"}
+        value={form.documents.otherDocument}
+        onChange={(e) => updateDocument("otherDocument", e.target.value)}
+      />
+    </FormControl>
+  );
+})}
+
         </VStack>
       </Box>
 
@@ -1179,15 +1173,31 @@ const res = await fetch(
         </FormControl>
 
         <HStack spacing={6}>
-          <FormControl isRequired>
-            <FormLabel fontWeight="600">{t("varasdarType")}</FormLabel>
-            <Input
-              {...inputStyle}
-              borderColor={invalidFields.varasdarType ? "red.500" : "#CBD5E0"}
-              value={form.varasdarType}
-              onChange={(e) => handleChange("varasdarType", e.target.value)}
-            />
-          </FormControl>
+         <FormControl isRequired>
+  <FormLabel fontWeight="600">વારસાઈ નો પ્રકાર</FormLabel>
+
+  <RadioGroup
+    value={form.varasdarType}
+    onChange={(val) => handleChange("varasdarType", val)}
+  >
+    <HStack spacing={6}>
+      <Radio value="alive" colorScheme="green">
+        હયાત
+      </Radio>
+
+      <Radio value="deceased" colorScheme="red">
+        મૃત
+      </Radio>
+    </HStack>
+  </RadioGroup>
+
+  {invalidFields.varasdarType && (
+    <Text fontSize="sm" color="red.500" mt={1}>
+      જરૂરી છે
+    </Text>
+  )}
+</FormControl>
+
 
           <FormControl isRequired>
             <FormLabel fontWeight="600">{t("totalHeirsCount")}</FormLabel>
