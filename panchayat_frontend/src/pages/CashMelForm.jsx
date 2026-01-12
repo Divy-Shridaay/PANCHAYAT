@@ -307,7 +307,7 @@ setForm((p) => ({ ...p, excelData: fixedJson }));
 
 
   toast({
-    title: "Excel ફાઇલ વાંચાઈ ગઈ",
+    title: "Excel ફાઇલ વંચાઈ ગઈ",
     status: "info",
     duration: 2000,
   });

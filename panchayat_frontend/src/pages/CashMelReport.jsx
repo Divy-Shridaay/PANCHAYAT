@@ -1017,8 +1017,8 @@ if (!hasValidRecords) {
     } catch (err) {
         console.error("Print error:", err);
         toast({
-            title: "પ્રિન્ટ નિષ્ફળ",
-            description: err.message || "કંઈક ખોટું થયું",
+            title: "કૃપા કરીને યોગ્ય તારીખ પસંદ કરો",
+            // description: err.message || "કંઈક ખોટું થયું",
             status: "error",
             duration: 3000,
         });
@@ -1029,48 +1029,65 @@ if (!hasValidRecords) {
 
     return (
         <Box mt={4} p={3} bg="gray.50" rounded="md">
-            <HStack spacing={3} mb={3} flexWrap="wrap">
+           <HStack spacing={3} mb={3} flexWrap="wrap">
 
-                 <Select
-                    width="180px"
-                    value={report.type}
-                    onChange={(e) => handleReportChange("type", e.target.value)}
-                >
-                    <option value="aavak">આવક</option>
-                    <option value="javak">જાવક</option>
-                    <option value="checkIssue">ચેક ઈશ્યૂ</option>
-                    <option value="tarij">તારીજ પત્રક</option>
-                    <option value="rojmel">રોજમેળ</option>
-                </Select>
-                    <DateInput
-                        label="From  "
-                        name="from"
-                        value={report.from}
-                        onDateChange={handleReportChange}
-                        formatDisplayDate={formatDisplayDate}
-                        convertToISO={convertToISO}
-                    />
+    <Select
+        width="180px"
+        value={report.type}
+        onChange={(e) => handleReportChange("type", e.target.value)}
+    >
+        <option value="aavak">આવક</option>
+        <option value="javak">જાવક</option>
+        <option value="checkIssue">ચેક ઈશ્યૂ</option>
+        <option value="tarij">તારીજ પત્રક</option>
+        <option value="rojmel">રોજમેળ</option>
+    </Select>
 
-                    <DateInput
-                        label="To "
-                        name="to"
-                        value={report.to}
-                        onDateChange={handleReportChange}
-                        formatDisplayDate={formatDisplayDate}
-                        convertToISO={convertToISO}
-                    />
+    {/* રોજમેળ માટે ખાસ સિંગલ ડેટ પિકર */}
+    {report.type === "rojmel" ? (
+        <DateInput
+            label="તારીખ"
+            name="singleDate"
+            value={report.singleDate || report.from}
+            onDateChange={(name, value) => {
+                handleReportChange("from", value);
+                handleReportChange("to", value);
+                handleReportChange("singleDate", value); // ઓપ્શનલ tracking
+            }}
+            formatDisplayDate={formatDisplayDate}
+            convertToISO={convertToISO}
+        />
+    ) : (
+        <>
+            <DateInput
+                label="From"
+                name="from"
+                value={report.from}
+                onDateChange={handleReportChange}
+                formatDisplayDate={formatDisplayDate}
+                convertToISO={convertToISO}
+            />
 
-               
+            <DateInput
+                label="To"
+                name="to"
+                value={report.to}
+                onDateChange={handleReportChange}
+                formatDisplayDate={formatDisplayDate}
+                convertToISO={convertToISO}
+            />
+        </>
+    )}
 
-                <Button
-                    colorScheme="green"
-                    isLoading={loading}
-                    onClick={handlePrintReport}
-                    leftIcon={<Icon as={FiPrinter} />}
-                >
-                    પ્રિન્ટ / PDF
-                </Button>
-            </HStack>
+    <Button
+        colorScheme="green"
+        isLoading={loading}
+        onClick={handlePrintReport}
+        leftIcon={<Icon as={FiPrinter} />}
+    >
+        પ્રિન્ટ / PDF
+    </Button>
+</HStack>
         </Box>
     );
 };
