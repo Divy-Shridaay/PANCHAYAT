@@ -61,11 +61,26 @@ export default function RecordView() {
 // -------------------------------
 const wifeRelation = pedhinamu?.mukhya?.spouse?.relation;
 
+// 🔥 COUNT WIVES FROM HEIRS (NOT mukhya.spouse)
+const wifeCount = pedhinamu?.heirs?.filter(h => {
+  const r = (h.relation || "")
+    .toLowerCase()
+    .replace(/\s|_/g, "");   // remove space and _
+
+  return (
+    r.includes("wife") ||          // wife, firstwife, secondwife
+    r.includes("patni") ||         // if backend sends transliteration
+    r.includes("પત્ની")           // if Gujarati stored
+  );
+}).length || 0;
+
 const multipleWifeLine =
-  wifeRelation === "second_wife" ||
-  wifeRelation === "third_wife"
-    ? "અને એકથી વધુ પત્ની હોય તો તેમના તમામ વારસદારોનો સમાવેશ કરવામાં આવેલ છે"
-    : "નો સમાવેશ કરવામાં આવેલ છે";
+  wifeCount > 1
+    ? "તેમજ બીજી પત્ની હોય તો તેના તમામ વારસદારોનો સમાવેશ  કરેલ છે "
+    : "નો સમાવેશ કરવામાં આવેલ છે ";
+
+    
+
 
 
     // Format +91 99999 99999 (Display only)

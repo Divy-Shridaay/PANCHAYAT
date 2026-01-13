@@ -77,7 +77,7 @@ export default function FullForm() {
     jaminSurveyNo: "",
     jaminKhatano: "",
     makanMilkatAkarniNo: "",
-any: "",
+    any: "",
 
     reasonForPedhinamu: "",
     panch: [],
@@ -131,161 +131,160 @@ any: "",
     });
   };
 
-useEffect(() => {
-  (async () => {
-    const { response, data } = await apiFetch(`/api/pedhinamu/${id}`, {}, navigate, toast);
+  useEffect(() => {
+    (async () => {
+      const { response, data } = await apiFetch(`/api/pedhinamu/${id}`, {}, navigate, toast);
 
-    const ped = data.pedhinamu;
-    const savedForm = data.form || {};
+      const ped = data.pedhinamu;
+      const savedForm = data.form || {};
 
-    if (!ped) return;
+      if (!ped) return;
 
-    const mukhya = ped.mukhya || {};
-    const heirs = ped.heirs || [];
+      const mukhya = ped.mukhya || {};
+      const heirs = ped.heirs || [];
 
-    let deceasedCount = mukhya.isDeceased ? 1 : 0;
+      let deceasedCount = mukhya.isDeceased ? 1 : 0;
 
-    heirs.forEach((h) => {
-      if (h.isDeceased) deceasedCount++;
-      if (h.subFamily?.spouse?.isDeceased) deceasedCount++;
+      heirs.forEach((h) => {
+        if (h.isDeceased) deceasedCount++;
+        if (h.subFamily?.spouse?.isDeceased) deceasedCount++;
 
-      (h.subFamily?.children || []).forEach((c) => {
-        if (c.isDeceased) deceasedCount++;
-        if (c.spouse?.isDeceased) deceasedCount++;
+        (h.subFamily?.children || []).forEach((c) => {
+          if (c.isDeceased) deceasedCount++;
+          if (c.spouse?.isDeceased) deceasedCount++;
 
-        (c.children || []).forEach((gc) => {
-          if (gc.isDeceased) deceasedCount++;
+          (c.children || []).forEach((gc) => {
+            if (gc.isDeceased) deceasedCount++;
+          });
         });
       });
-    });
-const applicantName = savedForm.applicantName || "";
-const applicantSurname = savedForm.applicantSurname || "";
-const applicantMobile = savedForm.applicantMobile || "";
-const applicantAadhaar = savedForm.applicantAadhaar || "";
+      const applicantName = savedForm.applicantName || "";
+      const applicantSurname = savedForm.applicantSurname || "";
+      const applicantMobile = savedForm.applicantMobile || "";
+      const applicantAadhaar = savedForm.applicantAadhaar || "";
 
-    const mappedHeirs = heirs.map((h) => ({
-      ...h,
-      dob: h.dob || "",
-      dobDisplay: h.dobDisplay || "",
-      dod: h.dod || "",
-      dodDisplay: h.dodDisplay || "",
+      const mappedHeirs = heirs.map((h) => ({
+        ...h,
+        dob: h.dob || "",
+        dobDisplay: h.dobDisplay || "",
+        dod: h.dod || "",
+        dodDisplay: h.dodDisplay || "",
 
-      subFamily: {
-        spouse: h.subFamily?.spouse
-          ? {
+        subFamily: {
+          spouse: h.subFamily?.spouse
+            ? {
               ...h.subFamily.spouse,
               dob: h.subFamily.spouse.dob || "",
               dobDisplay: h.subFamily.spouse.dobDisplay || "",
               dod: h.subFamily.spouse.dod || "",
               dodDisplay: h.subFamily.spouse.dodDisplay || "",
             }
-          : {},
+            : {},
 
-        children: (h.subFamily?.children || []).map((c) => ({
-          ...c,
-          dob: c.dob || "",
-          dobDisplay: c.dobDisplay || "",
-          dod: c.dod || "",
-          dodDisplay: c.dodDisplay || "",
+          children: (h.subFamily?.children || []).map((c) => ({
+            ...c,
+            dob: c.dob || "",
+            dobDisplay: c.dobDisplay || "",
+            dod: c.dod || "",
+            dodDisplay: c.dodDisplay || "",
 
-          spouse: c.spouse
-            ? {
+            spouse: c.spouse
+              ? {
                 ...c.spouse,
                 dob: c.spouse.dob || "",
                 dobDisplay: c.spouse.dobDisplay || "",
                 dod: c.spouse.dod || "",
                 dodDisplay: c.spouse.dodDisplay || "",
               }
-            : null,
+              : null,
 
-          children: (c.children || []).map((gc) => ({
-            ...gc,
-            dob: gc.dob || "",
-            dobDisplay: gc.dobDisplay || "",
-            dod: gc.dod || "",
-            dodDisplay: gc.dodDisplay || "",
+            children: (c.children || []).map((gc) => ({
+              ...gc,
+              dob: gc.dob || "",
+              dobDisplay: gc.dobDisplay || "",
+              dod: gc.dod || "",
+              dodDisplay: gc.dodDisplay || "",
+            })),
           })),
-        })),
-      },
-    }));
+        },
+      }));
 
-    function getAllDeceased(mukhya, heirs) {
-      const list = [];
-      if (mukhya.isDeceased) list.push(mukhya);
+      function getAllDeceased(mukhya, heirs) {
+        const list = [];
+        if (mukhya.isDeceased) list.push(mukhya);
 
-      heirs.forEach((h) => {
-        if (h.isDeceased) list.push(h);
-        if (h.subFamily?.spouse?.isDeceased) list.push(h.subFamily.spouse);
+        heirs.forEach((h) => {
+          if (h.isDeceased) list.push(h);
+          if (h.subFamily?.spouse?.isDeceased) list.push(h.subFamily.spouse);
 
-        (h.subFamily?.children || []).forEach((c) => {
-          if (c.isDeceased) list.push(c);
-          if (c.spouse?.isDeceased) list.push(c.spouse);
+          (h.subFamily?.children || []).forEach((c) => {
+            if (c.isDeceased) list.push(c);
+            if (c.spouse?.isDeceased) list.push(c.spouse);
 
-          (c.children || []).forEach((gc) => {
-            if (gc.isDeceased) list.push(gc);
+            (c.children || []).forEach((gc) => {
+              if (gc.isDeceased) list.push(gc);
+            });
           });
         });
-      });
 
-      return list;
-    }
-
-    const deceasedList = getAllDeceased(mukhya, heirs);
-
-    function toISO(dateStr) {
-      if (!dateStr) return "";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-        const [dd, mm, yyyy] = dateStr.split("/");
-        return `${yyyy}-${mm}-${dd}`;
+        return list;
       }
-      return "";
-    }
 
-    // 🔥 FIX: Store BOTH DB path & preview URL separately
-    const existingApplicantPhoto = savedForm.applicantPhoto || null;
+      const deceasedList = getAllDeceased(mukhya, heirs);
 
-    console.log("📷 Applicant Photo from DB:", existingApplicantPhoto);
+      function toISO(dateStr) {
+        if (!dateStr) return "";
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+          const [dd, mm, yyyy] = dateStr.split("/");
+          return `${yyyy}-${mm}-${dd}`;
+        }
+        return "";
+      }
 
-    setForm((prev) => ({
-      ...prev,
-      ...savedForm,
+      // 🔥 FIX: Store BOTH DB path & preview URL separately
+      const existingApplicantPhoto = savedForm.applicantPhoto || null;
 
-      applicantName,
-      applicantSurname,
-      applicantMobile,
-      applicantAadhaar,
+      console.log("📷 Applicant Photo from DB:", existingApplicantPhoto);
 
-      // 🔥 DB path (save ke liye)
-      applicantPhoto: existingApplicantPhoto,
+      setForm((prev) => ({
+        ...prev,
+        ...savedForm,
 
-      // 🔥 Preview URL (display ke liye)
-      applicantPhotoPreview: existingApplicantPhoto
-        ? `${API_BASE_URL}${existingApplicantPhoto}`
+        applicantName,
+        applicantSurname,
+        applicantMobile,
+        applicantAadhaar,
 
-        : null,
+        // 🔥 DB path (save ke liye)
+        applicantPhoto: existingApplicantPhoto,
 
-      deceasedPersons: deceasedList.map((p) => ({
-        name: p.name,
-        age: p.age || "",
-        date: toISO(p.dodDisplay || p.dod || ""),
-      })),
+        // 🔥 Preview URL (display ke liye)
+        applicantPhotoPreview: existingApplicantPhoto
+          ? `${API_BASE_URL}${existingApplicantPhoto}`
 
-      varasdarType:
-  savedForm.varasdarType ||
-  (deceasedList.length > 0 ? "deceased" : "alive"),
+          : null,
+
+        deceasedPersons: deceasedList.map((p) => ({
+          name: p.name,
+          age: p.age || "",
+          date: toISO(p.dodDisplay || p.dod || ""),
+        })),
+
+        varasdarType:
+          savedForm.varasdarType || "",
 
 
-      mukhyaName: mukhya.name || "",
-      mukhyaAge: mukhya.age || "",
-      heirs: mappedHeirs,
+        mukhyaName: mukhya.name || "",
+        mukhyaAge: mukhya.age || "",
+        heirs: mappedHeirs,
 
-      totalHeirsCount: heirs.length,
-      totalDeceasedCount: deceasedCount,
+        totalHeirsCount: heirs.length,
+        totalDeceasedCount: deceasedCount,
 
-      panch:
-        savedForm.panch && savedForm.panch.length > 0
-          ? savedForm.panch.map((p) => ({
+        panch:
+          savedForm.panch && savedForm.panch.length > 0
+            ? savedForm.panch.map((p) => ({
               name: p.name || "",
               age: p.age || "",
               occupation: p.occupation || "",
@@ -301,18 +300,18 @@ const applicantAadhaar = savedForm.applicantAadhaar || "";
 
                 : null,
             }))
-          : [
+            : [
               { name: "", age: "", occupation: "", aadhaar: "", mobile: "" },
               { name: "", age: "", occupation: "", aadhaar: "", mobile: "" },
               { name: "", age: "", occupation: "", aadhaar: "", mobile: "" },
             ],
-    }));
+      }));
 
-    setLoading(false);
-  })();
-}, []);
+      setLoading(false);
+    })();
+  }, []);
 
-const hiddenDocuments = ["aadhaarCopy", "panchResolution"];
+  const hiddenDocuments = ["aadhaarCopy", "panchResolution"];
 
   const handleSave = async () => {
     const errors = [];
@@ -384,12 +383,12 @@ const hiddenDocuments = ["aadhaarCopy", "panchResolution"];
         invalid[`panch_${i}_name`] = t("panchNameMissing");
       }
 
-   const ageNum = Number(p.age);
+      const ageNum = Number(p.age);
 
-if (!ageNum || ageNum < 18) {
-  errors.push(`પંચની ઉંમર 18 વર્ષથી વધુ હોવી જોઈએ #${i + 1}`);
-  invalid[`panch_${i}_age`] = "18+ required";
-}
+      if (!ageNum || ageNum < 18) {
+        errors.push(`પંચની ઉંમર 18 વર્ષથી વધુ હોવી જોઈએ #${i + 1}`);
+        invalid[`panch_${i}_age`] = "18+ required";
+      }
 
       if (isEmpty(p.occupation)) {
         errors.push(`${t("panchOccupationMissing")} #${i + 1}`);
@@ -410,6 +409,10 @@ if (!ageNum || ageNum < 18) {
       if (pa === "" || pa.length !== 12) {
         errors.push(`${t("panchAadhaarInvalid")} #${i + 1}`);
         invalid[`panch_${i}_aadhaar`] = t("panchAadhaarInvalid");
+      }
+
+      if (!p.photoPreview) {
+        errors.push(`પંચ #${i + 1} નો ફોટો ફરજિયાત છે`);
       }
     });
 
@@ -463,13 +466,22 @@ if (!ageNum || ageNum < 18) {
       invalid.talatiName = t("requiredField");
     }
 
+    if (isEmpty(form.makanMilkatAkarniNo)) {
+      errors.push("મકાનના મિલકત આકરણી નંબર ફરજિયાત છે");
+      invalid.makanMilkatAkarniNo = true;
+    }
+
 
     if (!form.varasdarType) {
-  errors.push("વારસદારનો પ્રકાર પસંદ કરો");
-  invalid.varasdarType = true;
-}
+      errors.push("વારસદારનો પ્રકાર પસંદ કરો");
+      invalid.varasdarType = true;
+    }
 
-    
+    if (!form.applicantPhotoPreview) {
+      errors.push("અરજદારનો ફોટો ફરજિયાત છે");
+    }
+
+
     if (isEmpty(form.javadNo)) {
       errors.push(t("enterJavadNo"));
       invalid.javadNo = t("requiredField");
@@ -489,92 +501,92 @@ if (!ageNum || ageNum < 18) {
       return;
     }
 
-   const cleanForm = {
-    ...form,
-    applicantMobile: form.applicantMobile.replace(/\D/g, ""),
-    applicantAadhaar: form.applicantAadhaar.replace(/\D/g, ""),
-    panch: form.panch.map((p) => ({
-      ...p,
-      mobile: p.mobile.replace(/\D/g, ""),
-      aadhaar: p.aadhaar.replace(/\D/g, ""),
-    })),
-  };
+    const cleanForm = {
+      ...form,
+      applicantMobile: form.applicantMobile.replace(/\D/g, ""),
+      applicantAadhaar: form.applicantAadhaar.replace(/\D/g, ""),
+      panch: form.panch.map((p) => ({
+        ...p,
+        mobile: p.mobile.replace(/\D/g, ""),
+        aadhaar: p.aadhaar.replace(/\D/g, ""),
+      })),
+    };
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  // 🔥 FIX: Send panch data with DB photo paths (not preview URLs)
-  const panchDataForJson = cleanForm.panch.map((p) => {
-    const { photoFile, photoPreview, ...panchData } = p;
-    return panchData; // This will include the 'photo' field with DB path
-  });
+    // 🔥 FIX: Send panch data with DB photo paths (not preview URLs)
+    const panchDataForJson = cleanForm.panch.map((p) => {
+      const { photoFile, photoPreview, ...panchData } = p;
+      return panchData; // This will include the 'photo' field with DB path
+    });
 
-  formData.append("panch", JSON.stringify(panchDataForJson));
+    formData.append("panch", JSON.stringify(panchDataForJson));
 
-  // 🔥 FIX: Send existing applicant photo path if no new file
-  if (form.applicantPhoto && !form.applicantPhotoFile) {
-    formData.append("existingApplicantPhoto", form.applicantPhoto);
-  }
+    // 🔥 FIX: Send existing applicant photo path if no new file
+    if (form.applicantPhoto && !form.applicantPhotoFile) {
+      formData.append("existingApplicantPhoto", form.applicantPhoto);
+    }
 
-  Object.keys(cleanForm).forEach((key) => {
-    if (key !== "panch" && 
-        key !== "applicantPhotoFile" && 
+    Object.keys(cleanForm).forEach((key) => {
+      if (key !== "panch" &&
+        key !== "applicantPhotoFile" &&
         key !== "applicantPhotoPreview" &&
         key !== "applicantPhoto") { // Don't send applicantPhoto in body
-      if (typeof cleanForm[key] === "object" && cleanForm[key] !== null) {
-        formData.append(key, JSON.stringify(cleanForm[key]));
-      } else {
-        formData.append(key, cleanForm[key]);
+        if (typeof cleanForm[key] === "object" && cleanForm[key] !== null) {
+          formData.append(key, JSON.stringify(cleanForm[key]));
+        } else {
+          formData.append(key, cleanForm[key]);
+        }
       }
+    });
+
+    // Add NEW applicant photo if uploaded
+    if (form.applicantPhotoFile) {
+      console.log('📸 Adding NEW applicant photo:', form.applicantPhotoFile.name);
+      formData.append("applicantPhoto", form.applicantPhotoFile);
     }
-  });
 
-  // Add NEW applicant photo if uploaded
-  if (form.applicantPhotoFile) {
-    console.log('📸 Adding NEW applicant photo:', form.applicantPhotoFile.name);
-    formData.append("applicantPhoto", form.applicantPhotoFile);
-  }
+    // Add NEW panch photos if uploaded
+    form.panch.forEach((panch, index) => {
+      if (panch.photoFile) {
+        console.log(`📸 Adding NEW panch photo ${index}:`, panch.photoFile.name);
+        formData.append("panchPhotos", panch.photoFile);
+      }
+    });
 
-  // Add NEW panch photos if uploaded
-  form.panch.forEach((panch, index) => {
-    if (panch.photoFile) {
-      console.log(`📸 Adding NEW panch photo ${index}:`, panch.photoFile.name);
-      formData.append("panchPhotos", panch.photoFile);
+    const res = await fetch(
+      `${API_BASE_URL}/api/pedhinamu/form/${id}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: formData,
+      }
+    );
+
+
+    if (!res.ok) {
+      toast({
+        title: t("error"),
+        status: "error",
+        duration: 3000,
+        position: "top",
+      });
+      return;
     }
-  });
 
-const res = await fetch(
-  `${API_BASE_URL}/api/pedhinamu/form/${id}`,
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: formData,
-  }
-);
-
-
-  if (!res.ok) {
     toast({
-      title: t("error"),
-      status: "error",
+      title: t("success"),
+      status: "success",
       duration: 3000,
       position: "top",
     });
-    return;
-  }
 
-  toast({
-    title: t("success"),
-    status: "success",
-    duration: 3000,
-    position: "top",
-  });
-
-  setTimeout(() => {
-    navigate("/records");
-  }, 900);
-};
+    setTimeout(() => {
+      navigate("/records");
+    }, 900);
+  };
   if (loading) return <Text p={10}>Loading...</Text>;
 
   const boxStyle = {
@@ -680,236 +692,194 @@ const res = await fetch(
         </HStack>
 
         {/* APPLICANT PHOTO UPLOAD */}
-       {/* APPLICANT PHOTO UPLOAD / CAMERA */}
-<FormControl mt={4}>
-  <FormLabel fontWeight="600">અરજદારની ફોટો</FormLabel>
+        {/* APPLICANT PHOTO UPLOAD / CAMERA */}
+        <FormControl mt={4} isRequired>
+          <FormLabel fontWeight="600">અરજદારની ફોટો</FormLabel>
 
-  {/* File Upload */}
- <Input
-  type="file"
-  accept="image/*"
-  disabled={!!form.applicantPhotoFile}
-  onChange={(e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // 🔥 Clear camera photo first
-      handleChange("applicantPhotoFile", null);
-      handleChange("applicantPhotoPreview", null);
+          {/* File Upload */}
+          <Input
+            type="file"
+            accept="image/*"
+            disabled={!!form.applicantPhotoFile}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                // 🔥 Clear camera photo first
+                handleChange("applicantPhotoFile", null);
+                handleChange("applicantPhotoPreview", null);
 
-      // 🔥 Set file upload photo
-      handleChange("applicantPhotoFile", file);
-      handleChange("applicantPhotoPreview", URL.createObjectURL(file));
-    }
-  }}
-/>
-
-
-  {/* Camera Capture */}
- <Box mt={2}>
-  <CameraCapture
-    onCapture={(file, url) => {
-      handleChange("applicantPhotoFile", file);
-      handleChange("applicantPhotoPreview", url);
-    }}
-  />
-</Box>
+                // 🔥 Set file upload photo
+                handleChange("applicantPhotoFile", file);
+                handleChange("applicantPhotoPreview", URL.createObjectURL(file));
+              }
+            }}
+          />
 
 
+          {/* Camera Capture */}
+          <Box mt={2}>
+            <CameraCapture
+              src={form.applicantPhotoPreview}
+              onCapture={(file, url) => {
+                handleChange("applicantPhotoFile", file);
+                handleChange("applicantPhotoPreview", url);
+              }}
+              onClear={() => {
+                handleChange("applicantPhotoFile", null);
+                handleChange("applicantPhotoPreview", null);
+              }}
+            />
+          </Box>
 
-  {/* Preview + Remove */}
-{form.applicantPhotoPreview && (
-  <Box mt={2}>
-    <Button
-      size="sm"
-      colorScheme="red"
-      variant="outline"
-      onClick={() => {
-        handleChange("applicantPhotoFile", null);
-        handleChange("applicantPhotoPreview", null);
-      }}
-    >
-      ફોટો દૂર કરો
-    </Button>
-  </Box>
-)}
-
-</FormControl>
+        </FormControl>
 
       </Box>
 
       {/* PANCH */}
       <Heading {...sectionTitle}>{t("panchDetails")}</Heading>
-    <Box {...boxStyle}>
-  {form.panch.map((p, i) => (
-    <Box
-      key={i}
-      p={4}
-      borderWidth="1px"
-      rounded="md"
-      borderColor="#DDEDE2"
-      bg="#F8FBF9"
-      mb={4}
-    >
-      <Text fontWeight="700" color="#1E4D2B" mb={3}>
-        Panch #{i + 1}
-      </Text>
+      <Box {...boxStyle}>
+        {form.panch.map((p, i) => (
+          <Box
+            key={i}
+            p={4}
+            borderWidth="1px"
+            rounded="md"
+            borderColor="#DDEDE2"
+            bg="#F8FBF9"
+            mb={4}
+          >
+            <Text fontWeight="700" color="#1E4D2B" mb={3}>
+              Panch #{i + 1}
+            </Text>
 
-      <HStack spacing={6}>
-        <FormControl isRequired>
-          <FormLabel fontWeight="600">{t("name")}</FormLabel>
-          <Input
-            {...inputStyle}
-            borderColor={
-              invalidFields[`panch_${i}_name`] ? "red.500" : "#CBD5E0"
-            }
-            value={p.name}
-            onChange={(e) => updatePanch(i, "name", e.target.value)}
-          />
-        </FormControl>
+            <HStack spacing={6}>
+              <FormControl isRequired>
+                <FormLabel fontWeight="600">{t("name")}</FormLabel>
+                <Input
+                  {...inputStyle}
+                  borderColor={
+                    invalidFields[`panch_${i}_name`] ? "red.500" : "#CBD5E0"
+                  }
+                  value={p.name}
+                  onChange={(e) => updatePanch(i, "name", e.target.value)}
+                />
+              </FormControl>
 
-        <FormControl isRequired>
-          <FormLabel fontWeight="600">{t("age")}</FormLabel>
-    <Input
-  {...inputStyle}
-  type="number"
-  min={18}
-  max={120}
-  borderColor={
-    invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
-  }
-  value={p.age}
-  onChange={(e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    updatePanch(i, "age", val);
-  }}
-/>
-
-
-        </FormControl>
-      </HStack>
-
-      <HStack spacing={6} mt={4}>
-        <FormControl isRequired>
-          <FormLabel fontWeight="600">{t("occupation")}</FormLabel>
-          <Input
-            {...inputStyle}
-            borderColor={
-              invalidFields[`panch_${i}_occupation`]
-                ? "red.500"
-                : "#CBD5E0"
-            }
-            value={p.occupation}
-            onChange={(e) => updatePanch(i, "occupation", e.target.value)}
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel fontWeight="600">{t("aadhaarShort")}</FormLabel>
-          <Input
-            {...inputStyle}
-            borderColor={
-              invalidFields[`panch_${i}_aadhaar`] ? "red.500" : "#CBD5E0"
-            }
-            value={p.aadhaar}
-            onChange={(e) =>
-              updatePanch(i, "aadhaar", formatAadhaar(e.target.value))
-            }
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel fontWeight="600">{t("mobile")}</FormLabel>
-          <Input
-            {...inputStyle}
-            borderColor={
-              invalidFields[`panch_${i}_mobile`] ? "red.500" : "#CBD5E0"
-            }
-            value={p.mobile}
-            onChange={(e) =>
-              updatePanch(i, "mobile", formatMobile(e.target.value))
-            }
-          />
-        </FormControl>
-      </HStack>
-
-      {/* ✅ PHOTO UPLOAD / CAMERA (FIXED) */}
-      <FormControl mt={4}>
-        <FormLabel fontWeight="600">પંચની ફોટો</FormLabel>
-
-        {/* File Upload */}
-      <Input
-  type="file"
-  accept="image/*"
-  disabled={!!p.photoFile}
-  onChange={(e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      updatePanch(i, "photoFile", null);
-      updatePanch(i, "photoPreview", null);
-
-      updatePanch(i, "photoFile", file);
-      updatePanch(i, "photoPreview", URL.createObjectURL(file));
-    }
-  }}
-/>
+              <FormControl isRequired>
+                <FormLabel fontWeight="600">{t("age")}</FormLabel>
+                <Input
+                  {...inputStyle}
+                  type="number"
+                  min={18}
+                  max={120}
+                  borderColor={
+                    invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
+                  }
+                  value={p.age}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    updatePanch(i, "age", val);
+                  }}
+                />
 
 
-        {/* Camera Capture */}
+              </FormControl>
+            </HStack>
+
+            <HStack spacing={6} mt={4}>
+              <FormControl isRequired>
+                <FormLabel fontWeight="600">{t("occupation")}</FormLabel>
+                <Input
+                  {...inputStyle}
+                  borderColor={
+                    invalidFields[`panch_${i}_occupation`]
+                      ? "red.500"
+                      : "#CBD5E0"
+                  }
+                  value={p.occupation}
+                  onChange={(e) => updatePanch(i, "occupation", e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="600">{t("aadhaarShort")}</FormLabel>
+                <Input
+                  {...inputStyle}
+                  borderColor={
+                    invalidFields[`panch_${i}_aadhaar`] ? "red.500" : "#CBD5E0"
+                  }
+                  value={p.aadhaar}
+                  onChange={(e) =>
+                    updatePanch(i, "aadhaar", formatAadhaar(e.target.value))
+                  }
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="600">{t("mobile")}</FormLabel>
+                <Input
+                  {...inputStyle}
+                  borderColor={
+                    invalidFields[`panch_${i}_mobile`] ? "red.500" : "#CBD5E0"
+                  }
+                  value={p.mobile}
+                  onChange={(e) =>
+                    updatePanch(i, "mobile", formatMobile(e.target.value))
+                  }
+                />
+              </FormControl>
+            </HStack>
+
+            {/* ✅ PHOTO UPLOAD / CAMERA (FIXED) */}
+            <FormControl mt={4} isRequired>
+              <FormLabel fontWeight="600">પંચની ફોટો</FormLabel>
+
+              {/* File Upload */}
+              <Input
+                type="file"
+                accept="image/*"
+                disabled={!!p.photoFile}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    updatePanch(i, "photoFile", null);
+                    updatePanch(i, "photoPreview", null);
+
+                    updatePanch(i, "photoFile", file);
+                    updatePanch(i, "photoPreview", URL.createObjectURL(file));
+                  }
+                }}
+              />
 
 
-<Box mt={2}>
-  <CameraCapture
-    onCapture={(file, url) => {
-      updatePanch(i, "photoFile", file);
-      updatePanch(i, "photoPreview", url);
-    }}
-  />
-</Box>
-
-
-        {/* Preview + Remove */}
-        {p.photoPreview && (
-          <Box mt={3}>
-            <img
-              src={p.photoPreview}
-              alt="Panch Photo"
-              style={{
-                width: "120px",
-                height: "120px",
-                objectFit: "cover",
-                borderRadius: "8px",
-                border: "1px solid #ccc",
-              }}
-            />
-
-            <Button
-              mt={2}
-              size="sm"
-              colorScheme="red"
-              variant="outline"
-              onClick={() => {
-                updatePanch(i, "photoFile", null);
-                updatePanch(i, "photoPreview", null);
-              }}
-            >
-              ફોટો દૂર કરો
-            </Button>
+              {/* Camera Capture */}
+              <Box mt={2}>
+                <CameraCapture
+                  src={p.photoPreview}
+                  onCapture={(file, url) => {
+                    updatePanch(i, "photoFile", file);
+                    updatePanch(i, "photoPreview", url);
+                  }}
+                  onClear={() => {
+                    updatePanch(i, "photoFile", null);
+                    updatePanch(i, "photoPreview", null);
+                  }}
+                />
+              </Box>
+            </FormControl>
           </Box>
-        )}
-      </FormControl>
-    </Box>
-  ))}
-</Box>
+        ))}
+      </Box>
 
 
       {/* DECEASED — NO STAR, NO REQUIRED MARKS */}
       <Heading {...sectionTitle}>{t("deceasedDetails")}</Heading>
       <Box {...boxStyle}>
         {form.deceasedPersons?.length === 0 && (
-          <Text color="gray.600"> 
-          {/* {t("noDeceasedFound")}  */}
-          
-          કુટુંબમાં કોઈ મૃત્યુ પામેલ સભ્ય નથી
+          <Text color="gray.600">
+            {/* {t("noDeceasedFound")}  */}
+
+            કુટુંબમાં કોઈ મૃત્યુ પામેલ સભ્ય નથી
           </Text>
         )}
 
@@ -977,64 +947,64 @@ const res = await fetch(
 
       {/* NOTARY */}
       <Heading {...sectionTitle}>{t("notaryDetails")}</Heading>
-     <Box {...boxStyle}>
-  <HStack spacing={6}>
-    <FormControl isRequired>
-      <FormLabel fontWeight="600">{t("notaryName")}</FormLabel>
-      <Input
-        {...inputStyle}
-        borderColor={invalidFields.notaryName ? "red.500" : "#CBD5E0"}
-        value={form.notaryName}
-        onChange={(e) => handleChange("notaryName", e.target.value)}
-      />
-    </FormControl>
+      <Box {...boxStyle}>
+        <HStack spacing={6}>
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">{t("notaryName")}</FormLabel>
+            <Input
+              {...inputStyle}
+              borderColor={invalidFields.notaryName ? "red.500" : "#CBD5E0"}
+              value={form.notaryName}
+              onChange={(e) => handleChange("notaryName", e.target.value)}
+            />
+          </FormControl>
 
-    <FormControl isRequired>
-      <FormLabel fontWeight="600">{t("notaryBookNo")}</FormLabel>
-      <Input
-        {...inputStyle}
-        borderColor={invalidFields.notaryBookNo ? "red.500" : "#CBD5E0"}
-        value={form.notaryBookNo}
-        onChange={(e) => handleChange("notaryBookNo", e.target.value)}
-      />
-    </FormControl>
-  </HStack>
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">{t("notaryBookNo")}</FormLabel>
+            <Input
+              {...inputStyle}
+              borderColor={invalidFields.notaryBookNo ? "red.500" : "#CBD5E0"}
+              value={form.notaryBookNo}
+              onChange={(e) => handleChange("notaryBookNo", e.target.value)}
+            />
+          </FormControl>
+        </HStack>
 
-  <HStack spacing={6} mt={4}>
-    <FormControl isRequired>
-      <FormLabel fontWeight="600">{t("notaryPageNo")}</FormLabel>
-      <Input
-        {...inputStyle}
-        borderColor={invalidFields.notaryPageNo ? "red.500" : "#CBD5E0"}
-        value={form.notaryPageNo}
-        onChange={(e) => handleChange("notaryPageNo", e.target.value)}
-      />
-    </FormControl>
+        <HStack spacing={6} mt={4}>
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">{t("notaryPageNo")}</FormLabel>
+            <Input
+              {...inputStyle}
+              borderColor={invalidFields.notaryPageNo ? "red.500" : "#CBD5E0"}
+              value={form.notaryPageNo}
+              onChange={(e) => handleChange("notaryPageNo", e.target.value)}
+            />
+          </FormControl>
 
-    <FormControl isRequired>
-      <FormLabel fontWeight="600">{t("notarySerialNo")}</FormLabel>
-      <Input
-        {...inputStyle}
-        borderColor={invalidFields.notarySerialNo ? "red.500" : "#CBD5E0"}
-        value={form.notarySerialNo}
-        onChange={(e) => handleChange("notarySerialNo", e.target.value)}
-      />
-    </FormControl>
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">{t("notarySerialNo")}</FormLabel>
+            <Input
+              {...inputStyle}
+              borderColor={invalidFields.notarySerialNo ? "red.500" : "#CBD5E0"}
+              value={form.notarySerialNo}
+              onChange={(e) => handleChange("notarySerialNo", e.target.value)}
+            />
+          </FormControl>
 
-    {/* ✅ UPDATED DATE FIELD */}
-    <FormControl isRequired>
-      <FormLabel fontWeight="600">{t("notaryDate")}</FormLabel>
-      <Input
-        {...inputStyle}
-        type="date"
-        max={new Date().toISOString().split("T")[0]}   // ✅ today & past only
-        borderColor={invalidFields.notaryDate ? "red.500" : "#CBD5E0"}
-        value={form.notaryDate}
-        onChange={(e) => handleChange("notaryDate", e.target.value)}
-      />
-    </FormControl>
-  </HStack>
-</Box>
+          {/* ✅ UPDATED DATE FIELD */}
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">{t("notaryDate")}</FormLabel>
+            <Input
+              {...inputStyle}
+              type="date"
+              max={new Date().toISOString().split("T")[0]}   // ✅ today & past only
+              borderColor={invalidFields.notaryDate ? "red.500" : "#CBD5E0"}
+              value={form.notaryDate}
+              onChange={(e) => handleChange("notaryDate", e.target.value)}
+            />
+          </FormControl>
+        </HStack>
+      </Box>
 
       {/* PURPOSE */}
       <Heading {...sectionTitle}>{t("useDetails")}</Heading>
@@ -1061,35 +1031,36 @@ const res = await fetch(
 
 
         {/* 🔽 ADDITIONAL PROPERTY DETAILS (OPTIONAL) */}
-<HStack spacing={6} mt={4}>
-  <FormControl>
-    <FormLabel fontWeight="600">
-      મકાનના મિલકત આકરણી નંબર
-    </FormLabel>
-    <Input
-      {...inputStyle}
-      value={form.makanMilkatAkarniNo || ""}
-      onChange={(e) =>
-        handleChange("makanMilkatAkarniNo", e.target.value)
-      }
-      
-    />
-  </FormControl>
+        <HStack spacing={6} mt={4}>
+          <FormControl isRequired flex={1}>
+            <FormLabel fontWeight="600">
+              મકાનના મિલકત આકરણી નંબર
+            </FormLabel>
+            <Input
+              {...inputStyle}
+              borderColor={invalidFields.makanMilkatAkarniNo ? "red.500" : "#CBD5E0"}
+              value={form.makanMilkatAkarniNo || ""}
+              onChange={(e) =>
+                handleChange("makanMilkatAkarniNo", e.target.value)
+              }
 
-  <FormControl>
-    <FormLabel fontWeight="600">અન્ય</FormLabel>
-    <Input
-      {...inputStyle}
-      value={form.any || ""}
-      onChange={(e) => handleChange("any", e.target.value)}
-    
-    />
-  </FormControl>
-</HStack>
+            />
+          </FormControl>
+
+          <FormControl flex={1}>
+            <FormLabel fontWeight="600">અન્ય</FormLabel>
+            <Input
+              {...inputStyle}
+              value={form.any || ""}
+              onChange={(e) => handleChange("any", e.target.value)}
+
+            />
+          </FormControl>
+        </HStack>
 
 
-        <HStack spacing={6}>
-          <FormControl isRequired>
+        <HStack spacing={6} mt={4}>
+          <FormControl isRequired flex={1}>
             <FormLabel fontWeight="600">{t("surveyNo")}</FormLabel>
             <Input
               {...inputStyle}
@@ -1099,7 +1070,7 @@ const res = await fetch(
             />
           </FormControl>
 
-          <FormControl isRequired>
+          <FormControl isRequired flex={1}>
             <FormLabel fontWeight="600">{t("khataNo")}</FormLabel>
             <Input
               {...inputStyle}
@@ -1127,34 +1098,34 @@ const res = await fetch(
       <Heading {...sectionTitle}>{t("documents")}</Heading>
       <Box {...boxStyle}>
         <VStack align="start">
-    {Object.keys(form.documents).map((key) => {
-  if (hiddenDocuments.includes(key)) return null;   // 🔥 REMOVE THESE
+          {Object.keys(form.documents).map((key) => {
+            if (hiddenDocuments.includes(key)) return null;   // 🔥 REMOVE THESE
 
-  return key !== "otherDocument" ? (
-    <FormControl key={key} isRequired>
-      <Checkbox
-        isChecked={form.documents[key]}
-        onChange={(e) => updateDocument(key, e.target.checked)}
-        colorScheme="green"
-        borderColor={
-          invalidFields[`doc_${key}`] ? "red.500" : undefined
-        }
-      >
-        {t(key)}
-      </Checkbox>
-    </FormControl>
-  ) : (
-    <FormControl key={key} mt={3}>
-      <FormLabel fontWeight="600">{t("otherDocument")}</FormLabel>
-      <Input
-        {...inputStyle}
-        borderColor={invalidFields.otherDocument ? "red.500" : "#CBD5E0"}
-        value={form.documents.otherDocument}
-        onChange={(e) => updateDocument("otherDocument", e.target.value)}
-      />
-    </FormControl>
-  );
-})}
+            return key !== "otherDocument" ? (
+              <FormControl key={key} isRequired>
+                <Checkbox
+                  isChecked={form.documents[key]}
+                  onChange={(e) => updateDocument(key, e.target.checked)}
+                  colorScheme="green"
+                  borderColor={
+                    invalidFields[`doc_${key}`] ? "red.500" : undefined
+                  }
+                >
+                  {t(key)}
+                </Checkbox>
+              </FormControl>
+            ) : (
+              <FormControl key={key} mt={3}>
+                <FormLabel fontWeight="600">{t("otherDocument")}</FormLabel>
+                <Input
+                  {...inputStyle}
+                  borderColor={invalidFields.otherDocument ? "red.500" : "#CBD5E0"}
+                  value={form.documents.otherDocument}
+                  onChange={(e) => updateDocument("otherDocument", e.target.value)}
+                />
+              </FormControl>
+            );
+          })}
 
         </VStack>
       </Box>
@@ -1173,30 +1144,30 @@ const res = await fetch(
         </FormControl>
 
         <HStack spacing={6}>
-         <FormControl isRequired>
-  <FormLabel fontWeight="600">વારસાઈ નો પ્રકાર</FormLabel>
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">વારસાઈ નો પ્રકાર</FormLabel>
 
-  <RadioGroup
-    value={form.varasdarType}
-    onChange={(val) => handleChange("varasdarType", val)}
-  >
-    <HStack spacing={6}>
-      <Radio value="alive" colorScheme="green">
-        હયાત
-      </Radio>
+            <RadioGroup
+              value={form.varasdarType}
+              onChange={(val) => handleChange("varasdarType", val)}
+            >
+              <HStack spacing={6}>
+                <Radio value="alive" colorScheme="green">
+                  હયાત
+                </Radio>
 
-      <Radio value="deceased" colorScheme="red">
-        મૃત
-      </Radio>
-    </HStack>
-  </RadioGroup>
+                <Radio value="deceased" colorScheme="red">
+                  મૃત
+                </Radio>
+              </HStack>
+            </RadioGroup>
 
-  {invalidFields.varasdarType && (
-    <Text fontSize="sm" color="red.500" mt={1}>
-      જરૂરી છે
-    </Text>
-  )}
-</FormControl>
+            {invalidFields.varasdarType && (
+              <Text fontSize="sm" color="red.500" mt={1}>
+                જરૂરી છે
+              </Text>
+            )}
+          </FormControl>
 
 
           <FormControl isRequired>

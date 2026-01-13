@@ -1,32 +1,41 @@
-import { useState, useRef } from "react";
-import { Box, Button, HStack, Image } from "@chakra-ui/react";
+import { useState, useRef, useEffect } from "react";
+import { Box, Button, HStack, Image, VStack } from "@chakra-ui/react";
 
-const CameraCapture = ({ onCapture }) => {
+const CameraCapture = ({ src, onCapture, onClear }) => {
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [preview, setPreview] = useState(null);
-
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  
   const streamRef = useRef(null);
+
+  // Stop camera on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const startCamera = async () => {
     setCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    });
+      streamRef.current = stream;
 
-    streamRef.current = stream;
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      setCameraOpen(false);
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
   };
 
@@ -34,69 +43,92 @@ const CameraCapture = ({ onCapture }) => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    if (video && canvas) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
 
-    const imageUrl = canvas.toDataURL("image/png");
-    setPreview(imageUrl);
+      const imageUrl = canvas.toDataURL("image/png");
 
-    canvas.toBlob((blob) => {
-      const file = new File([blob], "photo.png", { type: "image/png" });
-      onCapture(file, imageUrl);
-    });
+      canvas.toBlob((blob) => {
+        const file = new File([blob], "photo.png", { type: "image/png" });
+        onCapture(file, imageUrl);
+      });
 
-    stopCamera();
+      stopCamera();
+      setCameraOpen(false);
+    }
   };
 
-  const retakePhoto = () => {
-    setPreview(null);
+  const handleRetake = () => {
+    startCamera();
+  };
+
+  const handleRemove = () => {
+    stopCamera();
     setCameraOpen(false);
+    onClear();
   };
 
   return (
     <Box mt={2}>
-      {/* Buttons */}
-      {!preview && (
-        <HStack>
-          <Button size="sm" colorScheme="green" onClick={startCamera}>
-            📷 Camera Open
-          </Button>
-
-          {cameraOpen && (
-            <Button size="sm" colorScheme="blue" onClick={capturePhoto}>
-              📸 Capture
-            </Button>
-          )}
-        </HStack>
+      {/* 1. Initial State: No Photo & Camera Closed */}
+      {!src && !cameraOpen && (
+        <Button size="sm" colorScheme="blue" onClick={startCamera}>
+          📷 camera open
+        </Button>
       )}
 
-      {/* Camera view – ONLY after click */}
-      {cameraOpen && !preview && (
-        <Box mt={2}>
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            style={{
-              width: "100%",
-              maxWidth: "300px",
-              borderRadius: "8px"
-            }}
-          />
+      {/* 2. Camera Viewfinder */}
+      {cameraOpen && (
+        <VStack spacing={3} mt={2}>
+          <Box
+            borderRadius="md"
+            overflow="hidden"
+            border="2px solid #ccc"
+            width="100%"
+            maxWidth="300px"
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              style={{ width: "100%", display: "block" }}
+            />
+          </Box>
           <canvas ref={canvasRef} hidden />
-        </Box>
+
+          <Button colorScheme="green" onClick={capturePhoto}>
+            📸 ફોટો ક્લિક કરો 
+          </Button>
+        </VStack>
       )}
 
-      {/* Preview */}
-      {preview && (
+      {/* 3. Preview State (Photo Exists) - independent of cameraOpen status, 
+          but usually camera is closed when preview is shown unless retaking immediately overrides it.
+          Let's show preview only if camera is NOT open, or if we want to show it. 
+          Standard flow: src exists -> show preview. Retake -> hides preview, shows camera. */}
+      {src && !cameraOpen && (
         <Box mt={2}>
-          <Image src={preview} maxW="200px" borderRadius="md" />
-          <Button mt={2} size="sm" colorScheme="orange" onClick={retakePhoto}>
-            🔄 Retake
-          </Button>
+          <Image
+            src={src}
+            alt="Captured"
+            maxW="200px"
+            borderRadius="md"
+            border="1px solid #ccc"
+          />
+
+          <HStack mt={2}>
+            <Button size="sm" colorScheme="orange" onClick={handleRetake}>
+              🔄 retake
+            </Button>
+
+            <Button size="sm" colorScheme="red" onClick={handleRemove}>
+              🗑 ફોટો દૂર કરો 
+            </Button>
+          </HStack>
         </Box>
       )}
     </Box>

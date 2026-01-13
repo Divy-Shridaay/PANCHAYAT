@@ -30,7 +30,7 @@ export default function Pedhinamu() {
             isClosable: true,
             position: "top",
         });
-const isEmpty = (v) => v === "" || v === null || v === undefined;
+    const isEmpty = (v) => v === "" || v === null || v === undefined;
 
     const showError = (msg) =>
         toast({
@@ -44,17 +44,24 @@ const isEmpty = (v) => v === "" || v === null || v === undefined;
     const [step, setStep] = useState(1);
     const [totalHeirs, setTotalHeirs] = useState(0);
 
-const [form, setForm] = useState({
-    mukhyaName: "",
-   mukhyaBirthAge: "",   // for જન્મ તારીખ / ઉમર
-mukhyaDeathAge: "",   // for મૃત્યુ તારીખ / ઉમર
+    const [form, setForm] = useState({
+        mukhyaName: "",
 
-    heirs: [],
+        // Birth
+        mukhyaDob: "",
+        mukhyaDobDisplay: "",
+        mukhyaBirthAge: "",
 
-   
-});
+        // Death
+        mukhyaIsDeceased: false,
+        mukhyaDod: "",
+        mukhyaDodDisplay: "",
+        mukhyaDeathAge: "",
 
-const [fieldErrors, setFieldErrors] = useState({});
+        heirs: []
+    });
+
+    const [fieldErrors, setFieldErrors] = useState({});
 
 
     // Loader for edit mode
@@ -73,50 +80,58 @@ const [fieldErrors, setFieldErrors] = useState({});
     };
 
     // ✅ FINAL AGE OF MUKHYA (DOB first, else manual age)
-const getMukhyaFinalAge = () => {
-  // DEAD → calculate from dates OR use manual death age
-  if (form.mukhyaIsDeceased) {
-    if (form.mukhyaDeathAge) {
-      return Number(form.mukhyaDeathAge);
-    }
+    const getMukhyaFinalAge = () => {
+        // DEAD → calculate from dates OR use manual death age
+        if (form.mukhyaIsDeceased) {
+            if (form.mukhyaDeathAge) {
+                return Number(form.mukhyaDeathAge);
+            }
 
-    if (form.mukhyaDob && form.mukhyaDod) {
-      return Number(calculateAgeAtDeath(form.mukhyaDob, form.mukhyaDod));
-    }
+            if (form.mukhyaDob && form.mukhyaDod) {
+                return Number(calculateAgeAtDeath(form.mukhyaDob, form.mukhyaDod));
+            }
 
-    return 0;
-  }
+            return 0;
+        }
 
-  // ALIVE → birth age OR DOB
-  if (form.mukhyaBirthAge) {
-    return Number(form.mukhyaBirthAge);
-  }
+        // ALIVE → birth age OR DOB
+        if (form.mukhyaBirthAge) {
+            return Number(form.mukhyaBirthAge);
+        }
 
-  if (form.mukhyaDob) {
-    return Number(calculateAge(form.mukhyaDob));
-  }
+        if (form.mukhyaDob) {
+            return Number(calculateAge(form.mukhyaDob));
+        }
 
-  return 0;
-};
+        return 0;
+    };
 
 
-const calculateAgeAtDeath = (dob, dod) => {
-    if (!dob || !dod) return "";
+    const calculateAgeAtDeath = (dob, dod) => {
+        if (!dob || !dod) return "";
 
-    const birth = new Date(dob);
-    const death = new Date(dod);
+        const birth = new Date(dob);
+        const death = new Date(dod);
 
-    let age = death.getFullYear() - birth.getFullYear();
-    const m = death.getMonth() - birth.getMonth();
+        let age = death.getFullYear() - birth.getFullYear();
+        const m = death.getMonth() - birth.getMonth();
 
-    if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
-        age--;
-    }
+        if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
+            age--;
+        }
 
-    return age >= 0 ? age : "";
-};
+        return age >= 0 ? age : "";
+    };
 
-    
+    const getDobFromAge = (age) => {
+        if (!age) return "";
+        const today = new Date();
+        const y = today.getFullYear() - Number(age);
+        return `${y}-07-01`;   // safe mid-year
+    };
+
+
+
     // Converts user input "20 1 2004" → "2004-01-20"
     const formatDisplayDate = (value) => {
         // Keep digits only
@@ -164,30 +179,30 @@ const calculateAgeAtDeath = (dob, dod) => {
 
 
     const isDeathAfterBirth = (birthDisplay, deathDisplay) => {
-    if (!birthDisplay || !deathDisplay) return true;
+        if (!birthDisplay || !deathDisplay) return true;
 
-    const [bd, bm, by] = birthDisplay.split("/");
-    const [dd, dm, dy] = deathDisplay.split("/");
+        const [bd, bm, by] = birthDisplay.split("/");
+        const [dd, dm, dy] = deathDisplay.split("/");
 
-    if (!bd || !bm || !by || !dd || !dm || !dy) return false;
+        if (!bd || !bm || !by || !dd || !dm || !dy) return false;
 
-    const birth = new Date(`${by}-${bm}-${bd}`);
-    const death = new Date(`${dy}-${dm}-${dd}`);
+        const birth = new Date(`${by}-${bm}-${bd}`);
+        const death = new Date(`${dy}-${dm}-${dd}`);
 
-    return death > birth;
-};
+        return death > birth;
+    };
 
-const requireDeathDate = (isDeceased, dodDisplay, name = "") => {
-    if (isDeceased && !dodDisplay) {
-        showError(
-            name
-                ? `${name} માટે મૃત્યુ તારીખ ફરજિયાત છે`
-                : "મૃત વ્યક્તિ માટે મૃત્યુ તારીખ ફરજિયાત છે"
-        );
-        return false;
-    }
-    return true;
-};
+    const requireDeathDate = (isDeceased, dodDisplay, name = "") => {
+        if (isDeceased && !dodDisplay) {
+            showError(
+                name
+                    ? `${name} માટે મૃત્યુ તારીખ ફરજિયાત છે`
+                    : "મૃત વ્યક્તિ માટે મૃત્યુ તારીખ ફરજિયાત છે"
+            );
+            return false;
+        }
+        return true;
+    };
 
 
     const generateHeirs = (count) => {
@@ -284,506 +299,525 @@ const requireDeathDate = (isDeceased, dodDisplay, name = "") => {
         }
     };
 
-  const handleSave = async () => {
-    try {
+    const handleSave = async () => {
+        try {
 
-        // ✅ MAIN PERSON NAME REQUIRED
-if (!form.mukhyaName || !form.mukhyaName.trim()) {
-    showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
-    return;
-}
-
-
-// 🔴 ALL SELECTED HEIRS MUST BE FILLED
-if (form.heirs.length !== totalHeirs) {
-  showError("વારસદારોની સંખ્યા અને વિગતો મળતી નથી");
-  return;
-}
-
-for (let i = 0; i < totalHeirs; i++) {
-  const h = form.heirs[i];
-
-  // Name required
-  if (!h.name || !h.name.trim()) {
-    showError(`વારસદાર #${i + 1} નું નામ જરૂરી છે`);
-    return;
-  }
-
-  // Relation required
-  if (!h.relation || !h.relation.trim()) {
-    showError(`વારસદાર #${i + 1} માટે સંબંધ પસંદ કરવો જરૂરી છે`);
-    return;
-  }
-
-  // DOB or Age required
-  if (!h.dobDisplay && !h.age) {
-    showError(`વારસદાર #${i + 1} માટે જન્મ તારીખ અથવા ઉંમર જરૂરી છે`);
-    return;
-  }
-
-  // DOB format check
-  if (h.dobDisplay && !validateDob(h.dobDisplay)) {
-    showError(`વારસદાર #${i + 1} માટે અમાન્ય જન્મ તારીખ`);
-    return;
-  }
-}
-
-
-        // -----------------------------
-        // VALIDATION HELPERS
-        // -----------------------------
-        const validateAge = (age) => !age || /^[0-9]{1,3}$/.test(age);
-
-        // -----------------------------
-        // MAIN PERSON VALIDATION
-        // -----------------------------
-       // ✅ IF DEAD → death date OR age is compulsory
-
-        if (form.mukhyaDobDisplay && !validateDob(form.mukhyaDobDisplay)) {
-            showError(t("invalidDate"));
-            return;
-        }
-
-       
-
-
-        // 🔴 ALIVE → DOB or AGE is compulsory
-// 🟢 ALIVE VALIDATION (FINAL RULE)
-if (!form.mukhyaIsDeceased) {
-
-  // ❌ both empty → error
-  if (
-    isEmpty(form.mukhyaDobDisplay) &&
-    isEmpty(form.mukhyaBirthAge)
-  ) {
-    showError("હયાત વ્યક્તિ માટે જન્મ તારીખ અથવા ઉમર ફરજિયાત છે");
-    return;
-  }
-
-  // ❌ DOB entered but invalid → error
-  if (
-    !isEmpty(form.mukhyaDobDisplay) &&
-    !validateDob(form.mukhyaDobDisplay)
-  ) {
-    showError("માન્ય જન્મ તારીખ દાખલ કરો (DD/MM/YYYY)");
-    return;
-  }
-}
-
-
-// ✅ DEAD → death DATE or death AGE required
-if (
-  form.mukhyaIsDeceased &&
-  isEmpty(form.mukhyaDodDisplay) &&
-  isEmpty(form.mukhyaDeathAge)
-) {
-  showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
-  return;
-}
-
-
-if (form.mukhyaIsDeceased && form.mukhyaDodDisplay) {
-    if (!validateDob(form.mukhyaDodDisplay)) {
-        showError(t("invalidDate"));
-        return;
-    }
-
-    if (!isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)) {
-        showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
-        return;
-    }
-}
-
-
-        // -----------------------------
-        // VALIDATE HEIRS (UPDATED LOGIC)
-        // -----------------------------
-
-      
-
-      for (let i = 0; i < form.heirs.length; i++) {
-  const h = form.heirs[i];
-
-            // Skip completely empty heirs (no name, relation, age, or dob)
-            if (!h.name?.trim() && !h.relation?.trim() && !h.age && !h.dobDisplay) {
-                continue;
-            }
-
-            // ⭐ NAME REQUIRED (if any other field is filled)
-            if (!h.name?.trim()) {
-                showError(t("વારસદારનું નામ જરૂરી છે")); // "વારસદારનું નામ જરૂરી છે"
-                return;
-            }
-
-            // ⭐ RELATION REQUIRED
-            if (!h.relation?.trim()) {
-                showError(`${h.name}: ${t("સંબંધ પસંદ કરવો જરૂરી છે")}`);
+            // ✅ MAIN PERSON NAME REQUIRED
+            if (!form.mukhyaName || !form.mukhyaName.trim()) {
+                showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
                 return;
             }
 
 
-            // 🔴 HEIR DEATH DATE REQUIRED
-if (!requireDeathDate(h.isDeceased, h.dodDisplay, h.name)) {
-    return;
-}
-
-            // DOB or Age required
-            if (!h.dobDisplay && !h.age) {
-                showError(`${h.name}: ${t("dobOrAgeRequired")}`);
+            // 🔴 ALL SELECTED HEIRS MUST BE FILLED
+            if (form.heirs.length !== totalHeirs) {
+                showError("વારસદારોની સંખ્યા અને વિગતો મળતી નથી");
                 return;
             }
 
-            if (h.dobDisplay && !validateDob(h.dobDisplay)) {
-                showError(`${h.name}: ${t("invalidDate")}`);
+            for (let i = 0; i < totalHeirs; i++) {
+                const h = form.heirs[i];
+
+                // Name required
+                if (!h.name || !h.name.trim()) {
+                    showError(`વારસદાર #${i + 1} નું નામ જરૂરી છે`);
+                    return;
+                }
+
+                // Relation required
+                if (!h.relation || !h.relation.trim()) {
+                    showError(`વારસદાર #${i + 1} માટે સંબંધ પસંદ કરવો જરૂરી છે`);
+                    return;
+                }
+
+                // DOB or Age required
+                if (!h.dobDisplay && !h.age) {
+                    showError(`વારસદાર #${i + 1} માટે જન્મ તારીખ અથવા ઉંમર જરૂરી છે`);
+                    return;
+                }
+
+                // DOB format check
+                if (h.dobDisplay && !validateDob(h.dobDisplay)) {
+                    showError(`વારસદાર #${i + 1} માટે અમાન્ય જન્મ તારીખ`);
+                    return;
+                }
+            }
+
+
+            // -----------------------------
+            // VALIDATION HELPERS
+            // -----------------------------
+            const validateAge = (age) => !age || /^[0-9]{1,3}$/.test(age);
+
+            // -----------------------------
+            // MAIN PERSON VALIDATION
+            // -----------------------------
+            // ✅ IF DEAD → death date OR age is compulsory
+
+            if (form.mukhyaDobDisplay && !validateDob(form.mukhyaDobDisplay)) {
+                showError(t("invalidDate"));
                 return;
             }
 
-            if (h.age && !validateAge(h.age)) {
-                // showError(`${h.name}: ${t("invalidAge")}`);
+
+
+
+            // 🔴 ALIVE → DOB or AGE is compulsory
+            // 🟢 ALIVE VALIDATION (FINAL RULE)
+            if (!form.mukhyaIsDeceased) {
+
+                // ❌ both empty → error
+                if (
+                    isEmpty(form.mukhyaDobDisplay) &&
+                    isEmpty(form.mukhyaBirthAge)
+                ) {
+                    showError("હયાત વ્યક્તિ માટે જન્મ તારીખ અથવા ઉમર ફરજિયાત છે");
+                    return;
+                }
+
+                // ❌ DOB entered but invalid → error
+                if (
+                    !isEmpty(form.mukhyaDobDisplay) &&
+                    !validateDob(form.mukhyaDobDisplay)
+                ) {
+                    showError("માન્ય જન્મ તારીખ દાખલ કરો (DD/MM/YYYY)");
+                    return;
+                }
+            }
+
+
+            // ✅ DEAD → death DATE or death AGE required
+            if (
+                form.mukhyaIsDeceased &&
+                isEmpty(form.mukhyaDodDisplay) &&
+                isEmpty(form.mukhyaDeathAge)
+            ) {
+                showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
                 return;
             }
 
-       if (h.isDeceased && h.dodDisplay) {
-  if (!validateDob(h.dodDisplay)) {
-    showError(`${h.name}: ${t("invalidDate")}`);
-    return;
-  }
 
-  if (!isDeathAfterBirth(h.dobDisplay, h.dodDisplay)) {
-    setFieldErrors({ [`heir_${i}_dod`]: true });
+            if (form.mukhyaIsDeceased && form.mukhyaDodDisplay) {
+                if (!validateDob(form.mukhyaDodDisplay)) {
+                    showError(t("invalidDate"));
+                    return;
+                }
 
-    showError(
-      ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
-    );
-    return;
-  }
-}
+                if (!isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)) {
+                    showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
+                    return;
+                }
+            }
+
 
 
 
             // -----------------------------
-            // SPOUSE VALIDATION
+            // VALIDATE HEIRS (UPDATED LOGIC)
             // -----------------------------
-            if (h.subFamily?.spouse?.name?.trim()) {
+
+
+
+            for (let i = 0; i < form.heirs.length; i++) {
+                const h = form.heirs[i];
+
+
+                // ❌ REMOVED "Skip completely empty heirs" check
+                // We want strict validation: if you added a row, you must fill it.
+
+                // ⭐ NAME REQUIRED (Always)
+                if (!h.name?.trim()) {
+                    showError("પરિવારના સભ્યનું નામ ફરજિયાત છે");
+                    return;
+                }
+
+                // ⭐ RELATION REQUIRED
+                if (!h.relation?.trim()) {
+                    showError(`${h.name}: ${t("સંબંધ પસંદ કરવો જરૂરી છે")}`);
+                    return;
+                }
+
+
+                // 🔴 HEIR DEATH DATE REQUIRED
+                if (!requireDeathDate(h.isDeceased, h.dodDisplay, h.name)) {
+                    return;
+                }
+
+                // DOB or Age required
+                if (!h.dobDisplay && !h.age) {
+                    showError(`${h.name}: ${t("dobOrAgeRequired")}`);
+                    return;
+                }
+
+                if (h.dobDisplay && !validateDob(h.dobDisplay)) {
+                    showError(`${h.name}: ${t("invalidDate")}`);
+                    return;
+                }
+
+                if (h.age && !validateAge(h.age)) {
+                    // showError(`${h.name}: ${t("invalidAge")}`);
+                    return;
+                }
+
+                if (h.isDeceased && h.dodDisplay) {
+                    if (!validateDob(h.dodDisplay)) {
+                        showError(`${h.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+
+                    if (!isDeathAfterBirth(h.dobDisplay, h.dodDisplay)) {
+                        setFieldErrors({ [`heir_${i}_dod`]: true });
+
+                        showError(
+                            ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                        );
+                        return;
+                    }
+                }
+
+
+
+                // -----------------------------
+                // SPOUSE VALIDATION
+                // -----------------------------
+                // -----------------------------
+                // SPOUSE VALIDATION
+                // -----------------------------
+                // If ANY spouse field is entered, then Name + Relation become compulsory
                 const s = h.subFamily.spouse;
+                const hasSpouseData =
+                    s.name?.trim() ||
+                    s.relation?.trim() ||
+                    s.age ||
+                    s.dobDisplay ||
+                    s.isDeceased; // changing alive/dead is also "data entry"
 
-                // 🔴 SPOUSE DEATH DATE REQUIRED
-if (!requireDeathDate(s.isDeceased, s.dodDisplay, s.name)) {
-    return;
-}
+                if (hasSpouseData) {
+                    if (!s.name?.trim()) {
+                        showError("પરિવારના સભ્યનું નામ ફરજિયાત છે");
+                        return;
+                    }
+
+                    // 🔴 SPOUSE DEATH DATE REQUIRED
+                    if (!requireDeathDate(s.isDeceased, s.dodDisplay, s.name)) {
+                        return;
+                    }
 
 
-                if (!s.relation?.trim()) {
-                    showError(`${s.name}: ${t("spouseRelationRequired")}`);
-                    return;
+                    if (!s.relation?.trim()) {
+                        showError(`${s.name}: ${t("spouseRelationRequired")}`);
+                        return;
+                    }
+
+                    if (!s.dobDisplay && !s.age) {
+                        showError(`${s.name}: ${t("dobOrAgeRequired")}`);
+                        return;
+                    }
+
+                    if (s.dobDisplay && !validateDob(s.dobDisplay)) {
+                        showError(`${s.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+
+                    if (s.age && !validateAge(s.age)) {
+                        // showError(`${s.name}: ${t("invalidAge")}`);
+                        return;
+                    }
+                    if (s.isDeceased && s.dodDisplay) {
+                        if (!validateDob(s.dodDisplay)) {
+                            showError(`${s.name}: ${t("invalidDate")}`);
+                            return;
+                        }
+
+                        if (!isDeathAfterBirth(s.dobDisplay, s.dodDisplay)) {
+                            setFieldErrors({ [`spouse_${i}_dod`]: true });
+
+                            showError(
+                                ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                            );
+                            return;
+                        }
+                    }
+
+
                 }
 
-                if (!s.dobDisplay && !s.age) {
-                    showError(`${s.name}: ${t("dobOrAgeRequired")}`);
-                    return;
+                // -----------------------------
+                // CHILDREN VALIDATION
+                // -----------------------------
+                // CHILDREN VALIDATION
+                for (let ci = 0; ci < (h.subFamily.children || []).length; ci++) {
+                    const c = h.subFamily.children[ci];
+
+                    // 🔴 If child row exists, name is compulsory
+                    if (!c.name || !c.name.trim()) {
+                        showError("પરિવારના સભ્યનું નામ ફરજિયાત છે");
+                        return;
+                    }
+
+
+
+                    if (!c.relation?.trim()) {
+                        showError(`${c.name}: ${t("childRelationRequired")}`);
+                        return;
+                    }
+
+                    if (!c.dobDisplay && !c.age) {
+                        showError(`${c.name}: ${t("dobOrAgeRequired")}`);
+                        return;
+                    }
+
+                    if (c.dobDisplay && !validateDob(c.dobDisplay)) {
+                        showError(`${c.name}: ${t("invalidDate")}`);
+                        return;
+                    }
+
+                    if (c.age && !validateAge(c.age)) {
+                        // showError(`${c.name}: ${t("invalidAge")}`);
+                        return;
+                    }
+
+                    if (c.isDeceased && c.dodDisplay) {
+                        if (!validateDob(c.dodDisplay)) {
+                            showError(`${c.name}: ${t("invalidDate")}`);
+                            return;
+                        }
+
+                        if (!isDeathAfterBirth(c.dobDisplay, c.dodDisplay)) {
+                            setFieldErrors({ [`child_${i}_${ci}_dod`]: true });
+
+                            showError(
+                                ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                            );
+                            return;
+                        }
+                    }
+
+
+
+                    // -----------------------------
+                    // CHILD SPOUSE VALIDATION
+                    // -----------------------------
+                    const cs = c.spouse;
+
+                    if (cs?.name?.trim()) {
+
+
+                        // 🔴 CHILD SPOUSE DEATH DATE REQUIRED
+                        if (cs && !requireDeathDate(cs.isDeceased, cs.dodDisplay, cs.name)) {
+                            return;
+                        }
+
+
+                        if (!cs.relation?.trim()) {
+                            showError(`${cs.name}: ${t("spouseRelationRequired")}`);
+                            return;
+                        }
+
+                        if (!cs.dobDisplay && !cs.age) {
+                            showError(`${cs.name}: ${t("dobOrAgeRequired")}`);
+                            return;
+                        }
+
+                        if (cs.dobDisplay && !validateDob(cs.dobDisplay)) {
+                            showError(`${cs.name}: ${t("invalidDate")}`);
+                            return;
+                        }
+
+                        if (cs.age && !validateAge(cs.age)) {
+                            // showError(`${cs.name}: ${t("invalidAge")}`);
+                            return;
+                        }
+
+
+                    }
+
+                    // -----------------------------
+                    // GRANDCHILDREN VALIDATION
+                    // -----------------------------
+                    for (let gi = 0; gi < (c.children || []).length; gi++) {
+                        const gc = c.children[gi];
+
+
+
+                        // 🔴 GRANDCHILD DEATH DATE REQUIRED
+                        if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
+                            return;
+                        }
+
+                        // 🔴 If grandchild row exists, name is compulsory
+                        if (!gc.name || !gc.name.trim()) {
+                            showError("પરિવારના સભ્યનું નામ ફરજિયાત છે");
+                            return;
+                        }
+
+
+
+                        if (!gc.relation?.trim()) {
+                            showError(`${gc.name}: ${t("grandchildRelationRequired")}`);
+                            return;
+                        }
+
+                        if (!gc.dobDisplay && !gc.age) {
+                            showError(`${gc.name}: ${t("dobOrAgeRequired")}`);
+                            return;
+                        }
+
+                        if (gc.dobDisplay && !validateDob(gc.dobDisplay)) {
+                            showError(`${gc.name}: ${t("invalidDate")}`);
+                            return;
+                        }
+
+                        if (gc.age && !validateAge(gc.age)) {
+                            // showError(`${gc.name}: ${t("invalidAge")}`);
+                            return;
+                        }
+
+                        if (gc.isDeceased && gc.dodDisplay && !isDeathAfterBirth(gc.dobDisplay, gc.dodDisplay)) {
+                            setFieldErrors({ [`grand_${i}_${ci}_${gi}_dod`]: true });
+
+                            showError(
+                                ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                            );
+                            return;
+                        }
+
+                    }
                 }
-
-                if (s.dobDisplay && !validateDob(s.dobDisplay)) {
-                    showError(`${s.name}: ${t("invalidDate")}`);
-                    return;
-                }
-
-                if (s.age && !validateAge(s.age)) {
-                    // showError(`${s.name}: ${t("invalidAge")}`);
-                    return;
-                }
-if (s.isDeceased && s.dodDisplay) {
-  if (!validateDob(s.dodDisplay)) {
-    showError(`${s.name}: ${t("invalidDate")}`);
-    return;
-  }
-
-  if (!isDeathAfterBirth(s.dobDisplay, s.dodDisplay)) {
-    setFieldErrors({ [`spouse_${i}_dod`]: true });
-
-    showError(
-      ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
-    );
-    return;
-  }
-}
-
-
             }
 
+
+
             // -----------------------------
-            // CHILDREN VALIDATION
+            // COUNT MUKHIYA WIVES
             // -----------------------------
-            for (let ci = 0; ci < (h.subFamily.children || []).length; ci++) {
-  const c = h.subFamily.children[ci];
+            const mukhiyaWifeCount = form.heirs.filter((h) =>
+                ["wife", "first_wife", "second_wife", "third_wife"].includes(h.relation)
+            ).length;
 
+            const hasMultipleWives = mukhiyaWifeCount > 1;
 
+            // -----------------------------
+            // BUILD PAYLOAD AFTER VALIDATION
+            // -----------------------------
+            const payload = {
+                mukhya: {
+                    name: form.mukhyaName,
+                    age: getMukhyaFinalAge(),
 
-                // 🔴 CHILD DEATH DATE REQUIRED
-if (!requireDeathDate(c.isDeceased, c.dodDisplay, c.name)) {
-    return;
-}
+                    dob: form.mukhyaDob || "",
+                    hasMultipleWives,
 
+                    dobDisplay: form.mukhyaDobDisplay || "",
+                    isDeceased: form.mukhyaIsDeceased || false,
+                    dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
+                    dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
+                },
 
-                if (!c.name?.trim()) continue;
+                // 🔽 ADD HERE
+                makanMilkatAkarniNo: form.makanMilkatAkarniNo || "",
+                any: form.any || "",
+                heirs: form.heirs.map((h) => ({
+                    name: h.name,
+                    relation: h.relation,
+                    age: h.age,
+                    dob: h.dob || "",
+                    dobDisplay: h.dobDisplay || "",
+                    mobile: h.mobile || "",
+                    isDeceased: h.isDeceased || false,
+                    dod: h.isDeceased ? (h.dod || "") : "",
+                    dodDisplay: h.isDeceased ? (h.dodDisplay || "") : "",
 
-                if (!c.relation?.trim()) {
-                    showError(`${c.name}: ${t("childRelationRequired")}`);
-                    return;
-                }
+                    subFamily: {
+                        spouse: {
+                            name: h.subFamily.spouse.name,
+                            age: h.subFamily.spouse.age,
+                            relation: h.subFamily.spouse.relation,
+                            dob: h.subFamily.spouse.dob || "",
+                            dobDisplay: h.subFamily.spouse.dobDisplay || "",
+                            isDeceased: h.subFamily.spouse.isDeceased,
+                            dod: h.subFamily.spouse.isDeceased
+                                ? (h.subFamily.spouse.dod || "")
+                                : "",
+                            dodDisplay: h.subFamily.spouse.isDeceased
+                                ? (h.subFamily.spouse.dodDisplay || "")
+                                : ""
+                        },
 
-                if (!c.dobDisplay && !c.age) {
-                    showError(`${c.name}: ${t("dobOrAgeRequired")}`);
-                    return;
-                }
+                        children: h.subFamily.children.map((c) => ({
+                            name: c.name,
+                            age: c.age,
+                            relation: c.relation,
+                            dob: c.dob || "",
+                            dobDisplay: c.dobDisplay || "",
+                            isDeceased: c.isDeceased || false,
+                            dod: c.isDeceased ? (c.dod || "") : "",
+                            dodDisplay: c.isDeceased ? (c.dodDisplay || "") : "",
 
-                if (c.dobDisplay && !validateDob(c.dobDisplay)) {
-                    showError(`${c.name}: ${t("invalidDate")}`);
-                    return;
-                }
+                            spouse: c.spouse
+                                ? {
+                                    name: c.spouse.name || "",
+                                    age: c.spouse.age || "",
+                                    relation: c.spouse.relation || "",
+                                    dob: c.spouse.dob || "",
+                                    dobDisplay: c.spouse.dobDisplay || "",
+                                    isDeceased: c.spouse.isDeceased || false,
+                                    dod: c.spouse.isDeceased ? (c.spouse.dod || "") : "",
+                                    dodDisplay: c.spouse.isDeceased
+                                        ? (c.spouse.dodDisplay || "")
+                                        : ""
+                                }
+                                : null,
 
-                if (c.age && !validateAge(c.age)) {
-                    // showError(`${c.name}: ${t("invalidAge")}`);
-                    return;
-                }
-
-          if (c.isDeceased && c.dodDisplay) {
-  if (!validateDob(c.dodDisplay)) {
-    showError(`${c.name}: ${t("invalidDate")}`);
-    return;
-  }
-
-  if (!isDeathAfterBirth(c.dobDisplay, c.dodDisplay)) {
-    setFieldErrors({ [`child_${i}_${ci}_dod`]: true });
-
-    showError(
-      ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
-    );
-    return;
-  }
-}
-
-
-
-                // -----------------------------
-                // CHILD SPOUSE VALIDATION
-                // -----------------------------
-                const cs = c.spouse;
-
-                if (cs?.name?.trim()) {
-
-
-                    // 🔴 CHILD SPOUSE DEATH DATE REQUIRED
-if (cs && !requireDeathDate(cs.isDeceased, cs.dodDisplay, cs.name)) {
-    return;
-}
-
-
-                    if (!cs.relation?.trim()) {
-                        showError(`${cs.name}: ${t("spouseRelationRequired")}`);
-                        return;
-                    }
-
-                    if (!cs.dobDisplay && !cs.age) {
-                        showError(`${cs.name}: ${t("dobOrAgeRequired")}`);
-                        return;
-                    }
-
-                    if (cs.dobDisplay && !validateDob(cs.dobDisplay)) {
-                        showError(`${cs.name}: ${t("invalidDate")}`);
-                        return;
-                    }
-
-                    if (cs.age && !validateAge(cs.age)) {
-                        // showError(`${cs.name}: ${t("invalidAge")}`);
-                        return;
-                    }
-
-                   
-                }
-
-                // -----------------------------
-                // GRANDCHILDREN VALIDATION
-                // -----------------------------
-               for (let gi = 0; gi < (c.children || []).length; gi++) {
-  const gc = c.children[gi];
-
-
-
-                    // 🔴 GRANDCHILD DEATH DATE REQUIRED
-if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
-    return;
-}
-
-
-                    if (!gc.name?.trim()) continue;
-
-                    if (!gc.relation?.trim()) {
-                        showError(`${gc.name}: ${t("grandchildRelationRequired")}`);
-                        return;
-                    }
-
-                    if (!gc.dobDisplay && !gc.age) {
-                        showError(`${gc.name}: ${t("dobOrAgeRequired")}`);
-                        return;
-                    }
-
-                    if (gc.dobDisplay && !validateDob(gc.dobDisplay)) {
-                        showError(`${gc.name}: ${t("invalidDate")}`);
-                        return;
-                    }
-
-                    if (gc.age && !validateAge(gc.age)) {
-                        // showError(`${gc.name}: ${t("invalidAge")}`);
-                        return;
-                    }
-
-                  if (gc.isDeceased && gc.dodDisplay && !isDeathAfterBirth(gc.dobDisplay, gc.dodDisplay)) {
-  setFieldErrors({ [`grand_${i}_${ci}_${gi}_dod`]: true });
-
-  showError(
-    ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
-  );
-  return;
-}
-
-                }
-            }
-        }
-
-
-
-        // -----------------------------
-// COUNT MUKHIYA WIVES
-// -----------------------------
-const mukhiyaWifeCount = form.heirs.filter((h) =>
-  ["wife", "first_wife", "second_wife", "third_wife"].includes(h.relation)
-).length;
-
-const hasMultipleWives = mukhiyaWifeCount > 1;
-
-        // -----------------------------
-        // BUILD PAYLOAD AFTER VALIDATION
-        // -----------------------------
-        const payload = {
-          mukhya: {
-  name: form.mukhyaName,
-  age: form.mukhyaIsDeceased
-    ? form.mukhyaDeathAge
-    : form.mukhyaBirthAge,
-  dob: form.mukhyaDob || "",
-  hasMultipleWives,
-
-  dobDisplay: form.mukhyaDobDisplay || "",
-  isDeceased: form.mukhyaIsDeceased || false,
-  dod: form.mukhyaIsDeceased ? (form.mukhyaDod || "") : "",
-  dodDisplay: form.mukhyaIsDeceased ? (form.mukhyaDodDisplay || "") : ""
-},
-
- // 🔽 ADD HERE
-    makanMilkatAkarniNo: form.makanMilkatAkarniNo || "",
-    any: form.any || "",
-            heirs: form.heirs.map((h) => ({
-                name: h.name,
-                relation: h.relation,
-                age: h.age,
-                dob: h.dob || "",
-                dobDisplay: h.dobDisplay || "",
-                mobile: h.mobile || "",
-                isDeceased: h.isDeceased || false,
-                dod: h.isDeceased ? (h.dod || "") : "",
-                dodDisplay: h.isDeceased ? (h.dodDisplay || "") : "",
-
-                subFamily: {
-                    spouse: {
-                        name: h.subFamily.spouse.name,
-                        age: h.subFamily.spouse.age,
-                        relation: h.subFamily.spouse.relation,
-                        dob: h.subFamily.spouse.dob || "",
-                        dobDisplay: h.subFamily.spouse.dobDisplay || "",
-                        isDeceased: h.subFamily.spouse.isDeceased,
-                        dod: h.subFamily.spouse.isDeceased
-                            ? (h.subFamily.spouse.dod || "")
-                            : "",
-                        dodDisplay: h.subFamily.spouse.isDeceased
-                            ? (h.subFamily.spouse.dodDisplay || "")
-                            : ""
-                    },
-
-                    children: h.subFamily.children.map((c) => ({
-                        name: c.name,
-                        age: c.age,
-                        relation: c.relation,
-                        dob: c.dob || "",
-                        dobDisplay: c.dobDisplay || "",
-                        isDeceased: c.isDeceased || false,
-                        dod: c.isDeceased ? (c.dod || "") : "",
-                        dodDisplay: c.isDeceased ? (c.dodDisplay || "") : "",
-
-                        spouse: c.spouse
-                            ? {
-                                  name: c.spouse.name || "",
-                                  age: c.spouse.age || "",
-                                  relation: c.spouse.relation || "",
-                                  dob: c.spouse.dob || "",
-                                  dobDisplay: c.spouse.dobDisplay || "",
-                                  isDeceased: c.spouse.isDeceased || false,
-                                  dod: c.spouse.isDeceased ? (c.spouse.dod || "") : "",
-                                  dodDisplay: c.spouse.isDeceased
-                                      ? (c.spouse.dodDisplay || "")
-                                      : ""
-                              }
-                            : null,
-
-                        children: (c.children || []).map((gc) => ({
-                            name: gc.name,
-                            age: gc.age,
-                            relation: gc.relation,
-                            dob: gc.dob || "",
-                            dobDisplay: gc.dobDisplay || "",
-                            isDeceased: gc.isDeceased || false,
-                            dod: gc.isDeceased ? (gc.dod || "") : "",
-                            dodDisplay: gc.isDeceased ? (gc.dodDisplay || "") : ""
+                            children: (c.children || []).map((gc) => ({
+                                name: gc.name,
+                                age: gc.age,
+                                relation: gc.relation,
+                                dob: gc.dob || "",
+                                dobDisplay: gc.dobDisplay || "",
+                                isDeceased: gc.isDeceased || false,
+                                dod: gc.isDeceased ? (gc.dod || "") : "",
+                                dodDisplay: gc.isDeceased ? (gc.dodDisplay || "") : ""
+                            }))
                         }))
-                    }))
-                }
-            }))
-        };
+                    }
+                }))
+            };
 
-        // -----------------------------
-        // DECIDE API METHOD (CREATE vs UPDATE)
-        // -----------------------------
-        const isEditMode = Boolean(id);
-        const url = isEditMode
-            ? `/api/pedhinamu/${id}`
-            : `/api/pedhinamu`;
+            // -----------------------------
+            // DECIDE API METHOD (CREATE vs UPDATE)
+            // -----------------------------
+            const isEditMode = Boolean(id);
+            const url = isEditMode
+                ? `/api/pedhinamu/${id}`
+                : `/api/pedhinamu`;
 
-        const method = isEditMode ? "PUT" : "POST";
-        
+            const method = isEditMode ? "PUT" : "POST";
 
-        const { response, data } = await apiFetch(url, {
-            method,
-            body: JSON.stringify(payload),
-        }, navigate, toast);
 
-        if (!response.ok) {
-            showError(data.error || t("error"));
-            return;
+            const { response, data } = await apiFetch(url, {
+                method,
+                body: JSON.stringify(payload),
+            }, navigate, toast);
+
+            if (!response.ok) {
+                showError(data.error || t("error"));
+                return;
+            }
+
+            // SUCCESS
+            showSuccess(isEditMode ? t("updateSuccess") : t("success"));
+
+            setTimeout(() => {
+                const redirectId = isEditMode ? id : data.data._id;
+                navigate(`/pedhinamu/form/${redirectId}`);
+            }, 500);
+
+        } catch (err) {
+            console.error("SAVE ERROR:", err);
+            showError(t("error"));
         }
-
-        // SUCCESS
-        showSuccess(isEditMode ? t("updateSuccess") : t("success"));
-
-        setTimeout(() => {
-            const redirectId = isEditMode ? id : data.data._id;
-            navigate(`/pedhinamu/form/${redirectId}`);
-        }, 500);
-
-    } catch (err) {
-        console.error("SAVE ERROR:", err);
-        showError(t("error"));
-    }
-};
+    };
 
 
     const normalizeForm = (p) => {
@@ -929,135 +963,145 @@ const hasMultipleWives = mukhiyaWifeCount > 1;
                             />
                         </FormControl>
 
-                       {/* ALIVE / DEAD — MOVED UP */}
-<FormControl>
-  <FormLabel fontWeight="600">{t("aliveDead")}</FormLabel>
-  <Select
-    size="lg"
-    bg="gray.100"
-    value={form.mukhyaIsDeceased ? "dead" : "alive"}
-   onChange={(e) => {
-  const isDead = e.target.value === "dead";
+                        {/* ALIVE / DEAD — MOVED UP */}
+                        <FormControl>
+                            <FormLabel fontWeight="600">{t("aliveDead")}</FormLabel>
+                            <Select
+                                size="lg"
+                                bg="gray.100"
+                                value={form.mukhyaIsDeceased ? "dead" : "alive"}
+                                onChange={(e) => {
+                                    const isDead = e.target.value === "dead";
 
-  setForm({
-    ...form,
-    mukhyaIsDeceased: isDead,
+                                    setForm({
+                                        ...form,
+                                        mukhyaIsDeceased: isDead,
 
-    // 🔁 CLEAR BIRTH FIELDS WHEN DEAD
-    mukhyaDob: isDead ? "" : form.mukhyaDob,
-    mukhyaDobDisplay: isDead ? "" : form.mukhyaDobDisplay,
-    mukhyaBirthAge: isDead ? "" : form.mukhyaBirthAge,
+                                        // 🔁 CLEAR BIRTH FIELDS WHEN DEAD
+                                        // ❌ DO NOT clear DOB when dead
+                                        mukhyaDob: form.mukhyaDob,
+                                        mukhyaDobDisplay: form.mukhyaDobDisplay,
 
-    // 🔁 CLEAR DEATH FIELDS WHEN ALIVE
-    mukhyaDod: !isDead ? "" : form.mukhyaDod,
-    mukhyaDodDisplay: !isDead ? "" : form.mukhyaDodDisplay,
-    mukhyaDeathAge: !isDead ? "" : form.mukhyaDeathAge,
-  });
-}}
+                                        mukhyaBirthAge: isDead ? "" : form.mukhyaBirthAge,
 
-  >
-    <option value="alive">{t("alive")}</option>
-    <option value="dead">{t("deceased")}</option>
-  </Select>
-</FormControl>
+                                        // 🔁 CLEAR DEATH FIELDS WHEN ALIVE
+                                        mukhyaDod: !isDead ? "" : form.mukhyaDod,
+                                        mukhyaDodDisplay: !isDead ? "" : form.mukhyaDodDisplay,
+                                        mukhyaDeathAge: !isDead
+                                            ? ""
+                                            : form.mukhyaDod && (form.mukhyaDob || form.mukhyaBirthAge)
+                                                ? calculateAgeAtDeath(
+                                                    form.mukhyaDob || getDobFromAge(form.mukhyaBirthAge),
+                                                    form.mukhyaDod
+                                                )
+                                                : "",
 
-{/* BIRTH DATE / AGE */}
-<FormControl>
-  <FormLabel fontWeight="600">{t("birthDateAge")}</FormLabel>
+                                    });
+                                }}
 
-  <HStack spacing={3} align="center">
- <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  value={form.mukhyaDobDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
-    const iso = convertToISO(display);
+                            >
+                                <option value="alive">{t("alive")}</option>
+                                <option value="dead">{t("deceased")}</option>
+                            </Select>
+                        </FormControl>
 
-    setForm({
-      ...form,
-      mukhyaDobDisplay: display,
-      mukhyaDob: iso,
-      mukhyaBirthAge: iso ? calculateAge(iso) : ""
-    });
-  }}
-/>
+                        {/* BIRTH DATE / AGE */}
+                        <FormControl>
+                            <FormLabel fontWeight="600">{t("birthDateAge")}</FormLabel>
 
+                            <HStack spacing={3} align="center">
+                                <Input
+                                    type="text"
+                                    placeholder="DD/MM/YYYY"
+                                    size="lg"
+                                    bg="gray.100"
+                                    value={form.mukhyaDobDisplay || ""}
+                                    onChange={(e) => {
+                                        const display = formatDisplayDate(e.target.value);
+                                        const iso = convertToISO(display);
 
-
-    <Text fontWeight="bold" color="green.700">
-      {t("orText")}
-    </Text>
-
-   <Input
-  size="lg"
-  width="120px"
-  bg="gray.100"
-  placeholder={t("age")}
-  value={form.mukhyaBirthAge}
-  onChange={(e) => {
-    const v = e.target.value;
-    if (v && !/^[0-9]{1,3}$/.test(v)) return;
-    setForm({ ...form, mukhyaBirthAge: v });
-  }}
-/>
-
-  </HStack>
-</FormControl>
-
-{/* DEATH DATE / AGE — ONLY WHEN DEAD */}
-{form.mukhyaIsDeceased && (
-  <FormControl>
-    <FormLabel fontWeight="600">{t("deathDate")}</FormLabel>
-
-    <HStack spacing={3} align="center">
-  <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  borderColor={fieldErrors.mukhyaDod ? "red.500" : "gray.200"}
-  value={form.mukhyaDodDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
-    const iso = convertToISO(display);
-
-    setFieldErrors((p) => ({ ...p, mukhyaDod: false }));
-
-    setForm({
-      ...form,
-      mukhyaDodDisplay: display,
-      mukhyaDod: iso,
-      mukhyaDeathAge:
-        form.mukhyaDob && iso
-          ? calculateAgeAtDeath(form.mukhyaDob, iso)
-          : "",
-    });
-  }}
-/>
+                                        setForm({
+                                            ...form,
+                                            mukhyaDobDisplay: display,
+                                            mukhyaDob: iso,
+                                            mukhyaBirthAge: iso ? calculateAge(iso) : ""
+                                        });
+                                    }}
+                                />
 
 
-      <Text fontWeight="bold" color="green.700">
-        {t("orText")}
-      </Text>
-<Input
-  size="lg"
-  width="120px"
-  bg="gray.100"
-  placeholder={t("age")}
-  value={form.mukhyaDeathAge}
-  onChange={(e) => {
-    const v = e.target.value;
-    if (v && !/^[0-9]{1,3}$/.test(v)) return;
-    setForm({ ...form, mukhyaDeathAge: v });
-  }}
-/>
 
-    </HStack>
-  </FormControl>
-)}
+                                <Text fontWeight="bold" color="green.700">
+                                    {t("orText")}
+                                </Text>
+
+                                <Input
+                                    size="lg"
+                                    width="120px"
+                                    bg="gray.100"
+                                    placeholder={t("age")}
+                                    value={form.mukhyaBirthAge}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                        setForm({ ...form, mukhyaBirthAge: v });
+                                    }}
+                                />
+
+                            </HStack>
+                        </FormControl>
+
+
+                        {form.mukhyaIsDeceased && (
+                            <FormControl>
+                                <FormLabel fontWeight="600">{t("deathDate")}</FormLabel>
+
+                                <HStack spacing={3} align="center">
+
+                                    {/* Death Date */}
+                                    <Input
+                                        type="text"
+                                        placeholder="DD/MM/YYYY"
+                                        size="lg"
+                                        bg="gray.100"
+                                        value={form.mukhyaDodDisplay || ""}
+                                        onChange={(e) => {
+                                            const display = formatDisplayDate(e.target.value);
+                                            const iso = convertToISO(display);
+
+                                            const dob = form.mukhyaDob || getDobFromAge(form.mukhyaBirthAge);
+
+                                            setForm({
+                                                ...form,
+                                                mukhyaDodDisplay: display,
+                                                mukhyaDod: iso,
+                                                mukhyaDeathAge: dob && iso ? calculateAgeAtDeath(dob, iso) : "",
+                                            });
+                                        }}
+                                    />
+
+                                    <Text fontWeight="bold" color="green.700">
+                                        {t("orText")}
+                                    </Text>
+
+                                    {/* Death Age */}
+                                    <Input
+                                        size="lg"
+                                        width="120px"
+                                        bg="gray.100"
+                                        placeholder={t("age")}
+                                        value={form.mukhyaDeathAge}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                            setForm({ ...form, mukhyaDeathAge: v });
+                                        }}
+                                    />
+
+                                </HStack>
+                            </FormControl>
+                        )}
+
 
 
                         <FormControl>
@@ -1132,115 +1176,115 @@ const hasMultipleWives = mukhiyaWifeCount > 1;
                                 onWheel={(e) => e.target.blur()}
                             />
                         </FormControl>
-                       <Button
-  colorScheme="green"
-  size="lg"
-  width="100%"
-  rounded="xl"
-onClick={() => {
+                        <Button
+                            colorScheme="green"
+                            size="lg"
+                            width="100%"
+                            rounded="xl"
+                            onClick={() => {
 
 
-    // 🔴 NAME REQUIRED (STEP 1)
-if (!form.mukhyaName || !form.mukhyaName.trim()) {
-  showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
-  return;
-}
+                                // 🔴 NAME REQUIRED (STEP 1)
+                                if (!form.mukhyaName || !form.mukhyaName.trim()) {
+                                    showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
+                                    return;
+                                }
 
 
 
 
-    // 🔴 ALIVE → DOB or AGE is compulsory
-// 🟢 ALIVE VALIDATION (FINAL RULE)
-if (!form.mukhyaIsDeceased) {
+                                // 🔴 ALIVE → DOB or AGE is compulsory
+                                // 🟢 ALIVE VALIDATION (FINAL RULE)
+                                if (!form.mukhyaIsDeceased) {
 
-  // ❌ both empty → error
-  if (
-    isEmpty(form.mukhyaDobDisplay) &&
-    isEmpty(form.mukhyaBirthAge)
-  ) {
-    showError("હયાત વ્યક્તિ માટે જન્મ તારીખ અથવા ઉમર ફરજિયાત છે");
-    return;
-  }
+                                    // ❌ both empty → error
+                                    if (
+                                        isEmpty(form.mukhyaDobDisplay) &&
+                                        isEmpty(form.mukhyaBirthAge)
+                                    ) {
+                                        showError("હયાત વ્યક્તિ માટે જન્મ તારીખ અથવા ઉમર ફરજિયાત છે");
+                                        return;
+                                    }
 
-  // ❌ DOB entered but invalid → error
-  if (
-    !isEmpty(form.mukhyaDobDisplay) &&
-    !validateDob(form.mukhyaDobDisplay)
-  ) {
-    showError("માન્ય જન્મ તારીખ દાખલ કરો (DD/MM/YYYY)");
-    return;
-  }
-}
+                                    // ❌ DOB entered but invalid → error
+                                    if (
+                                        !isEmpty(form.mukhyaDobDisplay) &&
+                                        !validateDob(form.mukhyaDobDisplay)
+                                    ) {
+                                        showError("માન્ય જન્મ તારીખ દાખલ કરો (DD/MM/YYYY)");
+                                        return;
+                                    }
+                                }
 
-if (
-  form.mukhyaIsDeceased &&
-  isEmpty(form.mukhyaDodDisplay) &&
-  isEmpty(form.mukhyaDeathAge)
-) {
-  showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
-  return;
-}
-
-
-  // 🔴 2️⃣ INVALID DEATH DATE FORMAT
-  if (
-    form.mukhyaIsDeceased &&
-    form.mukhyaDodDisplay &&
-    !validateDob(form.mukhyaDodDisplay)
-  ) {
-    showError("મૃત્યુ તારીખ અમાન્ય છે");
-    return;
-  }
-
-  if (
-  form.mukhyaIsDeceased &&
-  form.mukhyaDobDisplay &&
-  form.mukhyaDodDisplay &&
-  !isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)
-) {
-  setFieldErrors({ mukhyaDod: true });
-
-  showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
-
-  setTimeout(() => {
-    document.querySelector('input[placeholder="DD/MM/YYYY"]')?.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-  }, 200);
-
-  return;
-}
+                                if (
+                                    form.mukhyaIsDeceased &&
+                                    isEmpty(form.mukhyaDodDisplay) &&
+                                    isEmpty(form.mukhyaDeathAge)
+                                ) {
+                                    showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
+                                    return;
+                                }
 
 
-// 🔴 MINIMUM 18 AGE VALIDATION (FINAL & CORRECT)
-if (
-  !form.mukhyaIsDeceased ||        // alive
-  form.mukhyaDeathAge              // dead + age entered
-) {
-  const age = getMukhyaFinalAge();
+                                // 🔴 2️⃣ INVALID DEATH DATE FORMAT
+                                if (
+                                    form.mukhyaIsDeceased &&
+                                    form.mukhyaDodDisplay &&
+                                    !validateDob(form.mukhyaDodDisplay)
+                                ) {
+                                    showError("મૃત્યુ તારીખ અમાન્ય છે");
+                                    return;
+                                }
 
-  if (age && age < 18) {
-    showError("મુખિયા ની ઉંમર ઓછામાં ઓછી ૧૮ વર્ષ હોવી જરૂરી છે");
-    return;
-  }
-}
+                                if (
+                                    form.mukhyaIsDeceased &&
+                                    form.mukhyaDobDisplay &&
+                                    form.mukhyaDodDisplay &&
+                                    !isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)
+                                ) {
+                                    setFieldErrors({ mukhyaDod: true });
+
+                                    showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
+
+                                    setTimeout(() => {
+                                        document.querySelector('input[placeholder="DD/MM/YYYY"]')?.scrollIntoView({
+                                            behavior: "smooth",
+                                            block: "center"
+                                        });
+                                    }, 200);
+
+                                    return;
+                                }
 
 
-  // 🔴 5️⃣ TOTAL HEIRS CHECK
-  if (totalHeirs < 1) {
-    showError("ઓછામાં ઓછો એક વારસદાર જરૂરી છે");
-    return;
-  }
+                                // 🔴 MINIMUM 18 AGE VALIDATION (FINAL & CORRECT)
+                                if (
+                                    !form.mukhyaIsDeceased ||        // alive
+                                    form.mukhyaDeathAge              // dead + age entered
+                                ) {
+                                    const age = getMukhyaFinalAge();
 
-  // ✅ ALL OK → GO TO STEP 2
-  setStep(2);
-}}
+                                    if (age && age < 18) {
+                                        showError("મુખિયા ની ઉંમર ઓછામાં ઓછી ૧૮ વર્ષ હોવી જરૂરી છે");
+                                        return;
+                                    }
+                                }
 
 
->
-  {t("next")}
-</Button>
+                                // 🔴 5️⃣ TOTAL HEIRS CHECK
+                                if (totalHeirs < 1) {
+                                    showError("ઓછામાં ઓછો એક વારસદાર જરૂરી છે");
+                                    return;
+                                }
+
+                                // ✅ ALL OK → GO TO STEP 2
+                                setStep(2);
+                            }}
+
+
+                        >
+                            {t("next")}
+                        </Button>
 
                     </VStack>
 
@@ -1324,13 +1368,13 @@ if (
                                                 const updated = [...form.heirs];
                                                 updated[i].dobDisplay = display;
                                                 updated[i].dob = iso;
-                                             updated[i].age = updated[i].isDeceased
-    ? updated[i].dod
-        ? calculateAgeAtDeath(iso, updated[i].dod)
-        : ""
-    : iso
-    ? calculateAge(iso)
-    : "";
+                                                updated[i].age = updated[i].isDeceased
+                                                    ? updated[i].dod
+                                                        ? calculateAgeAtDeath(iso, updated[i].dod)
+                                                        : ""
+                                                    : iso
+                                                        ? calculateAge(iso)
+                                                        : "";
 
 
                                                 setForm({ ...form, heirs: updated });
@@ -1342,21 +1386,17 @@ if (
                                             {t("orText")}
                                         </Text>
 
-                                        {/* AGE (Manual Entry) */}
                                         <Input
                                             size="lg"
                                             width="120px"
                                             bg="gray.100"
                                             placeholder={t("age")}
-                                            value={h.age}
+                                            value={h.isDeceased ? "" : h.age}
+                                            isReadOnly={h.isDeceased}
                                             onChange={(e) => {
+                                                if (h.isDeceased) return;
                                                 const value = e.target.value;
-
-                                                if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                    // showError(t("invalidAge"));
-                                                    return;
-                                                }
-
+                                                if (value && !/^[0-9]{1,3}$/.test(value)) return;
                                                 updateHeir(i, "age", value);
                                             }}
                                         />
@@ -1370,21 +1410,21 @@ if (
                                         size="lg"
                                         bg="gray.100"
                                         value={h.isDeceased ? "dead" : "alive"}
-                                       onChange={(e) => {
-    const isDead = e.target.value === "dead";
-    const updated = [...form.heirs];
+                                        onChange={(e) => {
+                                            const isDead = e.target.value === "dead";
+                                            const updated = [...form.heirs];
 
-    updated[i].isDeceased = isDead;
-    updated[i].age = isDead
-        ? updated[i].dob && updated[i].dod
-            ? calculateAgeAtDeath(updated[i].dob, updated[i].dod)
-            : ""
-        : updated[i].dob
-        ? calculateAge(updated[i].dob)
-        : "";
+                                            updated[i].isDeceased = isDead;
+                                            updated[i].age = isDead
+                                                ? updated[i].dob && updated[i].dod
+                                                    ? calculateAgeAtDeath(updated[i].dob, updated[i].dod)
+                                                    : ""
+                                                : updated[i].dob
+                                                    ? calculateAge(updated[i].dob)
+                                                    : "";
 
-    setForm({ ...form, heirs: updated });
-}}
+                                            setForm({ ...form, heirs: updated });
+                                        }}
 
                                     >
                                         <option value="alive">{t("alive")}</option>
@@ -1394,38 +1434,47 @@ if (
                                         <FormControl>
                                             <FormLabel>{t("deathDate")}</FormLabel>
 
-                                      <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  borderColor={fieldErrors[`heir_${i}_dod`] ? "red.500" : "gray.200"}
-  value={h.dodDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
+                                            <HStack>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="DD/MM/YYYY"
+                                                    size="lg"
+                                                    bg="gray.100"
+                                                    borderColor={fieldErrors[`heir_${i}_dod`] ? "red.500" : "gray.200"}
+                                                    value={h.dodDisplay || ""}
+                                                    onChange={(e) => {
+                                                        const display = formatDisplayDate(e.target.value);
 
-    // clear red when user edits
-    setFieldErrors((p) => ({ ...p, [`heir_${i}_dod`]: false }));
+                                                        // clear red when user edits
+                                                        setFieldErrors((p) => ({ ...p, [`heir_${i}_dod`]: false }));
 
-    if (display.length === 10 && !validateDob(display)) {
-      showError(t("invalidDate"));
-      return;
-    }
+                                                        if (display.length === 10 && !validateDob(display)) {
+                                                            showError(t("invalidDate"));
+                                                            return;
+                                                        }
 
-    const iso = convertToISO(display);
+                                                        const iso = convertToISO(display);
 
-    const updated = structuredClone(form.heirs);
-    updated[i].dodDisplay = display;
-    updated[i].dod = iso;
-    updated[i].age =
-      updated[i].dob && iso
-        ? calculateAgeAtDeath(updated[i].dob, iso)
-        : "";
+                                                        const updated = structuredClone(form.heirs);
+                                                        updated[i].dodDisplay = display;
+                                                        updated[i].dod = iso;
+                                                        updated[i].age =
+                                                            updated[i].dob && iso
+                                                                ? calculateAgeAtDeath(updated[i].dob, iso)
+                                                                : "";
 
-    setForm({ ...form, heirs: updated });
-  }}
-/>
-
+                                                        setForm({ ...form, heirs: updated });
+                                                    }}
+                                                />
+                                                <Input
+                                                    size="lg"
+                                                    width="120px"
+                                                    bg="gray.100"
+                                                    isReadOnly
+                                                    value={h.age || ""}
+                                                    placeholder={t("age")}
+                                                />
+                                            </HStack>
                                         </FormControl>
                                     )}
                                 </FormControl>
@@ -1514,14 +1563,14 @@ if (
                                                                     const u = [...form.heirs];
                                                                     u[i].subFamily.spouse.dobDisplay = display;
                                                                     u[i].subFamily.spouse.dob = iso;
-                                                                  u[i].subFamily.spouse.age =
-    u[i].subFamily.spouse.isDeceased
-        ? u[i].subFamily.spouse.dod
-            ? calculateAgeAtDeath(iso, u[i].subFamily.spouse.dod)
-            : ""
-        : iso
-        ? calculateAge(iso)
-        : "";
+                                                                    u[i].subFamily.spouse.age =
+                                                                        u[i].subFamily.spouse.isDeceased
+                                                                            ? u[i].subFamily.spouse.dod
+                                                                                ? calculateAgeAtDeath(iso, u[i].subFamily.spouse.dod)
+                                                                                : ""
+                                                                            : iso
+                                                                                ? calculateAge(iso)
+                                                                                : "";
 
 
                                                                     setForm({ ...form, heirs: u });
@@ -1533,25 +1582,20 @@ if (
                                                                 {t("orText")}
                                                             </Text>
 
-                                                            {/* SPOUSE AGE */}
+                                                            {/* SPOUSE AGE - Unified */}
                                                             <Input
                                                                 size="lg"
                                                                 width="120px"
                                                                 bg="gray.100"
                                                                 placeholder={t("age")}
-                                                                value={h.subFamily.spouse.age}
+                                                                value={h.subFamily.spouse.isDeceased ? "" : h.subFamily.spouse.age}
+                                                                isReadOnly={h.subFamily.spouse.isDeceased}
                                                                 onChange={(e) => {
+                                                                    if (h.subFamily.spouse.isDeceased) return;
                                                                     const value = e.target.value;
-
-                                                                    // Age must be numbers only
-                                                                    if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                        // showError(t("invalidAge"));
-                                                                        return;
-                                                                    }
-
+                                                                    if (value && !/^[0-9]{1,3}$/.test(value)) return;
                                                                     const u = [...form.heirs];
                                                                     u[i].subFamily.spouse.age = value;
-
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
                                                             />
@@ -1602,21 +1646,22 @@ if (
                                                         value={h.subFamily.spouse.isDeceased ? "dead" : "alive"}
                                                         onChange={(e) => {
                                                             const u = [...form.heirs];
-                                                          const isDead = e.target.value === "dead";
-u[i].subFamily.spouse.isDeceased = isDead;
-u[i].subFamily.spouse.age = isDead
-    ? u[i].subFamily.spouse.dob && u[i].subFamily.spouse.dod
-        ? calculateAgeAtDeath(
-              u[i].subFamily.spouse.dob,
-              u[i].subFamily.spouse.dod
-          )
-        : ""
-    : u[i].subFamily.spouse.dob
-    ? calculateAge(u[i].subFamily.spouse.dob)
-    : "";
+                                                            const isDead = e.target.value === "dead";
+                                                            u[i].subFamily.spouse.isDeceased = isDead;
+                                                            u[i].subFamily.spouse.age = isDead
+                                                                ? u[i].subFamily.spouse.dob && u[i].subFamily.spouse.dod
+                                                                    ? calculateAgeAtDeath(
+                                                                        u[i].subFamily.spouse.dob,
+                                                                        u[i].subFamily.spouse.dod
+                                                                    )
+                                                                    : ""
+                                                                : u[i].subFamily.spouse.dob
+                                                                    ? calculateAge(u[i].subFamily.spouse.dob)
+                                                                    : "";
 
                                                             setForm({ ...form, heirs: u });
                                                         }}
+
                                                     >
                                                         <option value="alive">{t("alive")}</option>
                                                         <option value="dead">{t("deceased")}</option>
@@ -1625,38 +1670,47 @@ u[i].subFamily.spouse.age = isDead
                                                         <FormControl>
                                                             <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                            <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  borderColor={fieldErrors[`spouse_${i}_dod`] ? "red.500" : "gray.200"}
-  value={h.subFamily.spouse.dodDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
+                                                            <HStack>
+                                                                <Input
+                                                                    type="text"
+                                                                    placeholder="DD/MM/YYYY"
+                                                                    size="lg"
+                                                                    bg="gray.100"
+                                                                    borderColor={fieldErrors[`spouse_${i}_dod`] ? "red.500" : "gray.200"}
+                                                                    value={h.subFamily.spouse.dodDisplay || ""}
+                                                                    onChange={(e) => {
+                                                                        const display = formatDisplayDate(e.target.value);
 
-    // clear red when editing
-    setFieldErrors((p) => ({ ...p, [`spouse_${i}_dod`]: false }));
+                                                                        // clear red when editing
+                                                                        setFieldErrors((p) => ({ ...p, [`spouse_${i}_dod`]: false }));
 
-    if (display.length === 10 && !validateDob(display)) {
-      showError(t("invalidDate"));
-      return;
-    }
+                                                                        if (display.length === 10 && !validateDob(display)) {
+                                                                            showError(t("invalidDate"));
+                                                                            return;
+                                                                        }
 
-    const iso = convertToISO(display);
+                                                                        const iso = convertToISO(display);
 
-    const u = structuredClone(form.heirs);
-    u[i].subFamily.spouse.dodDisplay = display;
-    u[i].subFamily.spouse.dod = iso;
-    u[i].subFamily.spouse.age =
-      u[i].subFamily.spouse.dob && iso
-        ? calculateAgeAtDeath(u[i].subFamily.spouse.dob, iso)
-        : "";
+                                                                        const u = structuredClone(form.heirs);
+                                                                        u[i].subFamily.spouse.dodDisplay = display;
+                                                                        u[i].subFamily.spouse.dod = iso;
+                                                                        u[i].subFamily.spouse.age =
+                                                                            u[i].subFamily.spouse.dob && iso
+                                                                                ? calculateAgeAtDeath(u[i].subFamily.spouse.dob, iso)
+                                                                                : "";
 
-    setForm({ ...form, heirs: u });
-  }}
-/>
-
+                                                                        setForm({ ...form, heirs: u });
+                                                                    }}
+                                                                />
+                                                                <Input
+                                                                    size="lg"
+                                                                    width="120px"
+                                                                    bg="gray.100"
+                                                                    isReadOnly
+                                                                    value={h.subFamily.spouse.age || ""}
+                                                                    placeholder={t("age")}
+                                                                />
+                                                            </HStack>
                                                         </FormControl>
                                                     )}
                                                 </FormControl>
@@ -1739,7 +1793,7 @@ u[i].subFamily.spouse.age = isDead
                                                                     u[i].subFamily.children[ci].spouse = {
                                                                         name: "",
                                                                         age: "",
-                                                                        relation: "",     
+                                                                        relation: "",
                                                                         isDeceased: false
                                                                     };
                                                                 }
@@ -1798,16 +1852,16 @@ u[i].subFamily.spouse.age = isDead
                                                                                         u[i].subFamily.children[ci].spouse.dobDisplay = display;
                                                                                         u[i].subFamily.children[ci].spouse.dob = iso;
                                                                                         u[i].subFamily.children[ci].spouse.age =
-    u[i].subFamily.children[ci].spouse.isDeceased
-        ? u[i].subFamily.children[ci].spouse.dod
-            ? calculateAgeAtDeath(
-                  iso,
-                  u[i].subFamily.children[ci].spouse.dod
-              )
-            : ""
-        : iso
-        ? calculateAge(iso)
-        : "";
+                                                                                            u[i].subFamily.children[ci].spouse.isDeceased
+                                                                                                ? u[i].subFamily.children[ci].spouse.dod
+                                                                                                    ? calculateAgeAtDeath(
+                                                                                                        iso,
+                                                                                                        u[i].subFamily.children[ci].spouse.dod
+                                                                                                    )
+                                                                                                    : ""
+                                                                                                : iso
+                                                                                                    ? calculateAge(iso)
+                                                                                                    : "";
 
 
                                                                                         setForm({ ...form, heirs: u });
@@ -1819,28 +1873,27 @@ u[i].subFamily.spouse.age = isDead
                                                                                     {t("orText")}
                                                                                 </Text> */}
 
-                                                                                {/* SPOUSE AGE */}
+                                                                                {/* SPOUSE AGE (Alive) */}
+                                                                                {/* SPOUSE AGE - Unified */}
                                                                                 <FormControl w="150px">
                                                                                     <FormLabel>{t("spouseAge")}</FormLabel>
+
                                                                                     <Input
                                                                                         size="lg"
                                                                                         bg="gray.100"
-                                                                                        value={child.spouse?.age || ""}
+                                                                                        value={child.spouse?.isDeceased ? "" : (child.spouse?.age || "")}
+                                                                                        isReadOnly={child.spouse?.isDeceased}
                                                                                         placeholder={t("age")}
                                                                                         onChange={(e) => {
+                                                                                            if (child.spouse?.isDeceased) return;
                                                                                             const value = e.target.value;
-
-                                                                                            // Age numeric validation
-                                                                                            if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                                                // showError(t("invalidAge"));
-                                                                                                return;
-                                                                                            }
-
+                                                                                            if (value && !/^[0-9]{1,3}$/.test(value)) return;
                                                                                             const u = structuredClone(form.heirs);
                                                                                             u[i].subFamily.children[ci].spouse.age = value;
                                                                                             setForm({ ...form, heirs: u });
                                                                                         }}
                                                                                     />
+
                                                                                 </FormControl>
 
                                                                             </HStack>
@@ -1887,25 +1940,25 @@ u[i].subFamily.spouse.age = isDead
                                                                             size="lg"
                                                                             bg="gray.100"
                                                                             value={child.spouse?.isDeceased ? "dead" : "alive"}
-                                                                           onChange={(e) => {
-    const u = structuredClone(form.heirs);
-    const isDead = e.target.value === "dead";
+                                                                            onChange={(e) => {
+                                                                                const u = structuredClone(form.heirs);
+                                                                                const isDead = e.target.value === "dead";
 
-    u[i].subFamily.children[ci].spouse.isDeceased = isDead;
-    u[i].subFamily.children[ci].spouse.age = isDead
-        ? u[i].subFamily.children[ci].spouse.dob &&
-          u[i].subFamily.children[ci].spouse.dod
-            ? calculateAgeAtDeath(
-                  u[i].subFamily.children[ci].spouse.dob,
-                  u[i].subFamily.children[ci].spouse.dod
-              )
-            : ""
-        : u[i].subFamily.children[ci].spouse.dob
-        ? calculateAge(u[i].subFamily.children[ci].spouse.dob)
-        : "";
+                                                                                u[i].subFamily.children[ci].spouse.isDeceased = isDead;
+                                                                                u[i].subFamily.children[ci].spouse.age = isDead
+                                                                                    ? u[i].subFamily.children[ci].spouse.dob &&
+                                                                                        u[i].subFamily.children[ci].spouse.dod
+                                                                                        ? calculateAgeAtDeath(
+                                                                                            u[i].subFamily.children[ci].spouse.dob,
+                                                                                            u[i].subFamily.children[ci].spouse.dod
+                                                                                        )
+                                                                                        : ""
+                                                                                    : u[i].subFamily.children[ci].spouse.dob
+                                                                                        ? calculateAge(u[i].subFamily.children[ci].spouse.dob)
+                                                                                        : "";
 
-    setForm({ ...form, heirs: u });
-}}
+                                                                                setForm({ ...form, heirs: u });
+                                                                            }}
 
                                                                         >
                                                                             <option value="alive">{t("alive")}</option>
@@ -1915,38 +1968,47 @@ u[i].subFamily.spouse.age = isDead
                                                                             <FormControl mt={3}>
                                                                                 <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                                                <Input
-                                                                                    type="text"
-                                                                                    placeholder="DD/MM/YYYY"
-                                                                                    size="lg"
-                                                                                    bg="gray.100"
-                                                                                    value={child.spouse?.dodDisplay || ""}
-                                                                                    onChange={(e) => {
-                                                                                        const display = formatDisplayDate(e.target.value);
+                                                                                <HStack>
+                                                                                    <Input
+                                                                                        type="text"
+                                                                                        placeholder="DD/MM/YYYY"
+                                                                                        size="lg"
+                                                                                        bg="gray.100"
+                                                                                        value={child.spouse?.dodDisplay || ""}
+                                                                                        onChange={(e) => {
+                                                                                            const display = formatDisplayDate(e.target.value);
 
-                                                                                        // validate death date
-                                                                                        if (display.length === 10 && !validateDob(display)) {
-                                                                                            showError(t("invalidDate"));
-                                                                                            return;
-                                                                                        }
+                                                                                            // validate only when complete
+                                                                                            if (display.length === 10 && !validateDob(display)) {
+                                                                                                showError(t("invalidDate"));
+                                                                                                return;
+                                                                                            }
 
-                                                                                        const iso = convertToISO(display);
+                                                                                            const iso = convertToISO(display);
 
-                                                                                        const u = structuredClone(form.heirs);
-                                                                                      u[i].subFamily.children[ci].spouse.dodDisplay = display;
-u[i].subFamily.children[ci].spouse.dod = iso;
-u[i].subFamily.children[ci].spouse.age =
-    u[i].subFamily.children[ci].spouse.dob && iso
-        ? calculateAgeAtDeath(
-              u[i].subFamily.children[ci].spouse.dob,
-              iso
-          )
-        : "";
+                                                                                            const u = structuredClone(form.heirs);
+                                                                                            u[i].subFamily.children[ci].spouse.dodDisplay = display;
+                                                                                            u[i].subFamily.children[ci].spouse.dod = iso;
+                                                                                            u[i].subFamily.children[ci].spouse.age =
+                                                                                                u[i].subFamily.children[ci].spouse.dob && iso
+                                                                                                    ? calculateAgeAtDeath(
+                                                                                                        u[i].subFamily.children[ci].spouse.dob,
+                                                                                                        iso
+                                                                                                    )
+                                                                                                    : "";
 
-
-                                                                                        setForm({ ...form, heirs: u });
-                                                                                    }}
-                                                                                />
+                                                                                            setForm({ ...form, heirs: u });
+                                                                                        }}
+                                                                                    />
+                                                                                    <Input
+                                                                                        size="lg"
+                                                                                        width="120px"
+                                                                                        bg="gray.100"
+                                                                                        isReadOnly
+                                                                                        value={child.spouse?.age || ""}
+                                                                                        placeholder={t("age")}
+                                                                                    />
+                                                                                </HStack>
                                                                             </FormControl>
                                                                         )}
 
@@ -2082,12 +2144,17 @@ u[i].subFamily.children[ci].spouse.age =
                                                                                                     placeholder="DD/MM/YYYY"
                                                                                                     size="lg"
                                                                                                     bg="gray.100"
+                                                                                                    borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dob`] ? "red.500" : "gray.200"}
                                                                                                     value={gc.dobDisplay || ""}
                                                                                                     onChange={(e) => {
                                                                                                         const display = formatDisplayDate(e.target.value);
 
                                                                                                         // Validate only when full length
+                                                                                                        // clear red when editing
+                                                                                                        setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dob`]: false }));
+
                                                                                                         if (display.length === 10 && !validateDob(display)) {
+                                                                                                            console.log("invalid dob");
                                                                                                             showError(t("invalidDate"));
                                                                                                             return;
                                                                                                         }
@@ -2098,16 +2165,17 @@ u[i].subFamily.children[ci].spouse.age =
                                                                                                         u[i].subFamily.children[ci].children[gi].dobDisplay = display;
                                                                                                         u[i].subFamily.children[ci].children[gi].dob = iso;
                                                                                                         u[i].subFamily.children[ci].children[gi].age =
-    u[i].subFamily.children[ci].children[gi].isDeceased
-        ? u[i].subFamily.children[ci].children[gi].dod
-            ? calculateAgeAtDeath(
-                  iso,
-                  u[i].subFamily.children[ci].children[gi].dod
-              )
-            : ""
-        : iso
-        ? calculateAge(iso)
-        : "";
+                                                                                                            u[i].subFamily.children[ci].children[gi].isDeceased
+                                                                                                                ? u[i].subFamily.children[ci].children[gi].dob &&
+                                                                                                                    u[i].subFamily.children[ci].children[gi].dod
+                                                                                                                    ? calculateAgeAtDeath(
+                                                                                                                        iso,
+                                                                                                                        u[i].subFamily.children[ci].children[gi].dod
+                                                                                                                    )
+                                                                                                                    : ""
+                                                                                                                : iso
+                                                                                                                    ? calculateAge(iso)
+                                                                                                                    : "";
 
 
                                                                                                         setForm({ ...form, heirs: u });
@@ -2119,25 +2187,20 @@ u[i].subFamily.children[ci].spouse.age =
                                                                                                     {t("orText")}
                                                                                                 </Text> */}
 
-                                                                                                {/* MANUAL AGE INPUT */}
+                                                                                                {/* MANUAL AGE INPUT - Unified */}
                                                                                                 <Input
                                                                                                     size="lg"
                                                                                                     width="120px"
                                                                                                     bg="gray.100"
                                                                                                     placeholder={t("age")}
-                                                                                                    value={gc.age}
+                                                                                                    value={gc.isDeceased ? "" : gc.age}
+                                                                                                    isReadOnly={gc.isDeceased}
                                                                                                     onChange={(e) => {
+                                                                                                        if (gc.isDeceased) return;
                                                                                                         const value = e.target.value;
-
-                                                                                                        // Age validation (numbers only)
-                                                                                                        if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                                                            // showError(t("invalidAge"));
-                                                                                                            return;
-                                                                                                        }
-
+                                                                                                        if (value && !/^[0-9]{1,3}$/.test(value)) return;
                                                                                                         const u = structuredClone(form.heirs);
                                                                                                         u[i].subFamily.children[ci].children[gi].age = value;
-
                                                                                                         setForm({ ...form, heirs: u });
                                                                                                     }}
                                                                                                 />
@@ -2155,18 +2218,18 @@ u[i].subFamily.children[ci].spouse.age =
                                                                                                 onChange={(e) => {
                                                                                                     const u = structuredClone(form.heirs);
                                                                                                     const isDead = e.target.value === "dead";
-u[i].subFamily.children[ci].children[gi].isDeceased = isDead;
-u[i].subFamily.children[ci].children[gi].age = isDead
-    ? u[i].subFamily.children[ci].children[gi].dob &&
-      u[i].subFamily.children[ci].children[gi].dod
-        ? calculateAgeAtDeath(
-              u[i].subFamily.children[ci].children[gi].dob,
-              u[i].subFamily.children[ci].children[gi].dod
-          )
-        : ""
-    : u[i].subFamily.children[ci].children[gi].dob
-    ? calculateAge(u[i].subFamily.children[ci].children[gi].dob)
-    : "";
+                                                                                                    u[i].subFamily.children[ci].children[gi].isDeceased = isDead;
+                                                                                                    u[i].subFamily.children[ci].children[gi].age = isDead
+                                                                                                        ? u[i].subFamily.children[ci].children[gi].dob &&
+                                                                                                            u[i].subFamily.children[ci].children[gi].dod
+                                                                                                            ? calculateAgeAtDeath(
+                                                                                                                u[i].subFamily.children[ci].children[gi].dob,
+                                                                                                                u[i].subFamily.children[ci].children[gi].dod
+                                                                                                            )
+                                                                                                            : ""
+                                                                                                        : u[i].subFamily.children[ci].children[gi].dob
+                                                                                                            ? calculateAge(u[i].subFamily.children[ci].children[gi].dob)
+                                                                                                            : "";
 
                                                                                                     setForm({ ...form, heirs: u });
                                                                                                 }}
@@ -2178,41 +2241,50 @@ u[i].subFamily.children[ci].children[gi].age = isDead
                                                                                                 <FormControl mt={3}>
                                                                                                     <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                                                          <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dod`] ? "red.500" : "gray.200"}
-  value={gc.dodDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
+                                                                                                    <HStack>
+                                                                                                        <Input
+                                                                                                            type="text"
+                                                                                                            placeholder="DD/MM/YYYY"
+                                                                                                            size="lg"
+                                                                                                            bg="gray.100"
+                                                                                                            borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dod`] ? "red.500" : "gray.200"}
+                                                                                                            value={gc.dodDisplay || ""}
+                                                                                                            onChange={(e) => {
+                                                                                                                const display = formatDisplayDate(e.target.value);
 
-    // clear red when editing
-    setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dod`]: false }));
+                                                                                                                // clear red when editing
+                                                                                                                setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dod`]: false }));
 
-    if (display.length === 10 && !validateDob(display)) {
-      showError(t("invalidDate"));
-      return;
-    }
+                                                                                                                if (display.length === 10 && !validateDob(display)) {
+                                                                                                                    showError(t("invalidDate"));
+                                                                                                                    return;
+                                                                                                                }
 
-    const iso = convertToISO(display);
+                                                                                                                const iso = convertToISO(display);
 
-    const u = structuredClone(form.heirs);
-    u[i].subFamily.children[ci].children[gi].dodDisplay = display;
-    u[i].subFamily.children[ci].children[gi].dod = iso;
-    u[i].subFamily.children[ci].children[gi].age =
-      u[i].subFamily.children[ci].children[gi].dob && iso
-        ? calculateAgeAtDeath(
-            u[i].subFamily.children[ci].children[gi].dob,
-            iso
-          )
-        : "";
+                                                                                                                const u = structuredClone(form.heirs);
+                                                                                                                u[i].subFamily.children[ci].children[gi].dodDisplay = display;
+                                                                                                                u[i].subFamily.children[ci].children[gi].dod = iso;
+                                                                                                                u[i].subFamily.children[ci].children[gi].age =
+                                                                                                                    u[i].subFamily.children[ci].children[gi].dob && iso
+                                                                                                                        ? calculateAgeAtDeath(
+                                                                                                                            u[i].subFamily.children[ci].children[gi].dob,
+                                                                                                                            iso
+                                                                                                                        )
+                                                                                                                        : "";
 
-    setForm({ ...form, heirs: u });
-  }}
-/>
-
+                                                                                                                setForm({ ...form, heirs: u });
+                                                                                                            }}
+                                                                                                        />
+                                                                                                        <Input
+                                                                                                            size="lg"
+                                                                                                            width="120px"
+                                                                                                            bg="gray.100"
+                                                                                                            isReadOnly
+                                                                                                            value={gc.age || ""}
+                                                                                                            placeholder={t("age")}
+                                                                                                        />
+                                                                                                    </HStack>
                                                                                                 </FormControl>
                                                                                             )}
                                                                                         </FormControl>
@@ -2298,9 +2370,13 @@ u[i].subFamily.children[ci].children[gi].age = isDead
                                                                         placeholder="DD/MM/YYYY"
                                                                         size="lg"
                                                                         bg="gray.100"
+                                                                        borderColor={fieldErrors[`child_${i}_${ci}_dob`] ? "red.500" : "gray.200"}
                                                                         value={child.dobDisplay || ""}
                                                                         onChange={(e) => {
                                                                             const display = formatDisplayDate(e.target.value);
+
+                                                                            // clear red when editing
+                                                                            setFieldErrors((p) => ({ ...p, [`child_${i}_${ci}_dob`]: false }));
 
                                                                             // Validate only when full length
                                                                             if (display.length === 10 && !validateDob(display)) {
@@ -2314,18 +2390,18 @@ u[i].subFamily.children[ci].children[gi].age = isDead
                                                                             u[i].subFamily.children[ci].dobDisplay = display;
                                                                             u[i].subFamily.children[ci].dob = iso;
                                                                             u[i].subFamily.children[ci].age =
-    u[i].subFamily.children[ci].isDeceased &&
-    u[i].subFamily.children[ci].dod
-        ? calculateAgeAtDeath(
-              iso,
-              u[i].subFamily.children[ci].dod
-          )
-        : iso
-        ? calculateAge(iso)
-        : "";
+                                                                                u[i].subFamily.children[ci].isDeceased &&
+                                                                                    u[i].subFamily.children[ci].dod
+                                                                                    ? calculateAgeAtDeath(
+                                                                                        iso,
+                                                                                        u[i].subFamily.children[ci].dod
+                                                                                    )
+                                                                                    : iso
+                                                                                        ? calculateAge(iso)
+                                                                                        : "";
 
 
-                                                                            
+
                                                                             setForm({ ...form, heirs: u });
                                                                         }}
                                                                     />
@@ -2335,25 +2411,20 @@ u[i].subFamily.children[ci].children[gi].age = isDead
                                                                         {t("orText")}
                                                                     </Text>
 
-                                                                    {/* CHILD AGE */}
+                                                                    {/* CHILD AGE - Unified */}
                                                                     <Input
                                                                         size="lg"
                                                                         width="120px"
                                                                         bg="gray.100"
                                                                         placeholder={t("age")}
-                                                                        value={child.age}
+                                                                        value={child.isDeceased ? "" : child.age}
+                                                                        isReadOnly={child.isDeceased}
                                                                         onChange={(e) => {
+                                                                            if (child.isDeceased) return;
                                                                             const value = e.target.value;
-
-                                                                            // AGE VALIDATION
-                                                                            if (value && !/^[0-9]{1,3}$/.test(value)) {
-                                                                                // showError(t("invalidAge"));
-                                                                                return;
-                                                                            }
-
+                                                                            if (value && !/^[0-9]{1,3}$/.test(value)) return;
                                                                             const u = structuredClone(form.heirs);
                                                                             u[i].subFamily.children[ci].age = value;
-
                                                                             setForm({ ...form, heirs: u });
                                                                         }}
                                                                     />
@@ -2370,18 +2441,18 @@ u[i].subFamily.children[ci].children[gi].age = isDead
                                                                 onChange={(e) => {
                                                                     const u = structuredClone(form.heirs);
                                                                     const isDead = e.target.value === "dead";
-u[i].subFamily.children[ci].isDeceased = isDead;
-u[i].subFamily.children[ci].age = isDead
-    ? u[i].subFamily.children[ci].dob &&
-      u[i].subFamily.children[ci].dod
-        ? calculateAgeAtDeath(
-              u[i].subFamily.children[ci].dob,
-              u[i].subFamily.children[ci].dod
-          )
-        : ""
-    : u[i].subFamily.children[ci].dob
-    ? calculateAge(u[i].subFamily.children[ci].dob)
-    : "";
+                                                                    u[i].subFamily.children[ci].isDeceased = isDead;
+                                                                    u[i].subFamily.children[ci].age = isDead
+                                                                        ? u[i].subFamily.children[ci].dob &&
+                                                                            u[i].subFamily.children[ci].dod
+                                                                            ? calculateAgeAtDeath(
+                                                                                u[i].subFamily.children[ci].dob,
+                                                                                u[i].subFamily.children[ci].dod
+                                                                            )
+                                                                            : ""
+                                                                        : u[i].subFamily.children[ci].dob
+                                                                            ? calculateAge(u[i].subFamily.children[ci].dob)
+                                                                            : "";
 
                                                                     setForm({ ...form, heirs: u });
                                                                 }}
@@ -2392,40 +2463,50 @@ u[i].subFamily.children[ci].age = isDead
                                                             {child.isDeceased && (
                                                                 <FormControl mt={3}>
                                                                     <FormLabel>{t("deathDate")}</FormLabel>
-                                                                 <Input
-  type="text"
-  placeholder="DD/MM/YYYY"
-  size="lg"
-  bg="gray.100"
-  borderColor={fieldErrors[`child_${i}_${ci}_dod`] ? "red.500" : "gray.200"}
-  value={child.dodDisplay || ""}
-  onChange={(e) => {
-    const display = formatDisplayDate(e.target.value);
+                                                                    <HStack>
+                                                                        <Input
+                                                                            type="text"
+                                                                            placeholder="DD/MM/YYYY"
+                                                                            size="lg"
+                                                                            bg="gray.100"
+                                                                            borderColor={fieldErrors[`child_${i}_${ci}_dod`] ? "red.500" : "gray.200"}
+                                                                            value={child.dodDisplay || ""}
+                                                                            onChange={(e) => {
+                                                                                const display = formatDisplayDate(e.target.value);
 
-    // clear red when editing
-    setFieldErrors((p) => ({ ...p, [`child_${i}_${ci}_dod`]: false }));
+                                                                                // clear red when editing
+                                                                                setFieldErrors((p) => ({ ...p, [`child_${i}_${ci}_dod`]: false }));
 
-    if (display.length === 10 && !validateDob(display)) {
-      showError(t("invalidDate"));
-      return;
-    }
+                                                                                if (display.length === 10 && !validateDob(display)) {
+                                                                                    showError(t("invalidDate"));
+                                                                                    return;
+                                                                                }
 
-    const iso = convertToISO(display);
+                                                                                const iso = convertToISO(display);
 
-    const u = structuredClone(form.heirs);
-    u[i].subFamily.children[ci].dodDisplay = display;
-    u[i].subFamily.children[ci].dod = iso;
-    u[i].subFamily.children[ci].age =
-      u[i].subFamily.children[ci].dob && iso
-        ? calculateAgeAtDeath(
-            u[i].subFamily.children[ci].dob,
-            iso
-          )
-        : "";
+                                                                                const u = structuredClone(form.heirs);
+                                                                                u[i].subFamily.children[ci].dodDisplay = display;
+                                                                                u[i].subFamily.children[ci].dod = iso;
+                                                                                u[i].subFamily.children[ci].age =
+                                                                                    u[i].subFamily.children[ci].dob && iso
+                                                                                        ? calculateAgeAtDeath(
+                                                                                            u[i].subFamily.children[ci].dob,
+                                                                                            iso
+                                                                                        )
+                                                                                        : "";
 
-    setForm({ ...form, heirs: u });
-  }}
-/>
+                                                                                setForm({ ...form, heirs: u });
+                                                                            }}
+                                                                        />
+                                                                        <Input
+                                                                            size="lg"
+                                                                            width="120px"
+                                                                            bg="gray.100"
+                                                                            isReadOnly
+                                                                            value={child.age || ""}
+                                                                            placeholder={t("age")}
+                                                                        />
+                                                                    </HStack>
 
                                                                 </FormControl>
                                                             )}
