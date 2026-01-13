@@ -20,6 +20,7 @@ export const createEntry = async (req, res, next) => {
       vyavharType,
       category,
       amount: Number(amount),
+      
       paymentMethod,
       bank,
       ddCheckNum,
