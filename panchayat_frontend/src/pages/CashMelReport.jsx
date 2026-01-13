@@ -10,9 +10,6 @@ import {
 import { FiPrinter } from "react-icons/fi";
 import { useRef } from "react";
 
-
-
-
 // DateInput component (simplified for this artifact)
 const DateInput = ({ label, name, value, onDateChange, formatDisplayDate, convertToISO }) => {
    
@@ -40,15 +37,11 @@ const DateInput = ({ label, name, value, onDateChange, formatDisplayDate, conver
     );
 };
 
-
-
-
 const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [report, setReport] = useState({ from: "", to: "", type: "aavak" });
     const dateErrorShownRef = useRef(false);
-// console.log("user object in CashMelReport:", user); 
 
 const hasRecordsInRange = (records, fromDate, toDate) => {
     return records.some(r => {
@@ -57,10 +50,9 @@ const hasRecordsInRange = (records, fromDate, toDate) => {
     });
 };
 
-
 const isFromAfterTo = (from, to) => {
     if (!from || !to) return false;
-    if (from.length !== 10 || to.length !== 10) return false; // 🔥 IMPORTANT
+    if (from.length !== 10 || to.length !== 10) return false;
 
     const fromISO = convertToISO(from);
     const toISO = convertToISO(to);
@@ -76,7 +68,7 @@ const isFromAfterTo = (from, to) => {
 };
 
 const isFutureDate = (date) => {
-    if (!date || date.length !== 10) return false; // 🔥 IMPORTANT
+    if (!date || date.length !== 10) return false;
 
     const iso = convertToISO(date);
     if (!iso) return false;
@@ -94,13 +86,11 @@ const handleReportChange = (key, value) => {
     setReport((prev) => {
         const updated = { ...prev, [key]: value };
 
-        // ✅ Allow typing until date is complete
         if ((key === "from" || key === "to") && value.length < 10) {
             dateErrorShownRef.current = false;
             return updated;
         }
 
-        // ❌ Future date check (only full date)
         if (isFutureDate(value)) {
             if (!dateErrorShownRef.current) {
                 toast({
@@ -115,7 +105,6 @@ const handleReportChange = (key, value) => {
             return prev;
         }
 
-        // ❌ From > To check (only when BOTH complete)
         if (
             updated.from?.length === 10 &&
             updated.to?.length === 10 &&
@@ -139,10 +128,6 @@ const handleReportChange = (key, value) => {
     });
 };
 
-
-
-
-
     const guj = (num) => {
         if (num === null || num === undefined || num === "") return "";
         const gujaratiDigits = ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"];
@@ -159,23 +144,20 @@ const handleReportChange = (key, value) => {
 
     const d = new Date(isoDate);
     const year = d.getFullYear();
-    const month = d.getMonth() + 1; // 1–12
+    const month = d.getMonth() + 1;
 
     let fyStart, fyEnd;
 
     if (month < 4) {
-        // Jan–Mar → previous FY
         fyStart = year - 1;
         fyEnd = year;
     } else {
-        // Apr–Dec → current FY
         fyStart = year;
         fyEnd = year + 1;
     }
 
     return `${guj(fyStart)}–${guj(fyEnd)}`;
 };
-
 
     const formatDisplayDate = (input) => {
         const digits = input.replace(/\D/g, "").slice(0, 8);
@@ -213,12 +195,9 @@ const handlePrintReport = async () => {
         const fromDate = convertToISO(report.from);
         const toDate = convertToISO(report.to);
         
-        // Get gam name from user object
         const talukoName = user?.gam || "ગ્રામ પંચાયત";
 
-        // ======================================================
-        // ✅ CHECK ISSUE REPORT
-        // ======================================================
+        // CHECK ISSUE REPORT
         if (report.type === "checkIssue") {
             const qs = `?from=${fromDate}&to=${toDate}`;
             const url = `${apiBase}/cashmel/report${qs}`;
@@ -230,29 +209,6 @@ const handlePrintReport = async () => {
             });
             const resJson = await recordsRes.json();
             const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
-//             const typeRecords = allRecords.filter(
-//   r => r.vyavharType === report.type
-// );
-
-// const hasValidRecords = hasRecordsInRange(
-//   typeRecords,
-//   fromDate,
-//   toDate
-// );
-
-
-// if (!hasValidRecords) {
-//     toast({
-//         title: "કોઈ રેકોર્ડ નથી",
-//         description: "પસંદ કરેલી તારીખ માટે કોઈ માહિતી ઉપલબ્ધ નથી",
-//         status: "warning",
-//         duration: 2500,
-//         position: "top",
-//     });
-//     setLoading(false);
-//     return;
-// }
-
 
             const checkedRows = allRecords.filter(r =>
                 r.vyavharType === "javak" &&
@@ -288,11 +244,8 @@ const handlePrintReport = async () => {
             let htmlTemplate = await templateRes.text();
            const fyGujarati = getGujaratiFinancialYear(fromDate);
 
-
-
             htmlTemplate = htmlTemplate
                 .replace("{{taluko}}", talukoName)
-                // console.log("user:", user)
                 .replace("{{userTaluko}}", user?.taluko || "")
                 .replace("{{userJillo}}", user?.jillo || "")
                 .replace("{{yearRange}}", fyGujarati)
@@ -308,18 +261,15 @@ const handlePrintReport = async () => {
             win.document.write(htmlTemplate);
             win.document.close();
          setTimeout(() => {
-  win.focus();   // 🔥 IMPORTANT LINE
+  win.focus();
   win.print();
 }, 500);
-
 
             setLoading(false);
             return;
         }
 
-        // ======================================================
-        // ===================== ROJMEL =========================
-        // ======================================================
+        // ROJMEL REPORT
         if (report.type === "rojmel") {
             const qs = `?from=${fromDate}&to=${toDate}`;
             const url = `${apiBase}/cashmel/report${qs}`;
@@ -520,8 +470,25 @@ if (!hasValidRecords) {
 </tr>`;
 
             /* ================= ACCOUNT TRANSFER TABLE ================= */
+            // 🔥 FIX: Get ALL banks from FY start to current date
+            const year = Number(fromDate.substring(0, 4));
+            const month = Number(fromDate.substring(5, 7));
+            const fyStartYear = month < 4 ? year - 1 : year;
+            const fyStart = `${fyStartYear}-04-01`;
+            
             const uniqueBanks = new Set();
-            allRecords.forEach(r => {
+            
+            // Fetch all historical records from FY start to find ALL banks ever used
+            const allHistoricalQs = `?from=${fyStart}&to=${toDate}`;
+            const allHistoricalRes = await fetch(`${apiBase}/cashmel/report${allHistoricalQs}`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
+            const allHistoricalJson = await allHistoricalRes.json();
+            const allHistoricalRecords = Array.isArray(allHistoricalJson.rows) ? allHistoricalJson.rows : [];
+            
+            allHistoricalRecords.forEach(r => {
                 if (r.paymentMethod === "bank" && r.bank) {
                     uniqueBanks.add(r.bank);
                 }
@@ -621,7 +588,6 @@ if (!hasValidRecords) {
 </tr>`;
             }
 
-            // Add total row
             accountTransferRows += `
 <tr style="font-weight: bold; background: #f2f2f2;">
     <td colspan="2" class="text-center">કુલ રકમ</td>

@@ -178,9 +178,16 @@ export const uploadExcel = async (req, res, next) => {
       const amount = Number(r.amount || 0);
 
       // ✅ NEW FIELDS (FIX)
-      const paymentMethod = mapPaymentMethod(r.paymentMethod);
-      const bank = String(r.bank || "").trim();
-      const ddCheckNum = String(r.ddCheckNum || "").trim();
+    const paymentMethod = mapPaymentMethod(r.paymentMethod);
+const bank = String(r.bank || "").trim();
+
+const ddCheckNum =
+  paymentMethod === "bank"
+    ? String(r.ddCheckNum || "").trim()
+    : "";
+
+    const remarks = String(r.remarks || "").trim();
+
 
       // ===============================
       // ❗ REQUIRED VALIDATION
@@ -223,10 +230,10 @@ await CashMel.create({
   vyavharType,
   category,
   amount,
-  paymentMethod: "rokad",
-  bank: "",
-  ddCheckNum: "",
-  remarks: "",
+  paymentMethod ,
+bank,
+ddCheckNum,
+  remarks,
   isDeleted: false
 });
 
