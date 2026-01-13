@@ -112,15 +112,16 @@ export default function RojmelVideo() {
         mx="auto"
         position="relative"
       >
-        <video
-          ref={videoRef}
-          src="/videos/dummy.mp4"
-          style={{ width: "100%" }}
-          autoPlay
-          muted
-          playsInline
-          onTimeUpdate={handleTimeUpdate}
-        />
+       <video
+  ref={videoRef}
+  src="/videos/Gram-Panchayatrojmed.mp4"
+  style={{ width: "100%" }}
+  autoPlay
+  muted
+  playsInline
+  onTimeUpdate={handleTimeUpdate}
+/>
+
 
         <Box position="absolute" bottom="0" width="100%" bg="rgba(0,0,0,0.65)" p={3}>
           <Slider value={progress} onChange={handleSeek} mb={3}>
