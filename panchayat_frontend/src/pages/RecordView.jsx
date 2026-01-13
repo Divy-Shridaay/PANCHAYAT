@@ -295,7 +295,7 @@ export default function RecordView() {
             if (isDead) {
                 const dob = formatGujaratiDate(node.dob);
                 const dod = formatGujaratiDate(node.dodDisplay || node.dod);
-                let secondLine = dod ? `મૃત્યુ: ${dod}` : "";
+                let secondLine = dod ? `મૈયત : ${dod}` : "";
                 if (!secondLine && node.age) secondLine = `ઉંમર: ${toGujaratiDigits(node.age)} વર્ષ`;
 
                 svgNodes += `
@@ -404,7 +404,7 @@ export default function RecordView() {
 
                 deathLine:
                     pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
-                        ? ` (મૃત્યુ તા. ${pedhinamu.mukhya.dodDisplay})`
+                        ? ` (મૈયત  તા. ${pedhinamu.mukhya.dodDisplay})`
                         : "",
 
                 notarySerialNo: form?.notarySerialNo || "",
@@ -776,7 +776,7 @@ export default function RecordView() {
 
                     {pedhinamu.mukhya.isDeceased && (
                         <Box>
-                            <Text fontWeight="600">મૃત્યુ તારીખ:</Text>
+                            <Text fontWeight="600">મૈયત  તારીખ:</Text>
                             <Text>{pedhinamu.mukhya.dodDisplay || "-"}</Text>
                         </Box>
                     )}
@@ -822,7 +822,7 @@ export default function RecordView() {
                             <Text><b>{t("age")}:</b> {h.age}</Text>
                             {h.isDeceased && (
                                 <HStack>
-                                    <Text fontWeight="600" color="black">મૃત્યુ તારીખ:</Text>
+                                    <Text fontWeight="600" color="black">મૈયત  તારીખ:</Text>
                                     <Text fontWeight="600" color="red.600">{h.dodDisplay || "-"}</Text>
                                 </HStack>
                             )}

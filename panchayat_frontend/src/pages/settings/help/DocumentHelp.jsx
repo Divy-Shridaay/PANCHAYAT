@@ -79,7 +79,7 @@ export default function DocumentHelp() {
       {/* PDF CARDS — LEFT ALIGNED */}
       <Box maxW="1000px">
         <SimpleGrid
-          columns={{ base: 1, md: 2 }}
+          columns={{ base: 1, md: 3 }}
           spacing={6}
         >
           <PdfCard
@@ -92,6 +92,12 @@ export default function DocumentHelp() {
             title="યુઝર ફ્લો દસ્તાવેજ"
             subtitle="સિસ્ટમ ઉપયોગ માટે માર્ગદર્શન"
             file="user-flow-document.pdf"
+          />
+
+          <PdfCard
+            title="પેઢીનામુંનો નમૂનો"
+            subtitle="પેઢીનામું ફોર્મ માટેનો નમૂનો"
+            file="pedhinamu documentation.pdf"
           />
         </SimpleGrid>
       </Box>

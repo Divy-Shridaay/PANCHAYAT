@@ -879,7 +879,7 @@ export default function FullForm() {
           <Text color="gray.600">
             {/* {t("noDeceasedFound")}  */}
 
-            કુટુંબમાં કોઈ મૃત્યુ પામેલ સભ્ય નથી
+            કુટુંબમાં કોઈ મૈયત  પામેલ સભ્ય નથી
           </Text>
         )}
 

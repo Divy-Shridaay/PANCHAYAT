@@ -9,8 +9,8 @@ function getPrefixAndDeathLine(isDeceased, dodDisplay) {
     return {
       prefix: "મૈયત શ્રી",
       deathLine: dodDisplay
-        ? ` (મૃત્યુ તા. ${dodDisplay})`
-        : " (મૃત્યુ પામેલ)"
+        ? ` (મૈયત  તા. ${dodDisplay})`
+        : " (મૈયત  પામેલ)"
     };
   }
 

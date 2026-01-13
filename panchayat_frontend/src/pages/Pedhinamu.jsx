@@ -192,12 +192,12 @@ export default function Pedhinamu() {
         return death > birth;
     };
 
-    const requireDeathDate = (isDeceased, dodDisplay, name = "") => {
-        if (isDeceased && !dodDisplay) {
+    const requireDeathDate = (isDeceased, dodDisplay, age, name = "") => {
+        if (isDeceased && isEmpty(dodDisplay) && isEmpty(age)) {
             showError(
                 name
-                    ? `${name} માટે મૃત્યુ તારીખ ફરજિયાત છે`
-                    : "મૃત વ્યક્તિ માટે મૃત્યુ તારીખ ફરજિયાત છે"
+                    ? `${name} માટે મૈયત  તારીખ અથવા મૈયત  સમયે ઉમર ફરજિયાત છે`
+                    : "મૃત વ્યક્તિ માટે મૈયત  તારીખ અથવા મૈયત  સમયે ઉમર ફરજિયાત છે"
             );
             return false;
         }
@@ -315,33 +315,7 @@ export default function Pedhinamu() {
                 return;
             }
 
-            for (let i = 0; i < totalHeirs; i++) {
-                const h = form.heirs[i];
-
-                // Name required
-                if (!h.name || !h.name.trim()) {
-                    showError(`વારસદાર #${i + 1} નું નામ જરૂરી છે`);
-                    return;
-                }
-
-                // Relation required
-                if (!h.relation || !h.relation.trim()) {
-                    showError(`વારસદાર #${i + 1} માટે સંબંધ પસંદ કરવો જરૂરી છે`);
-                    return;
-                }
-
-                // DOB or Age required
-                if (!h.dobDisplay && !h.age) {
-                    showError(`વારસદાર #${i + 1} માટે જન્મ તારીખ અથવા ઉંમર જરૂરી છે`);
-                    return;
-                }
-
-                // DOB format check
-                if (h.dobDisplay && !validateDob(h.dobDisplay)) {
-                    showError(`વારસદાર #${i + 1} માટે અમાન્ય જન્મ તારીખ`);
-                    return;
-                }
-            }
+            // (Previous heir loop removed as it is now consolidated below)
 
 
             // -----------------------------
@@ -386,13 +360,12 @@ export default function Pedhinamu() {
             }
 
 
-            // ✅ DEAD → death DATE or death AGE required
             if (
                 form.mukhyaIsDeceased &&
                 isEmpty(form.mukhyaDodDisplay) &&
                 isEmpty(form.mukhyaDeathAge)
             ) {
-                showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
+                showError(`${form.mukhyaName || "મુખ્ય વ્યક્તિ"}: મૃત વ્યક્તિ માટે મૈયત  તારીખ અથવા મૈયત  સમયે ઉમર ફરજિયાત છે`);
                 return;
             }
 
@@ -404,7 +377,7 @@ export default function Pedhinamu() {
                 }
 
                 if (!isDeathAfterBirth(form.mukhyaDobDisplay, form.mukhyaDodDisplay)) {
-                    showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
+                    showError("મૈયત  તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
                     return;
                 }
             }
@@ -433,18 +406,18 @@ export default function Pedhinamu() {
 
                 // ⭐ RELATION REQUIRED
                 if (!h.relation?.trim()) {
-                    showError(`${h.name}: ${t("સંબંધ પસંદ કરવો જરૂરી છે")}`);
+                    showError(`${h.name}: ${t("relationRequired")}`);
                     return;
                 }
 
 
-                // 🔴 HEIR DEATH DATE REQUIRED
-                if (!requireDeathDate(h.isDeceased, h.dodDisplay, h.name)) {
+                // 🔴 HEIR DEATH DATE/AGE REQUIRED
+                if (!requireDeathDate(h.isDeceased, h.dodDisplay, h.age, h.name)) {
                     return;
                 }
 
-                // DOB or Age required
-                if (!h.dobDisplay && !h.age) {
+                // DOB or Age required (ALIVE ONLY)
+                if (!h.isDeceased && !h.dobDisplay && !h.age) {
                     showError(`${h.name}: ${t("dobOrAgeRequired")}`);
                     return;
                 }
@@ -469,7 +442,7 @@ export default function Pedhinamu() {
                         setFieldErrors({ [`heir_${i}_dod`]: true });
 
                         showError(
-                            ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                            ` કૃપા કરી માન્ય મૈયત  તારીખ દાખલ કરો. મૈયત  તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
                         );
                         return;
                     }
@@ -498,8 +471,8 @@ export default function Pedhinamu() {
                         return;
                     }
 
-                    // 🔴 SPOUSE DEATH DATE REQUIRED
-                    if (!requireDeathDate(s.isDeceased, s.dodDisplay, s.name)) {
+                    // 🔴 SPOUSE DEATH DATE/AGE REQUIRED
+                    if (!requireDeathDate(s.isDeceased, s.dodDisplay, s.age, s.name)) {
                         return;
                     }
 
@@ -509,7 +482,7 @@ export default function Pedhinamu() {
                         return;
                     }
 
-                    if (!s.dobDisplay && !s.age) {
+                    if (!s.isDeceased && !s.dobDisplay && !s.age) {
                         showError(`${s.name}: ${t("dobOrAgeRequired")}`);
                         return;
                     }
@@ -533,7 +506,7 @@ export default function Pedhinamu() {
                             setFieldErrors({ [`spouse_${i}_dod`]: true });
 
                             showError(
-                                ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                                ` કૃપા કરી માન્ય મૈયત  તારીખ દાખલ કરો. મૈયત  તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
                             );
                             return;
                         }
@@ -562,7 +535,12 @@ export default function Pedhinamu() {
                         return;
                     }
 
-                    if (!c.dobDisplay && !c.age) {
+                    // 🔴 CHILD DEATH DATE/AGE REQUIRED
+                    if (!requireDeathDate(c.isDeceased, c.dodDisplay, c.age, c.name)) {
+                        return;
+                    }
+
+                    if (!c.isDeceased && !c.dobDisplay && !c.age) {
                         showError(`${c.name}: ${t("dobOrAgeRequired")}`);
                         return;
                     }
@@ -587,7 +565,7 @@ export default function Pedhinamu() {
                             setFieldErrors({ [`child_${i}_${ci}_dod`]: true });
 
                             showError(
-                                ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                                ` કૃપા કરી માન્ય મૈયત  તારીખ દાખલ કરો. મૈયત  તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
                             );
                             return;
                         }
@@ -603,8 +581,8 @@ export default function Pedhinamu() {
                     if (cs?.name?.trim()) {
 
 
-                        // 🔴 CHILD SPOUSE DEATH DATE REQUIRED
-                        if (cs && !requireDeathDate(cs.isDeceased, cs.dodDisplay, cs.name)) {
+                        // 🔴 CHILD SPOUSE DEATH DATE/AGE REQUIRED
+                        if (cs && !requireDeathDate(cs.isDeceased, cs.dodDisplay, cs.age, cs.name)) {
                             return;
                         }
 
@@ -614,7 +592,7 @@ export default function Pedhinamu() {
                             return;
                         }
 
-                        if (!cs.dobDisplay && !cs.age) {
+                        if (!cs.isDeceased && !cs.dobDisplay && !cs.age) {
                             showError(`${cs.name}: ${t("dobOrAgeRequired")}`);
                             return;
                         }
@@ -640,8 +618,8 @@ export default function Pedhinamu() {
 
 
 
-                        // 🔴 GRANDCHILD DEATH DATE REQUIRED
-                        if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.name)) {
+                        // 🔴 GRANDCHILD DEATH DATE/AGE REQUIRED
+                        if (!requireDeathDate(gc.isDeceased, gc.dodDisplay, gc.age, gc.name)) {
                             return;
                         }
 
@@ -658,7 +636,7 @@ export default function Pedhinamu() {
                             return;
                         }
 
-                        if (!gc.dobDisplay && !gc.age) {
+                        if (!gc.isDeceased && !gc.dobDisplay && !gc.age) {
                             showError(`${gc.name}: ${t("dobOrAgeRequired")}`);
                             return;
                         }
@@ -677,7 +655,7 @@ export default function Pedhinamu() {
                             setFieldErrors({ [`grand_${i}_${ci}_${gi}_dod`]: true });
 
                             showError(
-                                ` કૃપા કરી માન્ય મૃત્યુ તારીખ દાખલ કરો. મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
+                                ` કૃપા કરી માન્ય મૈયત  તારીખ દાખલ કરો. મૈયત  તારીખ જન્મ તારીખ પછીની હોવી જોઈએ.`
                             );
                             return;
                         }
@@ -829,6 +807,8 @@ export default function Pedhinamu() {
             // -------------------------
             mukhyaName: p.mukhya?.name || "",
             mukhyaAge: p.mukhya?.age || "",
+            mukhyaBirthAge: !p.mukhya?.isDeceased ? (p.mukhya?.age || "") : "",
+            mukhyaDeathAge: p.mukhya?.isDeceased ? (p.mukhya?.age || "") : "",
             mukhyaDob: p.mukhya?.dob || "",
             mukhyaDobDisplay: p.mukhya?.dobDisplay || "",
             mukhyaIsDeceased: p.mukhya?.isDeceased || false,
@@ -1221,7 +1201,7 @@ export default function Pedhinamu() {
                                     isEmpty(form.mukhyaDodDisplay) &&
                                     isEmpty(form.mukhyaDeathAge)
                                 ) {
-                                    showError("મૃત વ્યક્તિ માટે મૃત્યુ તારીખ અથવા મૃત્યુ સમયે ઉમર ફરજિયાત છે");
+                                    showError(`${form.mukhyaName || "મુખ્ય વ્યક્તિ"}: મૃત વ્યક્તિ માટે મૈયત  તારીખ અથવા મૈયત  સમયે ઉમર ફરજિયાત છે`);
                                     return;
                                 }
 
@@ -1232,7 +1212,7 @@ export default function Pedhinamu() {
                                     form.mukhyaDodDisplay &&
                                     !validateDob(form.mukhyaDodDisplay)
                                 ) {
-                                    showError("મૃત્યુ તારીખ અમાન્ય છે");
+                                    showError("મૈયત  તારીખ અમાન્ય છે");
                                     return;
                                 }
 
@@ -1244,7 +1224,7 @@ export default function Pedhinamu() {
                                 ) {
                                     setFieldErrors({ mukhyaDod: true });
 
-                                    showError("મૃત્યુ તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
+                                    showError("મૈયત  તારીખ જન્મ તારીખ પછીની હોવી જોઈએ");
 
                                     setTimeout(() => {
                                         document.querySelector('input[placeholder="DD/MM/YYYY"]')?.scrollIntoView({
@@ -1470,9 +1450,13 @@ export default function Pedhinamu() {
                                                     size="lg"
                                                     width="120px"
                                                     bg="gray.100"
-                                                    isReadOnly
                                                     value={h.age || ""}
                                                     placeholder={t("age")}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                        updateHeir(i, "age", v);
+                                                    }}
                                                 />
                                             </HStack>
                                         </FormControl>
@@ -1706,9 +1690,15 @@ export default function Pedhinamu() {
                                                                     size="lg"
                                                                     width="120px"
                                                                     bg="gray.100"
-                                                                    isReadOnly
                                                                     value={h.subFamily.spouse.age || ""}
                                                                     placeholder={t("age")}
+                                                                    onChange={(e) => {
+                                                                        const v = e.target.value;
+                                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                        const u = [...form.heirs];
+                                                                        u[i].subFamily.spouse.age = v;
+                                                                        setForm({ ...form, heirs: u });
+                                                                    }}
                                                                 />
                                                             </HStack>
                                                         </FormControl>
@@ -2004,9 +1994,15 @@ export default function Pedhinamu() {
                                                                                         size="lg"
                                                                                         width="120px"
                                                                                         bg="gray.100"
-                                                                                        isReadOnly
                                                                                         value={child.spouse?.age || ""}
                                                                                         placeholder={t("age")}
+                                                                                        onChange={(e) => {
+                                                                                            const v = e.target.value;
+                                                                                            if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                                            const u = structuredClone(form.heirs);
+                                                                                            u[i].subFamily.children[ci].spouse.age = v;
+                                                                                            setForm({ ...form, heirs: u });
+                                                                                        }}
                                                                                     />
                                                                                 </HStack>
                                                                             </FormControl>
@@ -2280,9 +2276,16 @@ export default function Pedhinamu() {
                                                                                                             size="lg"
                                                                                                             width="120px"
                                                                                                             bg="gray.100"
-                                                                                                            isReadOnly
+
                                                                                                             value={gc.age || ""}
                                                                                                             placeholder={t("age")}
+                                                                                                            onChange={(e) => {
+                                                                                                                const v = e.target.value;
+                                                                                                                if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                                                                const u = structuredClone(form.heirs);
+                                                                                                                u[i].subFamily.children[ci].children[gi].age = v;
+                                                                                                                setForm({ ...form, heirs: u });
+                                                                                                            }}
                                                                                                         />
                                                                                                     </HStack>
                                                                                                 </FormControl>
@@ -2502,9 +2505,15 @@ export default function Pedhinamu() {
                                                                             size="lg"
                                                                             width="120px"
                                                                             bg="gray.100"
-                                                                            isReadOnly
                                                                             value={child.age || ""}
                                                                             placeholder={t("age")}
+                                                                            onChange={(e) => {
+                                                                                const v = e.target.value;
+                                                                                if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                                const u = structuredClone(form.heirs);
+                                                                                u[i].subFamily.children[ci].age = v;
+                                                                                setForm({ ...form, heirs: u });
+                                                                            }}
                                                                         />
                                                                     </HStack>
 
