@@ -54,32 +54,32 @@ export default function RecordView() {
     const { pedhinamu, form } = data;
 
     // -------------------------------
-// MULTIPLE WIFE LINE LOGIC
-// -------------------------------
-// -------------------------------
-// MULTIPLE WIFE LINE (CORRECT LOGIC)
-// -------------------------------
-const wifeRelation = pedhinamu?.mukhya?.spouse?.relation;
+    // MULTIPLE WIFE LINE LOGIC
+    // -------------------------------
+    // -------------------------------
+    // MULTIPLE WIFE LINE (CORRECT LOGIC)
+    // -------------------------------
+    const wifeRelation = pedhinamu?.mukhya?.spouse?.relation;
 
-// 🔥 COUNT WIVES FROM HEIRS (NOT mukhya.spouse)
-const wifeCount = pedhinamu?.heirs?.filter(h => {
-  const r = (h.relation || "")
-    .toLowerCase()
-    .replace(/\s|_/g, "");   // remove space and _
+    // 🔥 COUNT WIVES FROM HEIRS (NOT mukhya.spouse)
+    const wifeCount = pedhinamu?.heirs?.filter(h => {
+        const r = (h.relation || "")
+            .toLowerCase()
+            .replace(/\s|_/g, "");   // remove space and _
 
-  return (
-    r.includes("wife") ||          // wife, firstwife, secondwife
-    r.includes("patni") ||         // if backend sends transliteration
-    r.includes("પત્ની")           // if Gujarati stored
-  );
-}).length || 0;
+        return (
+            r.includes("wife") ||          // wife, firstwife, secondwife
+            r.includes("patni") ||         // if backend sends transliteration
+            r.includes("પત્ની")           // if Gujarati stored
+        );
+    }).length || 0;
 
-const multipleWifeLine =
-  wifeCount > 1
-    ? "તેમજ બીજી પત્ની હોય તો તેના તમામ વારસદારોનો સમાવેશ  કરેલ છે "
-    : "નો સમાવેશ કરવામાં આવેલ છે ";
+    const multipleWifeLine =
+        wifeCount > 1
+            ? "તેમજ બીજી પત્ની હોય તો તેના તમામ વારસદારોનો સમાવેશ  કરેલ છે "
+            : "નો સમાવેશ કરવામાં આવેલ છે ";
 
-    
+
 
 
 
@@ -166,390 +166,366 @@ const multipleWifeLine =
 
 
     function formatGujaratiDate(dateStr) {
-  if (!dateStr) return "";
-  if (dateStr.includes("/")) return toGujaratiDigits(dateStr);
+        if (!dateStr) return "";
+        if (dateStr.includes("/")) return toGujaratiDigits(dateStr);
 
-  const d = new Date(dateStr);
-  if (isNaN(d)) return "";
-  return `${toGujaratiDigits(d.getDate())}/${toGujaratiDigits(d.getMonth() + 1)}/${toGujaratiDigits(d.getFullYear())}`;
-}
+        const d = new Date(dateStr);
+        if (isNaN(d)) return "";
+        return `${toGujaratiDigits(d.getDate())}/${toGujaratiDigits(d.getMonth() + 1)}/${toGujaratiDigits(d.getFullYear())}`;
+    }
 
-function calculateAgeAtDeath(dob, dod) {
-  if (!dob || !dod) return "";
+    function calculateAgeAtDeath(dob, dod) {
+        if (!dob || !dod) return "";
 
-  const birth = new Date(dob);
-  const death = new Date(dod);
+        const birth = new Date(dob);
+        const death = new Date(dod);
 
-  if (isNaN(birth) || isNaN(death)) return "";
+        if (isNaN(birth) || isNaN(death)) return "";
 
-  let age = death.getFullYear() - birth.getFullYear();
-  const m = death.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
-    age--;
-  }
+        let age = death.getFullYear() - birth.getFullYear();
+        const m = death.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
+            age--;
+        }
 
-  return age > 0 ? toGujaratiDigits(age) : "";
-}
+        return age > 0 ? toGujaratiDigits(age) : "";
+    }
 
 
     function generateSvgTree(root) {
-        const nodeWidth = 180;
-        const nodeHeight = 75;
-        const hGap = 80;
-        const vGap = 130;
+        const isRotated = root.children && root.children.length > 4;
 
-        const deceasedSuffix = " (મૈયત)";
+        // Optimized Parameters for Horizontal Mode (60px Font)
+        const charWidth = isRotated ? 8.5 : 24;
+        const minWidth = isRotated ? 120 : 320;
+        const hGap = isRotated ? 30 : 100;
+        const vGap = isRotated ? 45 : 300; // Increased vertically as requested
+        const paddingH = isRotated ? 20 : 70;
+        const topMargin = isRotated ? 20 : 90;
+        const marginX = isRotated ? 20 : 80;
+        const depthOffset = isRotated ? 55 : 220; // Increased vertically as requested
 
-        function computeLayout(node, depth = 0, x = 0) {
-            node.depth = depth;
+        const strokeWidth = isRotated ? 2 : 5;
+        const strokeColor = "#000";
 
-            if (!node.children || node.children.length === 0) {
-                node.width = nodeWidth;
-                node.x = x;
-                return nodeWidth;
+        function getNodeDimensions(node) {
+            const isDead = node.isDeceased;
+            const textName = isDead ? `${node.name} (મૈયત)` : node.name;
+            let relationText = node.relation ? ` (${node.relation})` : "";
+            if (!node.isDeceased) {
+                relationText += ` ઉંમર: ${toGujaratiDigits(node.age || "")}`;
             }
 
-            let totalWidth = 0;
-            node.children.forEach(child => {
-                const w = computeLayout(child, depth + 1, x + totalWidth);
-                totalWidth += w + hGap;
+            const nameLen = textName.length;
+            const relLen = relationText.length;
+            const contentWidth = Math.max(nameLen, relLen) * charWidth + paddingH;
+            const nodeWidth = Math.max(minWidth, contentWidth);
+            const nodeHeight = isRotated ? (isDead ? 80 : 55) : (isDead ? 220 : 150); // Adjusted height
+
+            return { width: nodeWidth, height: nodeHeight };
+        }
+
+        // Always calculate as a horizontal tree first
+        function computeLayout(node, depth = 0, startX = 0) {
+            node.depth = depth;
+            const { width: nw, height: nh } = getNodeDimensions(node);
+            node.nodeWidth = nw;
+            node.nodeHeight = nh;
+
+            if (!node.children || node.children.length === 0) {
+                node.subtreeWidth = nw;
+                node.x = startX;
+                return nw;
+            }
+
+            let childrenTotalWidth = 0;
+            node.children.forEach((child, i) => {
+                const w = computeLayout(child, depth + 1, startX + childrenTotalWidth);
+                childrenTotalWidth += w;
+                if (i < node.children.length - 1) childrenTotalWidth += hGap;
             });
 
-            totalWidth -= hGap;
+            node.subtreeWidth = Math.max(nw, childrenTotalWidth);
+            node.x = startX + (node.subtreeWidth / 2) - (nw / 2);
 
-            node.width = totalWidth;
-            node.x = x + totalWidth / 2 - nodeWidth / 2;
+            if (nw > childrenTotalWidth) {
+                const shift = (nw - childrenTotalWidth) / 2;
+                function shiftSubtree(n, s) {
+                    n.x += s;
+                    if (n.children) n.children.forEach(c => shiftSubtree(c, s));
+                }
+                node.children.forEach(c => shiftSubtree(c, shift));
+            }
 
-            return totalWidth;
+            return node.subtreeWidth;
         }
 
-        computeLayout(root);
-
-        function getMaxDepth(node) {
-            if (!node.children || node.children.length === 0) return node.depth;
-            return Math.max(...node.children.map(getMaxDepth));
-        }
-
-        const maxDepth = getMaxDepth(root);
-        const totalHeight = (maxDepth + 1) * (nodeHeight + vGap) + 200;
-        const totalWidth = root.width + 200;
+        const totalTreeWidth = computeLayout(root);
+        let maxReachedY = 0;
 
         let svgNodes = "";
         let svgLines = "";
 
         function render(node) {
-            const xCenter = node.x + nodeWidth / 2;
-            const yCenter = node.depth * (nodeHeight + vGap) + 120;
+            // Coordinate prep
+            const x = node.x + marginX;
+            const yBasis = node.depth * (vGap + depthOffset) + topMargin;
+            const xCenter = x + node.nodeWidth / 2;
+            const yCenter = yBasis + node.nodeHeight / 2;
+
+            const bottomY = yCenter + node.nodeHeight / 2;
+            if (bottomY > maxReachedY) maxReachedY = bottomY;
 
             const isDead = node.isDeceased;
             const textName = isDead ? `${node.name} (મૈયત)` : node.name;
-            // const deceasedLine = isDead ? `મૃત્યુ તારીખ: ${toGujaratiDigits(node.dodDisplay)}` : "";
-
-
-            let relationText = "";
-
-            if (node.relation) {
-                relationText = `(${node.relation})`;
+            let relationText = node.relation ? `(${node.relation})` : "";
+            if (!node.isDeceased) {
+                relationText += ` ઉંમર: ${toGujaratiDigits(node.age || "")}`;
             }
 
-        if (!node.isDeceased) {
-    relationText += `  ઉંમર: ${toGujaratiDigits(node.age || "")}`;
-}
-
-
-
-            const bg = isDead ? "#ffe3e3" : "#ffffff";
-            const border = isDead ? "#c0392b" : "#000000";
+            const bg = isDead ? "#fef4f4" : "#ffffff";
+            const fontSize = isRotated ? 15 : 60; // 60px as requested
+            const subFontSize = isRotated ? 11 : 40;
 
             svgNodes += `
-<rect 
-    x="${node.x}" 
-    y="${yCenter - nodeHeight / 2}"
-    width="${nodeWidth}" 
-    height="${nodeHeight}"
-    rx="10" 
-    ry="10"
-    fill="${bg}"
-    stroke="${border}"
-    stroke-width="2"
-/>
-
-<text 
-    x="${xCenter}" 
-    y="${yCenter - 12}"
-    text-anchor="middle"
-    font-size="18"
-    font-weight="700"
-    text-decoration="underline"
-    font-family="Noto Serif Gujarati"
->${textName}</text>
-
-${isDead ? (() => {
-  const dob = formatGujaratiDate(node.dob);
-  const dod = formatGujaratiDate(node.dodDisplay || node.dod);
-
-  let secondLine = "";
- if (dod) {
-  secondLine = `મૃત્યુ: ${dod}`;
-} else {
-  let ageAtDeath = calculateAgeAtDeath(node.dob, node.dod);
-
-  // 🔥 Fallback to stored age if no DOB+DOD
-  if (!ageAtDeath && node.age) {
-    ageAtDeath = toGujaratiDigits(node.age);
-  }
-
-  if (ageAtDeath) {
-    secondLine = `ઉંમર: ${ageAtDeath} વર્ષ`;
-  }
-}
-
-  return `
-  <text x="${xCenter}" y="${yCenter + 6}" text-anchor="middle"
-        font-size="13" font-weight="700" font-family="Noto Serif Gujarati">
-    ${dob ? `જન્મ: ${dob}` : ""}
-  </text>
-  <text x="${xCenter}" y="${yCenter + 24}" text-anchor="middle"
-        font-size="13" font-weight="700" font-family="Noto Serif Gujarati">
-    ${secondLine}
-  </text>
-  `;
-})() : ""}
-
-
-<text 
-    x="${xCenter}" 
-  y="${isDead ? (yCenter + 44) : (yCenter + 10)}"
-
-    text-anchor="middle"
-    font-size="15"
-    font-weight="700"
-    fill="#444"
-    font-family="Noto Serif Gujarati"
->${relationText}</text>
-
+<rect x="${x}" y="${yCenter - node.nodeHeight / 2}" width="${node.nodeWidth}" height="${node.nodeHeight}" rx="${isRotated ? 6 : 28}" ry="${isRotated ? 6 : 28}" fill="${bg}" stroke="none" />
+<text x="${xCenter}" y="${yCenter - (isDead ? (isRotated ? 17 : 65) : (isRotated ? 8 : 28))}" text-anchor="middle" font-size="${fontSize}" font-weight="700" text-decoration="underline" font-family="Noto Serif Gujarati" fill="#000">${textName}</text>
 `;
 
+            if (isDead) {
+                const dob = formatGujaratiDate(node.dob);
+                const dod = formatGujaratiDate(node.dodDisplay || node.dod);
+                let secondLine = dod ? `મૃત્યુ: ${dod}` : "";
+                if (!secondLine && node.age) secondLine = `ઉંમર: ${toGujaratiDigits(node.age)} વર્ષ`;
+
+                svgNodes += `
+<text x="${xCenter}" y="${yCenter + (isRotated ? 0 : 5)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#555">${dob ? `જન્મ: ${dob}` : ""}</text>
+<text x="${xCenter}" y="${yCenter + (isRotated ? 14 : 52)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#555">${secondLine}</text>
+`;
+            }
+
+            svgNodes += `
+<text x="${xCenter}" y="${yCenter + (isDead ? (isRotated ? 30 : 92) : (isRotated ? 18 : 50))}" text-anchor="middle" font-size="${subFontSize + 2}" font-weight="700" fill="#444" font-family="Noto Serif Gujarati">${relationText}</text>
+`;
 
             if (node.children) {
                 node.children.forEach(child => {
-                    const childX = child.x + nodeWidth / 2;
-                    const childY = (child.depth * (nodeHeight + vGap) + 120) - nodeHeight / 2;
+                    const childX = child.x + marginX + child.nodeWidth / 2;
+                    const childYStart = (child.depth * (vGap + depthOffset) + topMargin);
 
                     svgLines += `
-                <line 
-                    x1="${xCenter}" 
-                    y1="${yCenter + nodeHeight / 2}"
-                    x2="${childX}" 
-                    y2="${childY}"
-                    stroke="#000"
-                    stroke-width="2"
-                />
+                <line x1="${xCenter}" y1="${bottomY}" x2="${childX}" y2="${childYStart}" stroke="${strokeColor}" stroke-width="${strokeWidth}" />
             `;
-
                     render(child);
                 });
             }
         }
 
-
         render(root);
 
+        const totalWidth = totalTreeWidth + marginX * 2;
+        const totalHeight = maxReachedY + 10;
+
+        if (isRotated) {
+            return `
+            <svg width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 270mm; max-width: 100%; height: auto; display: block; margin: 0 auto; page-break-inside: avoid;">
+                <g transform="translate(${totalHeight}, 0) rotate(90)">
+                    ${svgLines}
+                    ${svgNodes}
+                </g>
+            </svg>
+            `;
+        }
+
         return `
-        <svg 
-             width="${totalWidth}" 
-  height="${totalHeight}"
-  viewBox="0 0 ${totalWidth} ${totalHeight}"
-            xmlns="http://www.w3.org/2000/svg"
-            style="max-width:100%;height:auto;display:block;margin:auto"
-        >
+        <svg width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; display: block; margin: 20px auto; page-break-inside: avoid;">
             ${svgLines}
             ${svgNodes}
         </svg>
     `;
     }
 
-const handlePedhinamuPrint = async () => {
-  try {
-    // 🔴 FIRST increment & check limit
-    const res = await apiFetch(
-      "/api/register/user/increment-print",
-      { method: "POST" },
-      navigate,
-      toast
-    );
+    const handlePedhinamuPrint = async () => {
+        try {
+            // 🔴 FIRST increment & check limit
+            const res = await apiFetch(
+                "/api/register/user/increment-print",
+                { method: "POST" },
+                navigate,
+                toast
+            );
 
-    if (!res.data.canPrint) {
-      setShowPaymentPopup(true);
-      return;
-    }
+            if (!res.data.canPrint) {
+                setShowPaymentPopup(true);
+                return;
+            }
 
-    // ✅ Only allowed prints reach here
-    const response2 = await fetch("/pedhinamu/pedhinamu.html");
-    let htmlTemplate = await response2.text();
+            // ✅ Only allowed prints reach here
+            const response2 = await fetch("/pedhinamu/pedhinamu.html");
+            let htmlTemplate = await response2.text();
 
-    const { pedhinamu, form } = data;
+            const { pedhinamu, form } = data;
 
-    // Get logged-in user data
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+            // Get logged-in user data
+            const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    // 🔥 DEBUG: Log the applicant photo value
-    console.log('🖼️ Applicant Photo Path:', form?.applicantPhoto);
-    console.log('🖼️ Full Photo URL:', form?.applicantPhoto ? `${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}` : 'No photo');
+            // 🔥 DEBUG: Log the applicant photo value
+            console.log('🖼️ Applicant Photo Path:', form?.applicantPhoto);
+            console.log('🖼️ Full Photo URL:', form?.applicantPhoto ? `${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}` : 'No photo');
 
-    /* -----------------------------------------
-       BASIC PLACEHOLDER REPLACEMENTS
-    ----------------------------------------- */
+            /* -----------------------------------------
+               BASIC PLACEHOLDER REPLACEMENTS
+            ----------------------------------------- */
 
-const replacements = {
-  applicantName: form?.applicantName || "",
-  mukkamAddress: form?.mukkamAddress || "",
-  multipleWifeLine: multipleWifeLine,
+            const replacements = {
+                applicantName: form?.applicantName || "",
+                mukkamAddress: form?.mukkamAddress || "",
+                multipleWifeLine: multipleWifeLine,
 
-  talatiName: form?.talatiName || "",
-  javadNo: form?.javadNo || "",
-  totalHeirsCount: form?.totalHeirsCount || "",
-  // ✅ ADD THESE
-    referenceNo: form?.referenceNo || "",
+                talatiName: form?.talatiName || "",
+                javadNo: form?.javadNo || "",
+                totalHeirsCount: form?.totalHeirsCount || "",
+                // ✅ ADD THESE
+                referenceNo: form?.referenceNo || "",
 
-  jaminSurveyNo: form?.jaminSurveyNo || "",
-  jaminKhatano: form?.jaminKhatano || "",
+                jaminSurveyNo: form?.jaminSurveyNo || "",
+                jaminKhatano: form?.jaminKhatano || "",
 
-  makanMilkatAkarniNo: form?.makanMilkatAkarniNo || "",
-any: form?.any || "",
+                makanMilkatAkarniNo: form?.makanMilkatAkarniNo || "",
+                any: form?.any || "",
 
-  mukhyoName: pedhinamu?.mukhya?.name || "",
+                mukhyoName: pedhinamu?.mukhya?.name || "",
 
-  reasonForPedhinamu: form?.reasonForPedhinamu || "",
-
-
-  // 🔥 ADD THESE (THIS WAS MISSING)
-mukhyoPrefix: pedhinamu?.mukhya?.isDeceased ? "મૈયત શ્રી" : "શ્રી",
-
-deathLine:
-  pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
-    ? ` (મૃત્યુ તા. ${pedhinamu.mukhya.dodDisplay})`
-    : "",
-
-  notarySerialNo: form?.notarySerialNo || "",
-  notaryBookNo: form?.notaryBookNo || "",
-  notaryPageNo: form?.notaryPageNo || "",
-  notaryName: form?.notaryName || "",
-  notaryDate: form?.notaryDate
-    ? formatDateToGujarati(form.notaryDate)
-    : "",
-
-  applicationDate: form?.applicationDate
-    ? formatDateToGujarati(form.applicationDate)
-    : formatDateToGujarati(pedhinamu.createdAt),
-
-  applicantMobile: formatMobile(form?.applicantMobile),
-  applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
-
-  taluko: user?.gam || "",
-  userTaluko: user?.taluko || "",
-  userJillo: user?.jillo || "",
-};
+                reasonForPedhinamu: form?.reasonForPedhinamu || "",
 
 
+                // 🔥 ADD THESE (THIS WAS MISSING)
+                mukhyoPrefix: pedhinamu?.mukhya?.isDeceased ? "મૈયત શ્રી" : "શ્રી",
+
+                deathLine:
+                    pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
+                        ? ` (મૃત્યુ તા. ${pedhinamu.mukhya.dodDisplay})`
+                        : "",
+
+                notarySerialNo: form?.notarySerialNo || "",
+                notaryBookNo: form?.notaryBookNo || "",
+                notaryPageNo: form?.notaryPageNo || "",
+                notaryName: form?.notaryName || "",
+                notaryDate: form?.notaryDate
+                    ? formatDateToGujarati(form.notaryDate)
+                    : "",
+
+                applicationDate: form?.applicationDate
+                    ? formatDateToGujarati(form.applicationDate)
+                    : formatDateToGujarati(pedhinamu.createdAt),
+
+                applicantMobile: formatMobile(form?.applicantMobile),
+                applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
+
+                taluko: user?.gam || "",
+                userTaluko: user?.taluko || "",
+                userJillo: user?.jillo || "",
+            };
 
 
-// ✅ PROPERTY EXTRA ROWS (NO HANDLEBARS)
-let propertyExtraRows = "";
 
-if (form?.makanMilkatAkarniNo?.trim()) {
-  propertyExtraRows += `
+
+            // ✅ PROPERTY EXTRA ROWS (NO HANDLEBARS)
+            let propertyExtraRows = "";
+
+            if (form?.makanMilkatAkarniNo?.trim()) {
+                propertyExtraRows += `
   <tr>
     <td></td>
     <td>મકાનના</td>
     <td>મિલકત આકરણી નંબર</td>
     <td class="center">${toGujaratiDigits(form.makanMilkatAkarniNo)}</td>
   </tr>`;
-}
+            }
 
-if (form?.any?.trim()) {
-  propertyExtraRows += `
+            if (form?.any?.trim()) {
+                propertyExtraRows += `
   <tr>
     <td></td>
     <td>અન્ય</td>
     <td></td>
     <td class="center">${form.any}</td>
   </tr>`;
-}
+            }
 
-replacements.propertyExtraRows = propertyExtraRows;
+            replacements.propertyExtraRows = propertyExtraRows;
 
-    console.log('userTaluko:', replacements.userTaluko);
-    console.log('userJillo:', replacements.userJillo);
-    console.log('taluko:', replacements.taluko);
+            console.log('userTaluko:', replacements.userTaluko);
+            console.log('userJillo:', replacements.userJillo);
+            console.log('taluko:', replacements.taluko);
 
-    // 🔥 IMPORTANT: Handle applicant photo separately with proper error handling
-    let applicantPhotoHtml = '';
-    
-    if (form?.applicantPhoto) {
-      const photoPath = form.applicantPhoto.startsWith('/uploads') 
-        ? form.applicantPhoto 
-        : `/uploads/${form.applicantPhoto}`;
-      
-      applicantPhotoHtml = `<img 
+            // 🔥 IMPORTANT: Handle applicant photo separately with proper error handling
+            let applicantPhotoHtml = '';
+
+            if (form?.applicantPhoto) {
+                const photoPath = form.applicantPhoto.startsWith('/uploads')
+                    ? form.applicantPhoto
+                    : `/uploads/${form.applicantPhoto}`;
+
+                applicantPhotoHtml = `<img 
         src="${import.meta.env.VITE_API_BASE_URL}${photoPath}" 
         style="width:120px; height:140px; object-fit:cover; border:1px solid #000;" 
         alt="Applicant Photo" 
         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:140px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
       />`;
-      
-      console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
-    } else {
-      applicantPhotoHtml = `<div style="width:120px; height:140px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
-      console.log('⚠️ No applicant photo available');
-    }
 
-    replacements.applicantPhotoHtml = applicantPhotoHtml;
+                console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
+            } else {
+                applicantPhotoHtml = `<div style="width:120px; height:140px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
+                console.log('⚠️ No applicant photo available');
+            }
 
-    // Replace all placeholders
-    const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml'];
-    Object.entries(replacements).forEach(([key, value]) => {
-      const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
-      htmlTemplate = htmlTemplate.replace(
-        new RegExp(`{{\\s*${key}\\s*}}`, "g"),
-        processedValue
-      );
-    });
+            replacements.applicantPhotoHtml = applicantPhotoHtml;
 
-    /* -----------------------------------------
-       HEIRS TABLE (SAFE + CLEAN)
-    ----------------------------------------- */
+            // Replace all placeholders
+            const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml'];
+            Object.entries(replacements).forEach(([key, value]) => {
+                const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
+                htmlTemplate = htmlTemplate.replace(
+                    new RegExp(`{{\\s*${key}\\s*}}`, "g"),
+                    processedValue
+                );
+            });
 
-    let heirsHtml = pedhinamu.heirs
-      .map((h) => {
-        let spouseRow = "";
-        let childrenRows = "";
+            /* -----------------------------------------
+               HEIRS TABLE (SAFE + CLEAN)
+            ----------------------------------------- */
 
-        // spouse
-        if (h.subFamily?.spouse?.name?.trim()) {
-          spouseRow = `
+            let heirsHtml = pedhinamu.heirs
+                .map((h) => {
+                    let spouseRow = "";
+                    let childrenRows = "";
+
+                    // spouse
+                    if (h.subFamily?.spouse?.name?.trim()) {
+                        spouseRow = `
             <tr>
                 <td style="padding-left:25px;">➤ ${h.subFamily.spouse.name}</td>
                 <td>${toGujaratiDigits(h.subFamily.spouse.age || "-")}</td>
                 <td>${relationToGujarati(h.subFamily.spouse.relation)}</td>
             </tr>
           `;
-        }
+                    }
 
-        // children
-        if (h.subFamily?.children?.length > 0) {
-          childrenRows = h.subFamily.children
-            .map((c) => `
+                    // children
+                    if (h.subFamily?.children?.length > 0) {
+                        childrenRows = h.subFamily.children
+                            .map((c) => `
               <tr>
                   <td style="padding-left:40px;">• ${c.name}</td>
                   <td>${toGujaratiDigits(c.age)}</td>
                   <td>${relationToGujarati(c.relation)}</td>
               </tr>
             `)
-            .join("");
-        }
+                            .join("");
+                    }
 
-        return `
+                    return `
             <tr>
                 <td><b>${h.name}</b></td>
                 <td>${toGujaratiDigits(h.age)}</td>
@@ -558,67 +534,67 @@ replacements.propertyExtraRows = propertyExtraRows;
             ${spouseRow}
             ${childrenRows}
         `;
-      })
-      .join("");
+                })
+                .join("");
 
-    htmlTemplate = htmlTemplate.replace("{{heirsTable}}", heirsHtml);
+            htmlTemplate = htmlTemplate.replace("{{heirsTable}}", heirsHtml);
 
-    /* -----------------------------------------
-       PANCH TABLE
-    ----------------------------------------- */
-    let panchHtml = form.panch
-      .map(
-        (p) => `
+            /* -----------------------------------------
+               PANCH TABLE
+            ----------------------------------------- */
+            let panchHtml = form.panch
+                .map(
+                    (p) => `
           <tr>
               <td>${p.name}</td>
               <td>${toGujaratiDigits(p.age)}</td>
               <td>${p.occupation}</td>
              <td>${replacements.taluko || "-"}</td>
           </tr>`
-      )
-      .join("");
+                )
+                .join("");
 
-    htmlTemplate = htmlTemplate.replace("{{panchTable}}", panchHtml);
+            htmlTemplate = htmlTemplate.replace("{{panchTable}}", panchHtml);
 
-    /* -----------------------------------------
-       PANCH SIGNATURE BLOCKS
-    ----------------------------------------- */
-    let panchSignHtml = form.panch
-      .map(
-        (p) => `
+            /* -----------------------------------------
+               PANCH SIGNATURE BLOCKS
+            ----------------------------------------- */
+            let panchSignHtml = form.panch
+                .map(
+                    (p) => `
           <p>
               <b>${p.name}</b><br>
               સહી: _______________________<br>
               અંગુઠાનો નિશાન: _____________
           </p>`
-      )
-      .join("");
+                )
+                .join("");
 
-    htmlTemplate = htmlTemplate.replace("{{panchSignatureBlocks}}", panchSignHtml);
+            htmlTemplate = htmlTemplate.replace("{{panchSignatureBlocks}}", panchSignHtml);
 
-    /* -----------------------------------------
-       PANCH PHOTO BLOCKS
-    ----------------------------------------- */
-    let panchPhotoHtml = form.panch
-      .map((p) => {
-        let photoHtml = '';
-        
-        if (p.photo) {
-          const panchPhotoPath = p.photo.startsWith('/uploads') 
-            ? p.photo 
-            : `/uploads/${p.photo}`;
-          
-          photoHtml = `<img 
+            /* -----------------------------------------
+               PANCH PHOTO BLOCKS
+            ----------------------------------------- */
+            let panchPhotoHtml = form.panch
+                .map((p) => {
+                    let photoHtml = '';
+
+                    if (p.photo) {
+                        const panchPhotoPath = p.photo.startsWith('/uploads')
+                            ? p.photo
+                            : `/uploads/${p.photo}`;
+
+                        photoHtml = `<img 
             src="${import.meta.env.VITE_API_BASE_URL}${panchPhotoPath}" 
             style="width:120px; height:120px; object-fit:cover; border:1px solid #ccc;" 
             alt="Panch Photo"
             onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;background:#f5f5f5;\\'>No Photo</div>';"
           />`;
-        } else {
-          photoHtml = '<div style="width:120px; height:120px; border:1px solid #ccc; background:#f5f5f5;"></div>';
-        }
-        
-        return `
+                    } else {
+                        photoHtml = '<div style="width:120px; height:120px; border:1px solid #ccc; background:#f5f5f5;"></div>';
+                    }
+
+                    return `
         <table style="margin-bottom:40px; width:100%;">
     <tr>
         <!-- Photo -->
@@ -649,95 +625,95 @@ replacements.propertyExtraRows = propertyExtraRows;
 </table>
 
         `;
-      })
-      .join("");
+                })
+                .join("");
 
-    htmlTemplate = htmlTemplate.replace("{{panchPhotoBlocks}}", panchPhotoHtml);
+            htmlTemplate = htmlTemplate.replace("{{panchPhotoBlocks}}", panchPhotoHtml);
 
-    /* -----------------------------------------
-        FAMILY TREE BUILDER (Dynamic)
-    ----------------------------------------- */
+            /* -----------------------------------------
+                FAMILY TREE BUILDER (Dynamic)
+            ----------------------------------------- */
 
-  function buildNode(person) {
-  if (!person) return null;
+            function buildNode(person) {
+                if (!person) return null;
 
-  const node = {
-    name: person.name,
-    age: person.age || "",
-    
-    // 🔥 THESE WERE MISSING
-    dob: person.dobDisplay || person.dob || "",
-    dod: person.dodDisplay || person.dod || "",
-    dodDisplay: person.dodDisplay || person.dod || "",
+                const node = {
+                    name: person.name,
+                    age: person.age || "",
 
-    relation: relationToGujarati(person.relation),
-    isDeceased: person.isDeceased || false,
-    isRoot: person.isRoot || false,
-    children: []
-  };
+                    // 🔥 THESE WERE MISSING
+                    dob: person.dobDisplay || person.dob || "",
+                    dod: person.dodDisplay || person.dod || "",
+                    dodDisplay: person.dodDisplay || person.dod || "",
 
-  const spouse = person.spouse || person.subFamily?.spouse;
+                    relation: relationToGujarati(person.relation),
+                    isDeceased: person.isDeceased || false,
+                    isRoot: person.isRoot || false,
+                    children: []
+                };
 
-  if (spouse?.name?.trim()) {
-    node.children.push({
-      name: spouse.name,
-      age: spouse.age || "",
-      dob: spouse.dobDisplay || spouse.dob || "",
-      dod: spouse.dodDisplay || spouse.dod || "",
-      dodDisplay: spouse.dodDisplay || spouse.dod || "",
-      relation: relationToGujarati(spouse.relation),
-      isDeceased: spouse.isDeceased || false,
-      children: []
-    });
-  }
+                const spouse = person.spouse || person.subFamily?.spouse;
 
-  const personChildren = person.subFamily?.children || person.children || [];
+                if (spouse?.name?.trim()) {
+                    node.children.push({
+                        name: spouse.name,
+                        age: spouse.age || "",
+                        dob: spouse.dobDisplay || spouse.dob || "",
+                        dod: spouse.dodDisplay || spouse.dod || "",
+                        dodDisplay: spouse.dodDisplay || spouse.dod || "",
+                        relation: relationToGujarati(spouse.relation),
+                        isDeceased: spouse.isDeceased || false,
+                        children: []
+                    });
+                }
 
-  personChildren.forEach(c => {
-    node.children.push(buildNode(c));
-  });
+                const personChildren = person.subFamily?.children || person.children || [];
 
-  return node;
-}
+                personChildren.forEach(c => {
+                    node.children.push(buildNode(c));
+                });
 
-
-    const rootPerson = buildNode({
-      ...pedhinamu.mukhya,
-      relation: "",
-      isRoot: true,
-      spouse: pedhinamu.mukhya.spouse || null,
-      children: pedhinamu.heirs
-    });
-
-    const svgTree = generateSvgTree(rootPerson);
-
-    htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, svgTree);
-
-    /* -----------------------------------------
-       PRINT WINDOW
-    ----------------------------------------- */
-    const printWindow = window.open("", "_blank", "width=1000,height=1200");
-    printWindow.document.write(htmlTemplate);
-    await printWindow.document.fonts.ready;
-    printWindow.document.close();
-    printWindow.focus();
-printWindow.print();
+                return node;
+            }
 
 
-    console.log('✅ PDF generation completed successfully');
+            const rootPerson = buildNode({
+                ...pedhinamu.mukhya,
+                relation: "",
+                isRoot: true,
+                spouse: pedhinamu.mukhya.spouse || null,
+                children: pedhinamu.heirs
+            });
 
-  } catch (err) {
-    console.error("❌ PRINT ERROR:", err);
-    toast({
-     title: "પ્રિન્ટ ભૂલ",
-description: "PDF જનરેટ કરવામાં નિષ્ફળતા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+            const svgTree = generateSvgTree(rootPerson);
 
-      status: "error",
-      duration: 3000,
-      position: "top",
-    });
-  }
-};
+            htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, svgTree);
+
+            /* -----------------------------------------
+               PRINT WINDOW
+            ----------------------------------------- */
+            const printWindow = window.open("", "_blank", "width=1000,height=1200");
+            printWindow.document.write(htmlTemplate);
+            await printWindow.document.fonts.ready;
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+
+
+            console.log('✅ PDF generation completed successfully');
+
+        } catch (err) {
+            console.error("❌ PRINT ERROR:", err);
+            toast({
+                title: "પ્રિન્ટ ભૂલ",
+                description: "PDF જનરેટ કરવામાં નિષ્ફળતા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+
+                status: "error",
+                duration: 3000,
+                position: "top",
+            });
+        }
+    };
     return (
         <Box bg="#F8FAF9" minH="100vh" p={10}>
             <Flex justify="space-between" mb={5}>
@@ -748,14 +724,14 @@ description: "PDF જનરેટ કરવામાં નિષ્ફળતા
                 >
                     ← {t("back")}
                 </Button>
-<Button
-    colorScheme="green"
-    px={6}
-    onClick={handlePedhinamuPrint}
-    isDisabled={!form} // ✅ ફોર્મ ન હોય તો disable
->
-    {t("printPedhinamu")}
-</Button>
+                <Button
+                    colorScheme="green"
+                    px={6}
+                    onClick={handlePedhinamuPrint}
+                    isDisabled={!form} // ✅ ફોર્મ ન હોય તો disable
+                >
+                    {t("printPedhinamu")}
+                </Button>
 
             </Flex>
 
@@ -965,16 +941,16 @@ description: "PDF જનરેટ કરવામાં નિષ્ફળતા
                                     <HStack spacing={4} align="start">
                                         {p.photo && (
                                             <Box>
-                                                <img 
-                                                    src={`${import.meta.env.VITE_API_BASE_URL}${p.photo}`} 
+                                                <img
+                                                    src={`${import.meta.env.VITE_API_BASE_URL}${p.photo}`}
                                                     alt={`Panch ${p.name}`}
-                                                    style={{ 
-                                                        width: '80px', 
-                                                        height: '80px', 
-                                                        objectFit: 'cover', 
+                                                    style={{
+                                                        width: '80px',
+                                                        height: '80px',
+                                                        objectFit: 'cover',
                                                         borderRadius: '8px',
                                                         border: '1px solid #ccc'
-                                                    }} 
+                                                    }}
                                                 />
                                             </Box>
                                         )}
@@ -998,16 +974,16 @@ description: "PDF જનરેટ કરવામાં નિષ્ફળતા
                             <HStack spacing={4} align="start">
                                 {form.applicantPhoto && (
                                     <Box>
-                                        <img 
-                                            src={`${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}`} 
+                                        <img
+                                            src={`${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}`}
                                             alt="Applicant Photo"
-                                            style={{ 
-                                                width: '80px', 
-                                                height: '80px', 
-                                                objectFit: 'cover', 
+                                            style={{
+                                                width: '80px',
+                                                height: '80px',
+                                                objectFit: 'cover',
                                                 borderRadius: '8px',
                                                 border: '1px solid #ccc'
-                                            }} 
+                                            }}
                                         />
                                     </Box>
                                 )}
@@ -1034,4 +1010,4 @@ description: "PDF જનરેટ કરવામાં નિષ્ફળતા
             />
         </Box>
     );
-    }           
+}           
