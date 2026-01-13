@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import ExpandableText from "../components/ExpandableText";
 import {
   Box,
   Heading,
@@ -397,6 +398,7 @@ const paymentMethodGujarati = (method) => {
                     <Th>{t("paymentMethod")}</Th>
                     <Th>{t("ddCheckNum")}</Th>
                     <Th isNumeric>{t("fieldAmount")}</Th>
+                    <Th>{t("remarks")}</Th>
                     <Th>{t("actions")}</Th>
                   </Tr>
                 </Thead>
@@ -436,6 +438,17 @@ const paymentMethodGujarati = (method) => {
                     <Td>{row.ddCheckNum?.trim() ? row.ddCheckNum : "-"}</Td>
 
                       <Td isNumeric>₹{toGujaratiDigits(row.amount)}</Td>
+
+                    <Td maxW="300px" whiteSpace="normal" breakwords="break-word">
+  <ExpandableText text={row.remarks} />
+</Td>
+
+{/* <td className="max-w-[280px] whitespace-normal break-words">
+  <ExpandableText text={row.remarks} wordLimit={6} />
+</td> */}
+
+
+
 
                       <Td>
                         <HStack spacing={2}>
