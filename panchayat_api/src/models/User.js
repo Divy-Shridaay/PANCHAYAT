@@ -53,6 +53,15 @@ const UserSchema = new mongoose.Schema({
   isPaid: { type: Boolean, default: false },
   printCount: { type: Number, default: 0 },
 
+  // Per-user module access controls
+  modules: {
+    pedhinamu: { type: Boolean, default: false },
+    rojmel: { type: Boolean, default: false },
+    magnu: { type: Boolean, default: false }
+  },
+  // Pedhinamu print override (admin can allow/deny printing irrespective of trial/payment)
+  pedhinamuPrintAllowed: { type: Boolean, default: false },
+
 }, { timestamps: true });
 
 // ✅ Remove duplicate index definition (you already have it in schema)

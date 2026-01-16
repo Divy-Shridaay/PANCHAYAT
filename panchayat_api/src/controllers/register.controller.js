@@ -474,6 +474,37 @@ export const deactivateUser = async (req, res) => {
   }
 };
 
+// ---------- Admin: Update user module toggles ----------
+export const updateUserModules = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { modules, pedhinamuPrintAllowed } = req.body;
+
+    const updateData = {};
+    if (modules && typeof modules === "object") {
+      updateData.modules = {
+        ...modules
+      };
+    }
+
+    if (typeof pedhinamuPrintAllowed !== "undefined") {
+      updateData.pedhinamuPrintAllowed = !!pedhinamuPrintAllowed;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password -otp -otpExpiry");
+
+    if (!user) {
+      return res.status(404).json({ message: "ઉપયોગકર્તા મળ્યો નથી " });
+    }
+
+    return res.json({ message: "User modules updated", user });
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "મોડ્યુલ અપડેટ કરવામાં નિષ્ફળ", error: err.message });
+  }
+};
+
 // ---------- Get current user status ----------
 export const getUserStatus = async (req, res) => {
   try {
@@ -495,15 +526,24 @@ export const getUserStatus = async (req, res) => {
       daysSinceTrial = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
     }
 
-    const canAccessModules = user.isPaid || daysSinceTrial < 8;
-    const canPrint = user.isPaid || user.printCount < 5;
+    const baseAccess = user.isPaid || daysSinceTrial < 8;
+
+    // Per-module access: allow if user has base access (paid/trial) OR admin has enabled the specific module
+    const modulesAccess = {
+      pedhinamu: baseAccess || !!user.modules?.pedhinamu,
+      rojmel: baseAccess || !!user.modules?.rojmel,
+      magnu: baseAccess || !!user.modules?.magnu,
+    };
+
+    // Printing: allow if paid OR under free limit OR admin explicitly allowed pedhinamuPrintAllowed
+    const canPrint = user.isPaid || user.printCount < 5 || !!user.pedhinamuPrintAllowed;
 
     return res.json({
       message: "ઉપયોગકર્તાની સ્થિતિ (User status)",
       user: {
         ...user.toObject(),
         daysSinceTrial,
-        canAccessModules,
+        modulesAccess,
         canPrint
       }
     });
@@ -528,7 +568,7 @@ export const incrementPrintCount = async (req, res) => {
       return res.status(404).json({ message: "ઉપયોગકર્તા મળ્યો નથી " });
     }
 
-    // ✅ CHANGE: Check isPaid instead of isActive
+    // If paid users always allowed
     if (user.isPaid) {
       user.printCount += 1;
       await user.save();
@@ -541,9 +581,20 @@ export const incrementPrintCount = async (req, res) => {
       });
     }
 
-    // ❌ TRIAL USER
-    const FREE_PRINT_LIMIT = 5;
+    // If admin explicitly allowed pedhinamu prints, allow (and increment)
+    if (user.pedhinamuPrintAllowed) {
+      user.printCount += 1;
+      await user.save();
+      return res.json({
+        canPrint: true,
+        reason: "ADMIN_OVERRIDE",
+        printCount: user.printCount,
+        user
+      });
+    }
 
+    // Trial users: enforce free limit
+    const FREE_PRINT_LIMIT = 5;
     if (user.printCount >= FREE_PRINT_LIMIT) {
       return res.json({
         canPrint: false,
@@ -553,10 +604,9 @@ export const incrementPrintCount = async (req, res) => {
       });
     }
 
-    // ✅ ALLOW PRINT & INCREMENT
+    // Allow print and increment
     user.printCount += 1;
     await user.save();
-
     return res.json({
       canPrint: true,
       reason: "FREE_TRIAL",

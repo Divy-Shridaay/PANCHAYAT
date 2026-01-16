@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile } from "../controllers/register.controller.js";
+import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile, updateUserModules } from "../controllers/register.controller.js";
 import logger from "../middleware/logger.js";
 import auth from "../middleware/auth.js";
 
@@ -41,6 +41,12 @@ router.put(
 router.put(
   "/admin/users/:userId/deactivate",
   deactivateUser
+);
+
+// Admin: Update user module toggles
+router.put(
+  "/admin/users/:userId/modules",
+  updateUserModules
 );
 
 // Get user status

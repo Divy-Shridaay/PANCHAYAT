@@ -112,12 +112,14 @@ export default function Dashboard() {
   /* =======================
      MODULE CLICK HANDLER
   ======================= */
-  const handleModuleClick = async (route) => {
+  const handleModuleClick = async (route, moduleName) => {
     try {
       const { response, data } = await apiFetch("/api/register/user/status");
       if (response.ok) {
         const status = data.user;
-        if (!status.canAccessModules) {
+        // Check per-module access instead of global canAccessModules
+        const moduleAccess = status.modulesAccess?.[moduleName] ?? false;
+        if (!moduleAccess) {
           setPopupType("module");
           setShowPaymentPopup(true);
           return;
@@ -199,7 +201,7 @@ export default function Dashboard() {
           textAlign="center"
           cursor="pointer"
           _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-          onClick={() => handleModuleClick("/pedhinamu")}
+          onClick={() => handleModuleClick("/pedhinamu", "pedhinamu")}
         >
           <FiUserCheck size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">
@@ -222,7 +224,7 @@ export default function Dashboard() {
           textAlign="center"
           cursor="pointer"
           _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-          onClick={() => handleModuleClick("/cashmelform")}
+          onClick={() => handleModuleClick("/cashmelform", "rojmel")}
         >
           <FiTrendingUp size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">
@@ -243,7 +245,28 @@ export default function Dashboard() {
   textAlign="center"
   cursor="pointer"
   _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-   onClick={() => window.open("http://localhost:5174", "_blank")}
+  onClick={async () => {
+    try {
+      const { response, data } = await apiFetch("/api/register/user/status");
+      if (response.ok) {
+        const status = data.user;
+        const moduleAccess = status.modulesAccess?.magnu ?? false;
+        if (!moduleAccess) {
+          setPopupType("module");
+          setShowPaymentPopup(true);
+          return;
+        }
+        window.open("http://localhost:5174", "_blank");
+      } else {
+        setPopupType("module");
+        setShowPaymentPopup(true);
+      }
+    } catch (err) {
+      console.error(err);
+      setPopupType("module");
+      setShowPaymentPopup(true);
+    }
+  }}
 >
   <FiFileText size={40} color="#2A7F62" />
   <Heading size="md" mt={4} color="#1E4D2B">

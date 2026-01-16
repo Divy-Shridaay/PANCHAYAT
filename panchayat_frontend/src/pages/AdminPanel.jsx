@@ -33,6 +33,7 @@ import {
   Badge,
   Divider
 } from "@chakra-ui/react";
+import { Switch } from "@chakra-ui/react";
 
 import { FaEye, FaTrash, FaDownload } from "react-icons/fa";
 import { apiFetch } from "../utils/api.js";
@@ -45,6 +46,8 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUserModules, setSelectedUserModules] = useState({ pedhinamu: false, rojmel: false, magnu: false });
+  const [selectedUserPedhinamuPrint, setSelectedUserPedhinamuPrint] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
 
@@ -100,7 +103,69 @@ useEffect(() => {
 // View user details
 const handleViewUser = (user) => {
   setSelectedUser(user);
+  // Initialize module toggle states from user data (fallback to false)
+  setSelectedUserModules({
+    pedhinamu: user.modules?.pedhinamu ?? false,
+    rojmel: user.modules?.rojmel ?? false,
+    magnu: user.modules?.magnu ?? false
+  });
+  setSelectedUserPedhinamuPrint(user.pedhinamuPrintAllowed ?? false);
   onOpen();
+};
+
+// Update module toggles on server
+const handleToggleModule = async (field, value) => {
+  if (!selectedUser) return;
+  try {
+    // optimistic UI and compute new state to send
+    const newModules = { ...selectedUserModules, [field]: value };
+    setSelectedUserModules(newModules);
+
+    const body = { modules: newModules };
+
+    const { response, data } = await apiFetch(`/api/register/admin/users/${selectedUser._id}/modules`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" }
+    }, navigate, toast);
+
+    if (response.ok) {
+      toast({ title: "સફળ", description: "મોડ્યુલ અપડેટ થયાં", status: "success", duration: 2000, isClosable: true, position: "top" });
+      // refresh list
+      fetchUsers();
+    } else {
+      throw new Error(data.message || "Update failed");
+    }
+  } catch (err) {
+    // revert on error
+    setSelectedUserModules(prev => ({ ...prev, [field]: !value }));
+    toast({ title: "ભૂલ", description: err.message || "સર્વર ભૂલ", status: "error", duration: 3000, isClosable: true, position: "top" });
+  }
+};
+
+const handleTogglePedhinamuPrint = async (value) => {
+  if (!selectedUser) return;
+  try {
+    setSelectedUserPedhinamuPrint(value);
+
+    const body = { pedhinamuPrintAllowed: value };
+
+    const { response, data } = await apiFetch(`/api/register/admin/users/${selectedUser._id}/modules`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" }
+    }, navigate, toast);
+
+    if (response.ok) {
+      toast({ title: "સફળ", description: "પ્રિન્ટ toggled", status: "success", duration: 2000, isClosable: true, position: "top" });
+      fetchUsers();
+    } else {
+      throw new Error(data.message || "Update failed");
+    }
+  } catch (err) {
+    setSelectedUserPedhinamuPrint(prev => !prev);
+    toast({ title: "ભૂલ", description: err.message || "સર્વર ભૂલ", status: "error", duration: 3000, isClosable: true, position: "top" });
+  }
 };
 
 // Logout
@@ -405,9 +470,9 @@ const filteredUsers = (users || []).filter(user => {
           {/* <Th fontSize="xs" color="#475569" fontWeight="700">
             ભૂમિકા
           </Th> */}
-          <Th fontSize="xs" color="#475569" fontWeight="700">
+          {/* <Th fontSize="xs" color="#475569" fontWeight="700">
             સ્થિતિ
-          </Th>
+          </Th> */}
           <Th fontSize="xs" color="#475569" fontWeight="700">
             નોંધણી તારીખ
           </Th>
@@ -448,14 +513,14 @@ const filteredUsers = (users || []).filter(user => {
               </Badge>
             </Td> */}
 
-            <Td>
+            {/* <Td>
               <VStack spacing={1} align="start">
-                {/* <Badge
+                <Badge
                   fontSize="xs"
                   colorScheme={user.isVerified ? "green" : "yellow"}
                 >
                   {user.isVerified ? "ચકાસેલ" : "બાકી"}
-                </Badge> */}
+                </Badge>
                 <Badge
                   fontSize="xs"
                   colorScheme={user.isPaid ? "blue" : "gray"}
@@ -463,7 +528,7 @@ const filteredUsers = (users || []).filter(user => {
                   {user.isPaid ? "એક્ટિવ" : "ઇનએક્ટિવ"}
                 </Badge>
               </VStack>
-            </Td>
+            </Td> */}
 
             <Td fontSize="xs" color="#64748b">
               {new Date(user.createdAt).toLocaleDateString("en-IN")}
@@ -547,19 +612,39 @@ const filteredUsers = (users || []).filter(user => {
             </Badge>
           </HStack> */}
 
-          <HStack justify="space-between" width="100%">
+        
+
+        
+           <HStack justify="space-between" width="100%">
+            <Text fontWeight="600" color="#475569" fontSize="sm">
+              ગામ :
+            </Text>
+            <Text color="#1e293b">{selectedUser.gam}</Text>
+          </HStack>
+
+            <HStack justify="space-between" width="100%">
+            <Text fontWeight="600" color="#475569" fontSize="sm">
+              તાલુકો:
+            </Text>
+            <Text color="#1e293b">{selectedUser.taluko}</Text>
+          </HStack> 
+
+
+            <HStack justify="space-between" width="100%">
+            <Text fontWeight="600" color="#475569" fontSize="sm">
+              જિલ્લો  :
+            </Text>
+            <Text color="#1e293b">{selectedUser.jillo}</Text>
+          </HStack>
+
+            <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">
               પિન કોડ:
             </Text>
             <Text color="#1e293b">{selectedUser.pinCode}</Text>
           </HStack>
 
-          <HStack justify="space-between" width="100%">
-            <Text fontWeight="600" color="#475569" fontSize="sm">
-              તાલુકો:
-            </Text>
-            <Text color="#1e293b">{selectedUser.taluko}</Text>
-          </HStack>
+
 
           <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">
@@ -583,25 +668,52 @@ const filteredUsers = (users || []).filter(user => {
             </Text>
           </HStack>
 
-          <HStack justify="space-between" width="100%">
+          {/* <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">
               ચકાસેલ:
             </Text>
             <Badge colorScheme={selectedUser.isVerified ? "green" : "yellow"}>
               {selectedUser.isVerified ? "હા" : "ના"}
             </Badge>
-          </HStack>
+          </HStack> */}
 
-          <HStack justify="space-between" width="100%">
+          {/* <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">
               પેઇડ:
             </Text>
             <Badge colorScheme={selectedUser.isPaid ? "green" : "yellow"}>
               {selectedUser.isPaid ? "હા" : "ના"}
             </Badge>
-          </HStack>
+          </HStack> */}
 
-          <HStack spacing={2} width="100%" mt={4}>
+          <Divider />
+
+          {/* Module toggles */}
+          <VStack spacing={3} align="start" width="100%">
+            <Text fontWeight="600" color="#475569" fontSize="sm">મોડ્યુલ અનુમતિ</Text>
+
+            <HStack justify="space-between" width="100%">
+              <Text>પેઢીનામું</Text>
+              <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.pedhinamu} onChange={(e) => handleToggleModule('pedhinamu', e.target.checked)} />
+            </HStack>
+
+            <HStack justify="space-between" width="100%">
+              <Text>રોજમેળ</Text>
+              <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.rojmel} onChange={(e) => handleToggleModule('rojmel', e.target.checked)} />
+            </HStack>
+
+            <HStack justify="space-between" width="100%">
+              <Text>માગણું</Text>
+              <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.magnu} onChange={(e) => handleToggleModule('magnu', e.target.checked)} />
+            </HStack>
+
+            <HStack justify="space-between" width="100%">
+              <Text>પેઢીનામું પ્રિન્ટ </Text>
+              <Switch size="md" colorScheme="teal" isChecked={selectedUserPedhinamuPrint} onChange={(e) => handleTogglePedhinamuPrint(e.target.checked)} />
+            </HStack>
+          </VStack>
+
+          {/* <HStack spacing={2} width="100%" mt={4}>
             {!selectedUser.isPaid ? (
               <Button
                 colorScheme="green"
@@ -619,7 +731,7 @@ const filteredUsers = (users || []).filter(user => {
                 યુઝરને ડીએક્ટિવેટ કરો
               </Button>
             )}
-          </HStack>
+          </HStack> */}
         </VStack>
       )}
     </ModalBody>
