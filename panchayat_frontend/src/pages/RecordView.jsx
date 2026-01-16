@@ -220,7 +220,10 @@ export default function RecordView() {
             const relLen = relationText.length;
             const contentWidth = Math.max(nameLen, relLen) * charWidth + paddingH;
             const nodeWidth = Math.max(minWidth, contentWidth);
-            const nodeHeight = isRotated ? (isDead ? 80 : 55) : (isDead ? 220 : 150); // Adjusted height
+           const nodeHeight = isRotated
+  ? (isDead ? 120 : 90)
+  : (isDead ? 300 : 210);
+
 
             return { width: nodeWidth, height: nodeHeight };
         }
@@ -284,12 +287,15 @@ export default function RecordView() {
             }
 
             const bg = isDead ? "#fef4f4" : "#ffffff";
-            const fontSize = isRotated ? 15 : 60; // 60px as requested
-            const subFontSize = isRotated ? 11 : 40;
+            const fontSize = isRotated ? 20 : 75; // 60px as requested
+            const subFontSize = isRotated ? 15 : 39;
 
             svgNodes += `
 <rect x="${x}" y="${yCenter - node.nodeHeight / 2}" width="${node.nodeWidth}" height="${node.nodeHeight}" rx="${isRotated ? 6 : 28}" ry="${isRotated ? 6 : 28}" fill="${bg}" stroke="none" />
-<text x="${xCenter}" y="${yCenter - (isDead ? (isRotated ? 17 : 65) : (isRotated ? 8 : 28))}" text-anchor="middle" font-size="${fontSize}" font-weight="700" text-decoration="underline" font-family="Noto Serif Gujarati" fill="#000">${textName}</text>
+<text x="${xCenter}" 
+y="${yCenter - (isDead ? (isRotated ? 22 : 85) : (isRotated ? 12 : 40))}"
+
+ " text-anchor="middle" font-size="${fontSize}" font-weight="700" text-decoration="underline" font-family="Noto Serif Gujarati" fill="#000">${textName}</text>
 `;
 
             if (isDead) {
@@ -305,7 +311,10 @@ export default function RecordView() {
             }
 
             svgNodes += `
-<text x="${xCenter}" y="${yCenter + (isDead ? (isRotated ? 30 : 92) : (isRotated ? 18 : 50))}" text-anchor="middle" font-size="${subFontSize + 2}" font-weight="700" fill="#444" font-family="Noto Serif Gujarati">${relationText}</text>
+<text x="${xCenter}"  
+y="${yCenter + (isDead ? (isRotated ? 38 : 120) : (isRotated ? 26 : 78))}"
+
+ text-anchor="middle" font-size="${subFontSize + 2}" font-weight="700" fill="#444" font-family="Noto Serif Gujarati">${relationText}</text>
 `;
 
             if (node.children) {
