@@ -18,6 +18,7 @@ import {
   FiTrendingUp,
 } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import { HiOutlineDocumentCurrencyRupee } from "react-icons/hi2";
 import { useEffect, useState } from "react";
 import { useApiFetch } from "../utils/api";
 import PaymentPopup from "../components/PaymentPopup";
@@ -29,7 +30,7 @@ export default function Dashboard() {
   const apiFetch = useApiFetch();
 
   const [user, setUser] = useState(null);
-    // console.log("User object:", user);
+  // console.log("User object:", user);
   // console.log("Gam:", user?.gam);
   const [userStatus, setUserStatus] = useState({
     canAccessModules: true,
@@ -150,9 +151,9 @@ export default function Dashboard() {
       <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700">
           🏛️ {user ? user.gam : t("appName")} ગ્રામ પંચાયત
-        
+
         </Heading>
-        
+
 
         <Flex gap={4}>
           <Button
@@ -212,7 +213,7 @@ export default function Dashboard() {
           </Text>
         </Box>
 
-      
+
 
         {/* Cashmel */}
         <Box
@@ -236,49 +237,49 @@ export default function Dashboard() {
         </Box>
 
         {/* project2 */}
- <Box
-  bg="white"
-  p={8}
-  rounded="2xl"
-  shadow="lg"
-  border="1px solid #E3EDE8"
-  textAlign="center"
-  cursor="pointer"
-  _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-  onClick={async () => {
-    try {
-      const { response, data } = await apiFetch("/api/register/user/status");
-      if (response.ok) {
-        const status = data.user;
-        const moduleAccess = status.modulesAccess?.magnu ?? false;
-        if (!moduleAccess) {
-          setPopupType("module");
-          setShowPaymentPopup(true);
-          return;
-        }
-        window.open("http://localhost:5174", "_blank");
-      } else {
-        setPopupType("module");
-        setShowPaymentPopup(true);
-      }
-    } catch (err) {
-      console.error(err);
-      setPopupType("module");
-      setShowPaymentPopup(true);
-    }
-  }}
->
-  <FiFileText size={40} color="#2A7F62" />
-  <Heading size="md" mt={4} color="#1E4D2B">
-    માગણું
-  </Heading>
-  <Text mt={2} color="gray.600">
-    {t("cardSettingsText")}
-  </Text>
-</Box>
+        <Box
+          bg="white"
+          p={8}
+          rounded="2xl"
+          shadow="lg"
+          border="1px solid #E3EDE8"
+          textAlign="center"
+          cursor="pointer"
+          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          onClick={async () => {
+            try {
+              const { response, data } = await apiFetch("/api/register/user/status");
+              if (response.ok) {
+                const status = data.user;
+                const moduleAccess = status.modulesAccess?.magnu ?? false;
+                if (!moduleAccess) {
+                  setPopupType("module");
+                  setShowPaymentPopup(true);
+                  return;
+                }
+                window.open("http://localhost:5174", "_blank");
+              } else {
+                setPopupType("module");
+                setShowPaymentPopup(true);
+              }
+            } catch (err) {
+              console.error(err);
+              setPopupType("module");
+              setShowPaymentPopup(true);
+            }
+          }}
+        >
+          <HiOutlineDocumentCurrencyRupee size={40} color="#2A7F62" />
+          <Heading size="md" mt={4} color="#1E4D2B">
+            જમીન મહેસુલ જમાબંધી હિસાબો
+          </Heading>
+          <Text mt={2} color="gray.600">
+            {t("cardSettingsText")}
+          </Text>
+        </Box>
 
 
-{/* Settings */}
+        {/* Settings */}
         <Box
           bg="white"
           p={8}
@@ -301,7 +302,7 @@ export default function Dashboard() {
 
       </SimpleGrid>
 
-        
+
 
       {/* PAYMENT POPUP */}
       <PaymentPopup

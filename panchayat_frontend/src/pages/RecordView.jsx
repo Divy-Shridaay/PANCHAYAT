@@ -193,17 +193,26 @@ export default function RecordView() {
 
 
     function generateSvgTree(root) {
+        function countNodes(n) {
+            let count = 1;
+            if (n.children) n.children.forEach(c => count += countNodes(c));
+            return count;
+        }
+
+        const totalNodes = countNodes(root);
+        const isSmall = totalNodes < 6;
+
         const isRotated = root.children && root.children.length > 4;
 
         // Optimized Parameters for Horizontal Mode (60px Font)
         const charWidth = isRotated ? 8.5 : 24;
         const minWidth = isRotated ? 120 : 320;
         const hGap = isRotated ? 30 : 100;
-        const vGap = isRotated ? 45 : 300; // Increased vertically as requested
+        const vGap = isRotated ? 45 : (isSmall ? 100 : 300); // Reduced for small trees
         const paddingH = isRotated ? 20 : 70;
         const topMargin = isRotated ? 20 : 90;
         const marginX = isRotated ? 20 : 80;
-        const depthOffset = isRotated ? 55 : 220; // Increased vertically as requested
+        const depthOffset = isRotated ? 55 : (isSmall ? 120 : 220); // Reduced for small trees
 
         const strokeWidth = isRotated ? 2 : 5;
         const strokeColor = "#000";
@@ -220,9 +229,9 @@ export default function RecordView() {
             const relLen = relationText.length;
             const contentWidth = Math.max(nameLen, relLen) * charWidth + paddingH;
             const nodeWidth = Math.max(minWidth, contentWidth);
-           const nodeHeight = isRotated
-  ? (isDead ? 120 : 90)
-  : (isDead ? 300 : 210);
+            const nodeHeight = isRotated
+                ? (isDead ? 120 : 90)
+                : (isDead ? (isSmall ? 250 : 300) : (isSmall ? 160 : 210)); // Dynamic height
 
 
             return { width: nodeWidth, height: nodeHeight };
@@ -287,8 +296,8 @@ export default function RecordView() {
             }
 
             const bg = isDead ? "#fef4f4" : "#ffffff";
-            const fontSize = isRotated ? 20 : 75; // 60px as requested
-            const subFontSize = isRotated ? 15 : 39;
+            const fontSize = isRotated ? 20 : 75; // Reverted to original
+            const subFontSize = isRotated ? 18 : 55; // Kept increased size for age
 
             svgNodes += `
 <rect x="${x}" y="${yCenter - node.nodeHeight / 2}" width="${node.nodeWidth}" height="${node.nodeHeight}" rx="${isRotated ? 6 : 28}" ry="${isRotated ? 6 : 28}" fill="${bg}" stroke="none" />
@@ -347,7 +356,7 @@ y="${yCenter + (isDead ? (isRotated ? 38 : 120) : (isRotated ? 26 : 78))}"
         }
 
         return `
-        <svg width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; display: block; margin: 20px auto; page-break-inside: avoid;">
+        <svg width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="max-width: ${isSmall ? '70%' : '100%'}; height: auto; display: block; margin: 20px auto; page-break-inside: avoid;">
             ${svgLines}
             ${svgNodes}
         </svg>
