@@ -7,6 +7,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;700&display=swap');
 
+/* ================= BASE ================= */
 body {
     font-family: "Noto Sans Gujarati", sans-serif;
     margin: 20px;
@@ -18,16 +19,17 @@ h3, h4 {
     margin: 4px 0;
 }
 
-/* ✅ SAFE UNDERLINE FOR PRINT / PDF */
+/* ================= UNDERLINE ================= */
 .underline {
     display: inline-block;
     padding-bottom: 2px;
     border-bottom: 2px solid #000;
 }
 
+/* ================= TABLE ================= */
 .table-wrapper {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: auto;   /* screen only */
 }
 
 table {
@@ -41,7 +43,6 @@ th, td {
     padding: 2px 4px;
     vertical-align: middle;
     text-align: center;
-    min-width: 40px;
 }
 
 th {
@@ -49,25 +50,15 @@ th {
     font-weight: 700;
 }
 
+td {
+    word-wrap: break-word;
+}
+
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 
-.summary {
-    font-weight: bold;
-    background: #e8e8e8;
-}
-
-.daily-total {
-    font-weight: bold;
-    background: #f2f2f2;
-}
-
-.opening-balance {
-    font-weight: bold;
-    background: #d8d8d8;
-}
-
+/* ================= FOOTER ================= */
 .footer-section {
     margin-top: 30px;
 }
@@ -78,17 +69,73 @@ th {
     border-collapse: collapse;
 }
 
-.footer-table th, .footer-table td {
+.footer-table th,
+.footer-table td {
     border: 1px solid #000;
     padding: 5px;
-    text-align: center;
 }
 
+/* ================= PRINT (NO ROTATION FIX) ================= */
 @media print {
-    body { margin: 10px; }
-    table { font-size: 8px; }
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .table-wrapper {
+    overflow: visible !important;
+    width: 100%;
+    /* Removed scale to avoid unnecessary shrinking */
+  }
+  
+  table {
+    width: 100% !important;
+    table-layout: auto;
+    page-break-inside: avoid;
+  }
+  
+  th, td {
+    font-size: 7px !important;  /* Increased from 5.5px for better readability, adjust if needed */
+    padding: 1px 2px !important;
+    line-height: 1.1;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    min-width: 8px;  /* Reduced min-width for better fitting */
+  }
+  
+  h3 {
+    font-size: 11px;
+    margin: 3px 0;
+  }
+  
+  h4 {
+    font-size: 9px;
+    margin: 2px 0;
+  }
+  
+  .footer-section {
+    margin-top: 10px;
+    /* Removed scale */
+  }
+  
+  .footer-table th,
+  .footer-table td {
+    font-size: 8px;  /* Adjusted for better look */
+    padding: 2px;
+  }
+  
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
 }
+
 </style>
+
 </head>
 
 <body>
@@ -98,7 +145,7 @@ th {
     <span class="underline">સામાન્ય રોકડમેળ</span>
 </h3>
 
-<h4>ગુજરાત રાજયના પંચાયતના સુધારેલા નિયમ ૫ મુજબ</h4>
+<h4>ગુજરાત રાજ્યના પંચાયતના સુધારેલા નિયમ ૫ મુજબ</h4>
 
 <h3>
     <span class="underline">{{taluko}}</span> : ગ્રામ પંચાયતનો  
@@ -109,8 +156,9 @@ th {
 
 <h4 style="text-align: right; margin-right: 20px;">ઉધાર</h4>
 
+<!-- ================= MAIN TABLE ================= -->
 <div class="table-wrapper">
-<table border="1" cellspacing="0" cellpadding="3">
+<table>
     <thead>
 
         <!-- ROW 1 -->
@@ -146,7 +194,7 @@ th {
 </table>
 </div>
 
-<!-- 🔹 તપસીલ -->
+<!-- ================= SUMMARY ================= -->
 <div class="footer-section">
     <h3 style="text-align:left; margin: 20px 0 10px;">તપસીલ : -</h3>
 
