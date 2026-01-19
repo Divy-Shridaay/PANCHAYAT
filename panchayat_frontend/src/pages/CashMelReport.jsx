@@ -706,7 +706,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     .replace("{{yearRange}}", fyGujarati)
                     .replace(
                         "{{dateRange}}",
-                        `${formatDateToGujarati(report.from)} થી ${formatDateToGujarati(report.to)}`
+                        `${formatDateToGujarati(report.from)} `
                     )
                     .replace("{{incomeHeaders}}", incomeHeadersHTML)
                     .replace("{{tableRows}}", tableRows)
