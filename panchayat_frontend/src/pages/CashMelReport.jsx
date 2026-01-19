@@ -75,7 +75,9 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         from: "",
         to: "",
         type: "aavak",
-        fy: ""
+        fy: "",
+        selectedBank: "",
+        selectedYear: ""
     });
 
     const dateErrorShownRef = useRef(false);
@@ -165,6 +167,14 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 return updated;
             }
 
+            // 🔥 If selectedYear is selected for checkIssue, auto-set from and to dates
+            if (key === "selectedYear" && value && prev.type === "checkIssue") {
+                const { from, to } = getDateRangeFromFY(value);
+                updated.from = from;
+                updated.to = to;
+                return updated;
+            }
+
             if ((key === "from" || key === "to") && value.length < 10) {
                 dateErrorShownRef.current = false;
                 return updated;
@@ -228,7 +238,27 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     };
 
     const handlePrintReport = async () => {
-        if (!report.from || !report.to) {
+        // Special validation for checkIssue
+        if (report.type === "checkIssue") {
+            if (!report.selectedBank) {
+                toast({
+                    title: "બેંક પસંદ કરો",
+                    status: "error",
+                    duration: 2000,
+                    position: "top",
+                });
+                return;
+            }
+            if (!report.selectedYear) {
+                toast({
+                    title: "આર્થિક વર્ષ પસંદ કરો",
+                    status: "error",
+                    duration: 2000,
+                    position: "top",
+                });
+                return;
+            }
+        } else if (!report.from || !report.to) {
             toast({
                 title: "તારીખ પસંદ કરો",
                 status: "error",
@@ -267,7 +297,8 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
                 const checkedRows = allRecords.filter(r =>
                     r.vyavharType === "javak" &&
-                    r.paymentMethod === "bank"
+                    r.paymentMethod === "bank" &&
+                    r.bank === report.selectedBank
                 );
 
                 if (checkedRows.length === 0) {
@@ -303,6 +334,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     .replace("{{taluko}}", talukoName)
                     .replace("{{userTaluko}}", user?.taluko || "")
                     .replace("{{userJillo}}", user?.jillo || "")
+                    .replace("{{bankName}}", report.selectedBank)
                     .replace("{{yearRange}}", fyGujarati)
                     .replace(
                         "{{dateRange}}",
@@ -1080,13 +1112,46 @@ if (!hasValidRecords) {
         onChange={(e) => handleReportChange("fy", e.target.value)}
         placeholder="આર્થિક વર્ષ પસંદ કરો"
     >
-        <option value="">આર્થિક વર્ષ પસંદ કરો</option>
+        {/* <option value="">આર્થિક વર્ષ પસંદ કરો</option> */}
         {getFinancialYears().map((fy) => (
             <option key={fy.value} value={fy.value}>
                 {fy.label}
             </option>
         ))}
     </Select>
+)}
+
+{/* 🔥 Bank and Year Dropdowns - Show ONLY for checkIssue */}
+{report.type === "checkIssue" && (
+    <>
+        <Select
+            width="180px"
+            value={report.selectedBank}
+            onChange={(e) => handleReportChange("selectedBank", e.target.value)}
+            placeholder="બેંક પસંદ કરો"
+        >
+            {/* <option value="">બેંક પસંદ કરો</option> */}
+            {banks.map((bank) => (
+                <option key={bank._id} value={bank.name}>
+                    {bank.name}
+                </option>
+            ))}
+        </Select>
+
+        <Select
+            width="180px"
+            value={report.selectedYear}
+            onChange={(e) => handleReportChange("selectedYear", e.target.value)}
+            placeholder="આર્થિક વર્ષ પસંદ કરો"
+        >
+            {/* <option value="">આર્થિક વર્ષ પસંદ કરો</option> */}
+            {getFinancialYears().map((fy) => (
+                <option key={fy.value} value={fy.value}>
+                    {fy.label}
+                </option>
+            ))}
+        </Select>
+    </>
 )}
 
 
@@ -1107,8 +1172,8 @@ if (!hasValidRecords) {
         />
     ) : (
         <>
-            {/* 🔥 Hide date inputs when FY is selected for tarij/aavak/javak */}
-           {report.type !== "tarij" && report.type !== "rojmel" && (
+            {/* 🔥 Hide date inputs when FY is selected for tarij/checkIssue or single date for rojmel */}
+           {report.type !== "tarij" && report.type !== "rojmel" && report.type !== "checkIssue" && (
                 <>
                     <DateInput
                         label="From "
