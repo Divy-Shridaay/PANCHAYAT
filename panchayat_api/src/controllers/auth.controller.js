@@ -78,13 +78,16 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     // ✅ FIX HERE
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+const transporter = nodemailer.createTransport({
+  host: "smtp.office365.com",   // FIXED
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  requireTLS: true,
+});
 
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;

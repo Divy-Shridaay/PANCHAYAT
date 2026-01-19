@@ -6,15 +6,18 @@ import { transliterateGujaratiToEnglish } from "../utils/toEnglish.js";
 
 dotenv.config();
 
-// ---------- Gmail transporter ----------
+// ----------  transporter ----------
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.office365.com",   // FIXED
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,   // ✅ correct
-
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
+  requireTLS: true,
 });
+
 
 
 
@@ -23,7 +26,7 @@ const transporter = nodemailer.createTransport({
 export const sendMail = async (to, subject, html) => {
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,  // Important Fix
+      from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`, // ✅ FIXED
       to,
       subject,
       html,
