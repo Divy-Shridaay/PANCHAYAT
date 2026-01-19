@@ -12,12 +12,13 @@ import {
   FiSettings,
   FiTrendingUp,
 } from "react-icons/fi";
+import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
 
 import {
-  
-  
+
+
   Button,
-  Flex        
+  Flex
 } from "@chakra-ui/react";
 
 
@@ -27,41 +28,41 @@ export default function PedhinamuHome() {
 
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
-    
-       {/* 🔙 LEFT */}
- <Flex align="center" mb={6}>
-  {/* 🔙 LEFT : Back Button */}
-  <Box width="180px">
-    <Button
-      leftIcon={<FiArrowLeft />}
-      colorScheme="green"
-      variant="outline"
-      onClick={() => navigate("/dashboard")}
-    >
-      પાછા જાવ
-    </Button>
-  </Box>
 
-  {/* 🟢 CENTER : Heading */}
-  <Heading
-    flex="1"
-    textAlign="center"
-    size="lg"
-    color="green.700"
-  >
-    {t("pedhinamu")}
-  </Heading>
+      {/* 🔙 LEFT */}
+      <Flex align="center" mb={6}>
+        {/* 🔙 LEFT : Back Button */}
+        <Box width="180px">
+          <Button
+            leftIcon={<FiArrowLeft />}
+            colorScheme="green"
+            variant="outline"
+            onClick={() => navigate("/dashboard")}
+          >
+            પાછા જાવ
+          </Button>
+        </Box>
 
-  {/* 👉 RIGHT : Empty space (for perfect centering) */}
-  <Box width="180px" />
-</Flex>
+        {/* 🟢 CENTER : Heading */}
+        <Heading
+          flex="1"
+          textAlign="center"
+          size="lg"
+          color="green.700"
+        >
+          {t("pedhinamu")}
+        </Heading>
+
+        {/* 👉 RIGHT : Empty space (for perfect centering) */}
+        <Box width="180px" />
+      </Flex>
 
 
       <SimpleGrid
-  columns={{ base: 1, md: 3 }}
-  spacing={8}
-  maxW="1200px"
->
+        columns={{ base: 1, md: 3 }}
+        spacing={8}
+        maxW="1200px"
+      >
 
 
         {/* CREATE NEW */}
@@ -98,26 +99,26 @@ export default function PedhinamuHome() {
           <Text mt={2}>{t("viewPedhinamuDesc")}</Text>
         </Box>
 
-          {/* CARD: Records */}
-                <Box
-                  bg="white"
-                  p={8}
-                  rounded="2xl"
-                  shadow="lg"
-                  border="1px solid #E3EDE8"
-                  textAlign="center"
-                  cursor="pointer"
-                  _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
-                  onClick={() => navigate("/records")}
-                >
-                  <FiFileText size={40} color="#2A7F62" />
-                  <Heading size="md" mt={4} color="#1E4D2B">
-                    {t("certificates")}
-                  </Heading>
-                  <Text mt={2} color="gray.600">
-                    {t("cardRecordsText")}
-                  </Text>
-                </Box>
+        {/* CARD: Records */}
+        <Box
+          bg="white"
+          p={8}
+          rounded="2xl"
+          shadow="lg"
+          border="1px solid #E3EDE8"
+          textAlign="center"
+          cursor="pointer"
+          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          onClick={() => navigate("/records")}
+        >
+          <HiOutlineClipboardDocumentCheck size={40} color="#2A7F62" />
+          <Heading size="md" mt={4} color="#1E4D2B">
+            {t("certificates")}
+          </Heading>
+          <Text mt={2} color="gray.600">
+            {t("cardRecordsText")}
+          </Text>
+        </Box>
 
       </SimpleGrid>
     </Box>
