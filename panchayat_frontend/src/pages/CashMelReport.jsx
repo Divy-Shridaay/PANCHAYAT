@@ -10,33 +10,50 @@ import {
 } from "@chakra-ui/react";
 import { FiPrinter } from "react-icons/fi";
 import { useRef } from "react";
+const formatDateInput = (value) => {
+    // only digits
+    const digits = value.replace(/\D/g, "");
+
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    if (digits.length <= 8)
+        return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+};
 
 // DateInput component (simplified for this artifact)
-const DateInput = ({ label, name, value, onDateChange, formatDisplayDate, convertToISO }) => {
-   
+const DateInput = ({ label, name, value, onDateChange }) => {
     return (
         <Box>
-            <label style={{ fontSize: '14px', fontWeight: 600 }}>{label}</label>
+            <label style={{ fontSize: "14px", fontWeight: 600 }}>
+                {label}
+            </label>
+
             <input
                 type="text"
                 placeholder="DD/MM/YYYY"
-                value={value}
+                value={value || ""}
+                maxLength={10}
+
                 onChange={(e) => {
-                    const display = formatDisplayDate(e.target.value);
-                    const iso = convertToISO(display);
-                    onDateChange(name, display);
+                    const formatted = formatDateInput(e.target.value);
+                    onDateChange(name, formatted);
                 }}
+
                 style={{
-                    width: '150px',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '6px',
-                    marginTop: '4px'
+                    width: "150px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "6px",
+                    marginTop: "4px",
                 }}
             />
         </Box>
     );
 };
+
+
 
 const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     const toast = useToast();
@@ -1156,7 +1173,7 @@ if (!hasValidRecords) {
 
 
 
-    {/* રોજમેળ માટે ખાસ સિંગલ ડેટ પિકર */}
+    {/* રોજમેળ માટે ખાસ સિંગલ ડેટ પિકર--- */}
     {report.type === "rojmel" ? (
         <DateInput
             label="તારીખ "
