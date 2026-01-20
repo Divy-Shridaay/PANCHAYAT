@@ -205,21 +205,23 @@ export default function RecordView() {
         const isRotated = root.children && root.children.length > 4;
 
         // Optimized Parameters for Horizontal Mode (60px Font)
-        const charWidth = isRotated ? 8.5 : 24;
-        const minWidth = isRotated ? 120 : 320;
-        const hGap = isRotated ? 30 : 100;
-        const vGap = isRotated ? 45 : (isSmall ? 100 : 300); // Reduced for small trees
-        const paddingH = isRotated ? 20 : 70;
-        const topMargin = isRotated ? 20 : 90;
-        const marginX = isRotated ? 20 : 80;
-        const depthOffset = isRotated ? 55 : (isSmall ? 120 : 220); // Reduced for small trees
+        // Optimized Parameters for Horizontal Mode (60px Font)
+        const charWidth = isRotated ? 8.5 : 32;
+        const minWidth = isRotated ? 120 : 400;
+        const hGap = isRotated ? 30 : 120;
+        const vGap = isRotated ? 45 : (isSmall ? 264 : 594); // Increased by 10%
+        const paddingH = isRotated ? 20 : 80;
+        const topMargin = isRotated ? 20 : 100;
+        const marginX = isRotated ? 20 : 100;
+        const depthOffset = isRotated ? 55 : (isSmall ? 238 : 396); // Increased by 10%
 
         const strokeWidth = isRotated ? 2 : 5;
         const strokeColor = "#000";
 
         function getNodeDimensions(node) {
             const isDead = node.isDeceased;
-            const textName = isDead ? `${node.name} (મૈયત)` : node.name;
+            const displayName = (!node.isRoot && node.name) ? node.name.split(' ')[0] : node.name;
+            const textName = isDead ? `${displayName} (મૈયત)` : displayName;
             let relationText = node.relation ? ` (${node.relation})` : "";
             if (!node.isDeceased) {
                 relationText += ` ઉંમર: ${toGujaratiDigits(node.age || "")}`;
@@ -231,7 +233,7 @@ export default function RecordView() {
             const nodeWidth = Math.max(minWidth, contentWidth);
             const nodeHeight = isRotated
                 ? (isDead ? 120 : 90)
-                : (isDead ? (isSmall ? 250 : 300) : (isSmall ? 160 : 210)); // Dynamic height
+                : (isDead ? (isSmall ? 300 : 360) : (isSmall ? 200 : 260)); // Dynamic height
 
 
             return { width: nodeWidth, height: nodeHeight };
@@ -289,20 +291,21 @@ export default function RecordView() {
             if (bottomY > maxReachedY) maxReachedY = bottomY;
 
             const isDead = node.isDeceased;
-            const textName = isDead ? `${node.name} (મૈયત)` : node.name;
+            const displayName = (!node.isRoot && node.name) ? node.name.split(' ')[0] : node.name;
+            const textName = isDead ? `${displayName} (મૈયત)` : displayName;
             let relationText = node.relation ? `(${node.relation})` : "";
             if (!node.isDeceased) {
                 relationText += ` ઉંમર: ${toGujaratiDigits(node.age || "")}`;
             }
 
-            const bg = isDead ? "#fef4f4" : "#ffffff";
-            const fontSize = isRotated ? 20 : 75; // Reverted to original
-            const subFontSize = isRotated ? 18 : 55; // Kept increased size for age
+            const bg = "#ffffff";
+            const fontSize = isRotated ? 22 : (node.isRoot ? 110 : 110);
+            const subFontSize = isRotated ? 20 : 90;
 
             svgNodes += `
 <rect x="${x}" y="${yCenter - node.nodeHeight / 2}" width="${node.nodeWidth}" height="${node.nodeHeight}" rx="${isRotated ? 6 : 28}" ry="${isRotated ? 6 : 28}" fill="${bg}" stroke="none" />
 <text x="${xCenter}" 
-y="${yCenter - (isDead ? (isRotated ? 22 : 85) : (isRotated ? 12 : 40))}"
+y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
 
  " text-anchor="middle" font-size="${fontSize}" font-weight="700" text-decoration="underline" font-family="Noto Serif Gujarati" fill="#000">${textName}</text>
 `;
@@ -314,16 +317,16 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 85) : (isRotated ? 12 : 40))}"
                 if (!secondLine && node.age) secondLine = `ઉંમર: ${toGujaratiDigits(node.age)} વર્ષ`;
 
                 svgNodes += `
-<text x="${xCenter}" y="${yCenter + (isRotated ? 0 : 5)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#555">${dob ? `જન્મ: ${dob}` : ""}</text>
-<text x="${xCenter}" y="${yCenter + (isRotated ? 14 : 52)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#555">${secondLine}</text>
+<text x="${xCenter}" y="${yCenter + (isRotated ? 0 : 20)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">${dob ? `જન્મ: ${dob}` : ""}</text>
+<text x="${xCenter}" y="${yCenter + (isRotated ? 14 : 85)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">${secondLine}</text>
 `;
             }
 
             svgNodes += `
 <text x="${xCenter}"  
-y="${yCenter + (isDead ? (isRotated ? 38 : 120) : (isRotated ? 26 : 78))}"
+ y="${yCenter + (isDead ? (isRotated ? 38 : 160) : (isRotated ? 26 : 100))}"
 
- text-anchor="middle" font-size="${subFontSize + 2}" font-weight="700" fill="#444" font-family="Noto Serif Gujarati">${relationText}</text>
+ text-anchor="middle" font-size="${subFontSize}" font-weight="700" fill="#000" font-family="Noto Serif Gujarati">${relationText}</text>
 `;
 
             if (node.children) {
