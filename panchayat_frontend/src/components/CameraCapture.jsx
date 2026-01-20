@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Box, Button, HStack, Image, VStack } from "@chakra-ui/react";
 
-const CameraCapture = ({ src, onCapture, onClear }) => {
+const CameraCapture = ({ src, onCapture, onClear, showRetake = true }) => {
   const [cameraOpen, setCameraOpen] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -101,7 +101,7 @@ const CameraCapture = ({ src, onCapture, onClear }) => {
           <canvas ref={canvasRef} hidden />
 
           <Button colorScheme="green" onClick={capturePhoto}>
-            📸 ફોટો ક્લિક કરો 
+            📸 ફોટો ક્લિક કરો
           </Button>
         </VStack>
       )}
@@ -121,12 +121,14 @@ const CameraCapture = ({ src, onCapture, onClear }) => {
           />
 
           <HStack mt={2}>
-            <Button size="sm" colorScheme="orange" onClick={handleRetake}>
-              🔄 retake
-            </Button>
+            {showRetake && (
+              <Button size="sm" colorScheme="orange" onClick={handleRetake}>
+                🔄 retake
+              </Button>
+            )}
 
             <Button size="sm" colorScheme="red" onClick={handleRemove}>
-              🗑 ફોટો દૂર કરો 
+              🗑 ફોટો દૂર કરો
             </Button>
           </HStack>
         </Box>

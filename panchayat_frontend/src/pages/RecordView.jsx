@@ -19,6 +19,72 @@ import { useToast } from "@chakra-ui/react";
 import { apiFetch } from "../utils/api.js";
 import PaymentPopup from "../components/PaymentPopup";
 
+const RecursiveFamilyMember = ({ member, t, level = 0 }) => {
+    // Determine children: support both subFamily.children and direct children property
+    const children = member.subFamily?.children || member.children || [];
+
+    // console.log(`[RecursiveFamilyMember] name=${member.name} level=${level} childrenCount=${children.length}`, children);
+
+    return (
+        <Box
+            mb={2}
+            p={3}
+            ml={level * 4} // Indent based on level
+            borderWidth="1px"
+            rounded="md"
+            borderColor={member.isDeceased ? "red.400" : "gray.200"}
+            bg={member.isDeceased ? "#F9EAEA" : "white"}
+            borderLeftWidth={level > 0 ? "4px" : "1px"}
+            borderLeftColor={level > 0 ? "blue.400" : (member.isDeceased ? "red.400" : "gray.200")}
+        >
+            <Text
+                fontWeight="600"
+                textDecoration={member.isDeceased ? "line-through" : "none"}
+                color={member.isDeceased ? "red.600" : "black"}
+            >
+                {member.name} {member.isDeceased && t("isDeceasedShort")}
+            </Text>
+
+            <Text><b>{t("age")}:</b> {member.age}</Text>
+            <Text><b>{t("relation")}:</b> {t(member.relation)}</Text>
+
+            {/* SPOUSE of this member */}
+            {member.spouse?.name?.trim() && (
+                <Box
+                    mt={2}
+                    p={2}
+                    bg="white"
+                    borderWidth="1px"
+                    rounded="md"
+                    borderColor={member.spouse.isDeceased ? "red.400" : "gray.300"}
+                >
+                    <Text
+                        fontWeight="600"
+                        fontSize="sm"
+                        color={member.spouse.isDeceased ? "red.600" : "green.600"}
+                    >
+                        {t("spouse")} {member.spouse.isDeceased && t("isDeceasedShort")}
+                    </Text>
+                    <Text fontSize="sm"><b>{t("name")}:</b> {member.spouse.name}</Text>
+                    <Text fontSize="sm"><b>{t("age")}:</b> {member.spouse.age || "-"}</Text>
+                    <Text fontSize="sm"><b>{t("relation")}:</b> {t(member.spouse.relation)}</Text>
+                </Box>
+            )}
+
+
+
+            {/* Recursively render children */}
+            {children.length > 0 && (
+                <Box mt={2}>
+                    {children.map((child, index) => (
+                        <RecursiveFamilyMember key={index} member={child} t={t} level={level + 1} />
+                    ))}
+                </Box>
+            )}
+        </Box>
+    );
+};
+
 export default function RecordView() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -32,6 +98,8 @@ export default function RecordView() {
     useEffect(() => {
         (async () => {
             const { response, data } = await apiFetch(`/api/pedhinamu/${id}`, {}, navigate, toast);
+            console.log("API DATA:", data);
+
             setData(data);
         })();
 
@@ -894,26 +962,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
                                     <Divider my={2} />
 
                                     {h.subFamily.children.map((c, index) => (
-                                        <Box
-                                            key={index}
-                                            mb={2}
-                                            p={2}
-                                            borderWidth="1px"
-                                            rounded="md"
-                                            borderColor={c.isDeceased ? "red.400" : "gray.200"}
-                                            bg={c.isDeceased ? "#F9EAEA" : "white"}
-                                        >
-                                            <Text
-                                                fontWeight="600"
-                                                textDecoration={c.isDeceased ? "line-through" : "none"}
-                                                color={c.isDeceased ? "red.600" : "black"}
-                                            >
-                                                {c.name} {c.isDeceased && t("isDeceasedShort")}
-                                            </Text>
-
-                                            <Text><b>{t("age")}:</b> {c.age}</Text>
-                                            <Text><b>{t("relation")}:</b> {t(c.relation)}</Text>
-                                        </Box>
+                                        <RecursiveFamilyMember key={index} member={c} t={t} level={0} />
                                     ))}
                                 </Box>
                             )}
@@ -1029,6 +1078,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
                 onClose={() => setShowPaymentPopup(false)}
                 type="print"
             />
+
         </Box>
     );
-}           
+}

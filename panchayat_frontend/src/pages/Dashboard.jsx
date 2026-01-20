@@ -274,7 +274,7 @@ export default function Dashboard() {
             જમીન મહેસુલ જમાબંધી હિસાબો
           </Heading>
           <Text mt={2} color="gray.600">
-            {t("cardSettingsText")}
+            {t("cardmangnutext")}
           </Text>
         </Box>
 

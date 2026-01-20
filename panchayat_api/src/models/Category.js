@@ -6,6 +6,7 @@ const schema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date },
   isDeleted: { type: Boolean, default: false },
+  isDefault: { type: Boolean, default: false },
 });
 
 export default mongoose.model("Category", schema);

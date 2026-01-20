@@ -33,6 +33,7 @@ export const updateCategory = async (req, res, next) => {
     if (!name) return res.status(400).json({ message: "Missing name" });
     const cat = await Category.findById(id);
     if (!cat || cat.isDeleted) return res.status(404).json({ message: "Not found" });
+    if (cat.isDefault) return res.status(403).json({ message: "Cannot edit default category" });
     cat.name = name.trim();
     cat.updatedAt = Date.now();
     await cat.save();
@@ -47,6 +48,7 @@ export const softDeleteCategory = async (req, res, next) => {
     const { id } = req.params;
     const cat = await Category.findById(id);
     if (!cat || cat.isDeleted) return res.status(404).json({ message: "Not found" });
+    if (cat.isDefault) return res.status(403).json({ message: "Cannot delete default category" });
     cat.isDeleted = true;
     cat.updatedAt = Date.now();
     await cat.save();

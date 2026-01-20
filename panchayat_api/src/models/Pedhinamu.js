@@ -51,6 +51,9 @@ import mongoose from "mongoose";
 /* ======================================================
    GRANDCHILDREN (3rd Level)
 ====================================================== */
+/* ======================================================
+   GRANDCHILDREN (3rd Level)
+====================================================== */
 const GrandChildSchema = new mongoose.Schema({
   name: String,
   age: String,
@@ -61,8 +64,11 @@ const GrandChildSchema = new mongoose.Schema({
 
   isDeceased: { type: Boolean, default: false },
   dod: String,
-  dodDisplay: String
-});
+  dodDisplay: String,
+
+  // Allow further nesting (Level 4+)
+  children: []
+}, { strict: false }); // Allow loose structure for deep nesting if needed
 
 /* ======================================================
    CHILDREN OF HEIRS (2nd Level)

@@ -218,26 +218,30 @@ const CategorySettings = () => {
                     <Text fontWeight="500">{c.name}</Text>
 
                     <HStack spacing={2}>
-                      <Button
-                        size="sm"
-                        colorScheme="blue"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingId(c._id);
-                          setEditingName(c.name);
-                        }}
-                      >
-                        એડિટ
-                      </Button>
+                      {!c.isDefault && (
+                        <>
+                          <Button
+                            size="sm"
+                            colorScheme="blue"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingId(c._id);
+                              setEditingName(c.name);
+                            }}
+                          >
+                            એડિટ
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        colorScheme="red"
-                        variant="outline"
-                        onClick={() => deleteCategory(c._id)}
-                      >
-                        ડિલીટ
-                      </Button>
+                          <Button
+                            size="sm"
+                            colorScheme="red"
+                            variant="outline"
+                            onClick={() => deleteCategory(c._id)}
+                          >
+                            ડિલીટ
+                          </Button>
+                        </>
+                      )}
                     </HStack>
                   </>
                 )}

@@ -65,6 +65,7 @@ export default function FullForm() {
     applicantAadhaar: "",
     applicantPhotoFile: null,
     applicantPhotoPreview: null,
+    applicantPhotoSource: null, // "camera" | "file" | "db"
     applicationDate: "",
     deceasedPersons: [],
     notaryName: "",
@@ -104,6 +105,8 @@ export default function FullForm() {
   const navigate = useNavigate();
   const [invalidFields, setInvalidFields] = useState({});
   const formRef = useRef({});
+  const applicantFileRef = useRef(null);
+  const panchFileRefs = useRef([]);
   const source = params.get("from");
 
   const handleBack = () => {
@@ -126,7 +129,7 @@ export default function FullForm() {
   const updatePanch = (index, key, value) => {
     setForm((prev) => {
       const updated = [...prev.panch];
-      updated[index][key] = value;
+      updated[index] = { ...updated[index], [key]: value };
       return { ...prev, panch: updated };
     });
   };
@@ -264,6 +267,9 @@ export default function FullForm() {
           ? `${API_BASE_URL}${existingApplicantPhoto}`
 
           : null,
+        applicantPhotoSource: savedForm.applicantPhotoSource || (existingApplicantPhoto ?
+          ((existingApplicantPhoto.toLowerCase().endsWith(".png") || existingApplicantPhoto.toLowerCase().endsWith(".webp")) ? "camera" : "db")
+          : null),
 
         deceasedPersons: deceasedList.map((p) => ({
           name: p.name,
@@ -299,11 +305,14 @@ export default function FullForm() {
                 ? `${API_BASE_URL}${p.photo}`
 
                 : null,
+              photoSource: p.photoSource || (p.photo ?
+                ((p.photo.toLowerCase().endsWith(".png") || p.photo.toLowerCase().endsWith(".webp")) ? "camera" : "db")
+                : null),
             }))
             : [
-              { name: "", age: "", occupation: "", aadhaar: "", mobile: "" },
-              { name: "", age: "", occupation: "", aadhaar: "", mobile: "" },
-              { name: "", age: "", occupation: "", aadhaar: "", mobile: "" },
+              { name: "", age: "", occupation: "", aadhaar: "", mobile: "", photoSource: null },
+              { name: "", age: "", occupation: "", aadhaar: "", mobile: "", photoSource: null },
+              { name: "", age: "", occupation: "", aadhaar: "", mobile: "", photoSource: null },
             ],
       }));
 
@@ -517,7 +526,7 @@ export default function FullForm() {
     // 🔥 FIX: Send panch data with DB photo paths (not preview URLs)
     const panchDataForJson = cleanForm.panch.map((p) => {
       const { photoFile, photoPreview, ...panchData } = p;
-      return panchData; // This will include the 'photo' field with DB path
+      return panchData; // photoSource is already here
     });
 
     formData.append("panch", JSON.stringify(panchDataForJson));
@@ -531,7 +540,7 @@ export default function FullForm() {
       if (key !== "panch" &&
         key !== "applicantPhotoFile" &&
         key !== "applicantPhotoPreview" &&
-        key !== "applicantPhoto") { // Don't send applicantPhoto in body
+        key !== "applicantPhoto") {
         if (typeof cleanForm[key] === "object" && cleanForm[key] !== null) {
           formData.append(key, JSON.stringify(cleanForm[key]));
         } else {
@@ -698,19 +707,19 @@ export default function FullForm() {
 
           {/* File Upload */}
           <Input
+            ref={applicantFileRef}
             type="file"
             accept="image/*"
-            disabled={!!form.applicantPhotoFile}
+            disabled={!!form.applicantPhotoPreview}
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
-                // 🔥 Clear camera photo first
-                handleChange("applicantPhotoFile", null);
-                handleChange("applicantPhotoPreview", null);
-
-                // 🔥 Set file upload photo
-                handleChange("applicantPhotoFile", file);
-                handleChange("applicantPhotoPreview", URL.createObjectURL(file));
+                setForm(prev => ({
+                  ...prev,
+                  applicantPhotoFile: file,
+                  applicantPhotoPreview: URL.createObjectURL(file),
+                  applicantPhotoSource: "file"
+                }));
               }
             }}
           />
@@ -720,13 +729,24 @@ export default function FullForm() {
           <Box mt={2}>
             <CameraCapture
               src={form.applicantPhotoPreview}
+              showRetake={form.applicantPhotoSource === "camera"}
               onCapture={(file, url) => {
-                handleChange("applicantPhotoFile", file);
-                handleChange("applicantPhotoPreview", url);
+                setForm(prev => ({
+                  ...prev,
+                  applicantPhotoFile: file,
+                  applicantPhotoPreview: url,
+                  applicantPhotoSource: "camera"
+                }));
+                if (applicantFileRef.current) applicantFileRef.current.value = "";
               }}
               onClear={() => {
-                handleChange("applicantPhotoFile", null);
-                handleChange("applicantPhotoPreview", null);
+                setForm(prev => ({
+                  ...prev,
+                  applicantPhotoFile: null,
+                  applicantPhotoPreview: null,
+                  applicantPhotoSource: null
+                }));
+                if (applicantFileRef.current) applicantFileRef.current.value = "";
               }}
             />
           </Box>
@@ -836,17 +856,23 @@ export default function FullForm() {
 
               {/* File Upload */}
               <Input
+                ref={(el) => (panchFileRefs.current[i] = el)}
                 type="file"
                 accept="image/*"
-                disabled={!!p.photoFile}
+                disabled={!!p.photoPreview}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    updatePanch(i, "photoFile", null);
-                    updatePanch(i, "photoPreview", null);
-
-                    updatePanch(i, "photoFile", file);
-                    updatePanch(i, "photoPreview", URL.createObjectURL(file));
+                    setForm(prev => {
+                      const updated = [...prev.panch];
+                      updated[i] = {
+                        ...updated[i],
+                        photoFile: file,
+                        photoPreview: URL.createObjectURL(file),
+                        photoSource: "file"
+                      };
+                      return { ...prev, panch: updated };
+                    });
                   }
                 }}
               />
@@ -856,13 +882,32 @@ export default function FullForm() {
               <Box mt={2}>
                 <CameraCapture
                   src={p.photoPreview}
+                  showRetake={p.photoSource === "camera"}
                   onCapture={(file, url) => {
-                    updatePanch(i, "photoFile", file);
-                    updatePanch(i, "photoPreview", url);
+                    setForm(prev => {
+                      const updated = [...prev.panch];
+                      updated[i] = {
+                        ...updated[i],
+                        photoFile: file,
+                        photoPreview: url,
+                        photoSource: "camera"
+                      };
+                      return { ...prev, panch: updated };
+                    });
+                    if (panchFileRefs.current[i]) panchFileRefs.current[i].value = "";
                   }}
                   onClear={() => {
-                    updatePanch(i, "photoFile", null);
-                    updatePanch(i, "photoPreview", null);
+                    setForm(prev => {
+                      const updated = [...prev.panch];
+                      updated[i] = {
+                        ...updated[i],
+                        photoFile: null,
+                        photoPreview: null,
+                        photoSource: null
+                      };
+                      return { ...prev, panch: updated };
+                    });
+                    if (panchFileRefs.current[i]) panchFileRefs.current[i].value = "";
                   }}
                 />
               </Box>

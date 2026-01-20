@@ -304,7 +304,7 @@ export default function Pedhinamu() {
 
             // ✅ MAIN PERSON NAME REQUIRED
             if (!form.mukhyaName || !form.mukhyaName.trim()) {
-                showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
+                showError("મુખ્ય વ્યક્તિનું નામ જરૂરી છે");
                 return;
             }
 
@@ -755,7 +755,10 @@ export default function Pedhinamu() {
                                 dobDisplay: gc.dobDisplay || "",
                                 isDeceased: gc.isDeceased || false,
                                 dod: gc.isDeceased ? (gc.dod || "") : "",
-                                dodDisplay: gc.isDeceased ? (gc.dodDisplay || "") : ""
+                                dodDisplay: gc.isDeceased ? (gc.dodDisplay || "") : "",
+                                // Support further nesting
+                                spouse: gc.spouse ? { ...gc.spouse } : null,
+                                children: (gc.children || []).map(ggc => ({ ...ggc }))
                             }))
                         }))
                     }
@@ -1166,7 +1169,7 @@ export default function Pedhinamu() {
 
                                 // 🔴 NAME REQUIRED (STEP 1)
                                 if (!form.mukhyaName || !form.mukhyaName.trim()) {
-                                    showError("મુખ્યા વ્યક્તિનું નામ જરૂરી છે");
+                                    showError("મુખ્ય વ્યક્તિનું નામ જરૂરી છે");
                                     return;
                                 }
 
@@ -1414,7 +1417,7 @@ export default function Pedhinamu() {
                                         <FormControl>
                                             <FormLabel>{t("deathDate")}</FormLabel>
 
-                                            <HStack>
+                                            <HStack spacing={3} align="center">
                                                 <Input
                                                     type="text"
                                                     placeholder="DD/MM/YYYY"
@@ -1446,6 +1449,11 @@ export default function Pedhinamu() {
                                                         setForm({ ...form, heirs: updated });
                                                     }}
                                                 />
+
+                                                <Text fontWeight="bold" color="green.700">
+                                                    {t("orText")}
+                                                </Text>
+
                                                 <Input
                                                     size="lg"
                                                     width="120px"
@@ -1522,7 +1530,7 @@ export default function Pedhinamu() {
                                                 <HStack spacing={3}>
                                                     {/* SPOUSE DOB + AGE */}
                                                     <FormControl>
-                                                        <FormLabel>{t("spouseBirthDate")}</FormLabel>
+                                                        <FormLabel>{t("birthDateAge")}</FormLabel>
 
                                                         <HStack spacing={3} align="center">
 
@@ -1654,7 +1662,7 @@ export default function Pedhinamu() {
                                                         <FormControl>
                                                             <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                            <HStack>
+                                                            <HStack spacing={3} align="center">
                                                                 <Input
                                                                     type="text"
                                                                     placeholder="DD/MM/YYYY"
@@ -1686,6 +1694,11 @@ export default function Pedhinamu() {
                                                                         setForm({ ...form, heirs: u });
                                                                     }}
                                                                 />
+
+                                                                <Text fontWeight="bold" color="green.700">
+                                                                    {t("orText")}
+                                                                </Text>
+
                                                                 <Input
                                                                     size="lg"
                                                                     width="120px"
@@ -1816,7 +1829,7 @@ export default function Pedhinamu() {
 
                                                                     <HStack spacing={3}>
                                                                         <FormControl>
-                                                                            <FormLabel>{t("spouseBirthDate")}</FormLabel>
+                                                                            <FormLabel>{t("birthDateAge")}</FormLabel>
 
                                                                             <HStack spacing={3} align="center">
 
@@ -1859,33 +1872,27 @@ export default function Pedhinamu() {
                                                                                 />
 
                                                                                 {/* OR TEXT */}
-                                                                                {/* <Text fontWeight="bold" color="green.700">
+                                                                                <Text fontWeight="bold" color="green.700">
                                                                                     {t("orText")}
-                                                                                </Text> */}
+                                                                                </Text>
 
-                                                                                {/* SPOUSE AGE (Alive) */}
                                                                                 {/* SPOUSE AGE - Unified */}
-                                                                                <FormControl w="150px">
-                                                                                    <FormLabel>{t("spouseAge")}</FormLabel>
-
-                                                                                    <Input
-                                                                                        size="lg"
-                                                                                        bg="gray.100"
-                                                                                        value={child.spouse?.isDeceased ? "" : (child.spouse?.age || "")}
-                                                                                        isReadOnly={child.spouse?.isDeceased}
-                                                                                        placeholder={t("age")}
-                                                                                        onChange={(e) => {
-                                                                                            if (child.spouse?.isDeceased) return;
-                                                                                            const value = e.target.value;
-                                                                                            if (value && !/^[0-9]{1,3}$/.test(value)) return;
-                                                                                            const u = structuredClone(form.heirs);
-                                                                                            u[i].subFamily.children[ci].spouse.age = value;
-                                                                                            setForm({ ...form, heirs: u });
-                                                                                        }}
-                                                                                    />
-
-                                                                                </FormControl>
-
+                                                                                <Input
+                                                                                    size="lg"
+                                                                                    width="120px"
+                                                                                    bg="gray.100"
+                                                                                    value={child.spouse?.isDeceased ? "" : (child.spouse?.age || "")}
+                                                                                    isReadOnly={child.spouse?.isDeceased}
+                                                                                    placeholder={t("age")}
+                                                                                    onChange={(e) => {
+                                                                                        if (child.spouse?.isDeceased) return;
+                                                                                        const value = e.target.value;
+                                                                                        if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                                        const u = structuredClone(form.heirs);
+                                                                                        u[i].subFamily.children[ci].spouse.age = value;
+                                                                                        setForm({ ...form, heirs: u });
+                                                                                    }}
+                                                                                />
                                                                             </HStack>
                                                                         </FormControl>
                                                                     </HStack>
@@ -1958,7 +1965,7 @@ export default function Pedhinamu() {
                                                                             <FormControl mt={3}>
                                                                                 <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                                                <HStack>
+                                                                                <HStack spacing={3} align="center">
                                                                                     <Input
                                                                                         type="text"
                                                                                         placeholder="DD/MM/YYYY"
@@ -1990,6 +1997,11 @@ export default function Pedhinamu() {
                                                                                             setForm({ ...form, heirs: u });
                                                                                         }}
                                                                                     />
+
+                                                                                    <Text fontWeight="bold" color="green.700">
+                                                                                        {t("orText")}
+                                                                                    </Text>
+
                                                                                     <Input
                                                                                         size="lg"
                                                                                         width="120px"
@@ -2179,9 +2191,9 @@ export default function Pedhinamu() {
                                                                                                 />
 
                                                                                                 {/* OR TEXT */}
-                                                                                                {/* <Text fontWeight="bold" color="green.700">
+                                                                                                <Text fontWeight="bold" color="green.700">
                                                                                                     {t("orText")}
-                                                                                                </Text> */}
+                                                                                                </Text>
 
                                                                                                 {/* MANUAL AGE INPUT - Unified */}
                                                                                                 <Input
@@ -2272,6 +2284,11 @@ export default function Pedhinamu() {
                                                                                                                 setForm({ ...form, heirs: u });
                                                                                                             }}
                                                                                                         />
+
+                                                                                                        <Text fontWeight="bold" color="green.700">
+                                                                                                            {t("orText")}
+                                                                                                        </Text>
+
                                                                                                         <Input
                                                                                                             size="lg"
                                                                                                             width="120px"

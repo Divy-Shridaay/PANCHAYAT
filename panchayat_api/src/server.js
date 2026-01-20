@@ -39,18 +39,12 @@ app.listen(process.env.PORT, () =>
 
 const seedDefaultCategories = async () => {
   for (const cat of defaultCategories) {
-    const exists = await Category.findOne({
-      name: cat.name,
-      type: cat.type,
-    });
-
-    if (!exists) {
-      await Category.create({
-        name: cat.name,
-        type: cat.type,
-      });
-    }
+    await Category.findOneAndUpdate(
+      { name: cat.name, type: cat.type },
+      { $set: { isDefault: true } },
+      { upsert: true, new: true }
+    );
   }
 
-  console.log("✅ Default categories ensured");
+  console.log("✅ Default categories ensured and protected");
 };

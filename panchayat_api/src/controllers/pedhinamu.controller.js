@@ -34,7 +34,7 @@ export const createPedhinamu = async (req, res) => {
         name: d.mukhya.name,
         age: d.mukhya.age,
         dob: d.mukhya.dob || "",
-          hasMultipleWives: d.hasMultipleWives || false,
+        hasMultipleWives: d.hasMultipleWives || false,
         dobDisplay: d.mukhya.dobDisplay || "",
         isDeceased: d.mukhya.isDeceased || false,
         dod: d.mukhya.dod || "",
@@ -108,11 +108,11 @@ export const createPedhinamu = async (req, res) => {
 
     const saved = await Pedhinamu.create(data);
 
-res.json({
-  success: true,
-  message: "Pedhinamu saved successfully",
-  data: saved
-});
+    res.json({
+      success: true,
+      message: "Pedhinamu saved successfully",
+      data: saved
+    });
 
 
   } catch (err) {
@@ -214,7 +214,7 @@ export const saveFullForm = async (req, res) => {
       console.log("✅ Applicant photo saved:", applicantPhotoPath);
     } else {
       console.log("ℹ️ No new applicant photo uploaded");
-      
+
       // 🔥 FIX: Keep existing photo if no new upload
       const existingForm = await PedhinamuFormDetails.findOne({ pedhinamuId: id });
       if (existingForm?.applicantPhoto) {
@@ -240,7 +240,7 @@ export const saveFullForm = async (req, res) => {
       });
     } else {
       console.log("ℹ️ No new panch photos uploaded");
-      
+
       // 🔥 FIX: Keep existing panch photos if no new upload
       const existingForm = await PedhinamuFormDetails.findOne({ pedhinamuId: id });
       if (existingForm?.panch) {
@@ -270,6 +270,7 @@ export const saveFullForm = async (req, res) => {
       applicantSurname: body.applicantSurname || "",
       applicantMobile: body.applicantMobile || "",
       applicantAadhaar: body.applicantAadhaar || "",
+      applicantPhotoSource: body.applicantPhotoSource || "",
       applicationDate: body.applicationDate || "",
 
       mukhyaName: body.mukhyaName || "",
@@ -286,7 +287,7 @@ export const saveFullForm = async (req, res) => {
       jaminSurveyNo: body.jaminSurveyNo || "",
       jaminKhatano: body.jaminKhatano || "",
       makanMilkatAkarniNo: body.makanMilkatAkarniNo || "",
-any: body.any || "",
+      any: body.any || "",
 
       reasonForPedhinamu: body.reasonForPedhinamu || "",
 
@@ -346,6 +347,13 @@ export const getFullPedhinamu = async (req, res) => {
     }
 
     const form = await PedhinamuFormDetails.findOne({ pedhinamuId: id });
+
+
+
+    console.log("DB Pedhinamu Heirs:", JSON.stringify(pedhinamu.heirs, null, 2));
+    if (form) {
+      console.log("DB Form Heirs:", JSON.stringify(form.heirs, null, 2));
+    }
 
     res.json({
       success: true,
@@ -420,5 +428,5 @@ export const softDeletePedhinamu = async (req, res) => {
 
 
 
-  
+
 };

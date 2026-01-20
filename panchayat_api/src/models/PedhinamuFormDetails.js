@@ -14,6 +14,7 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
     applicantMobile: String,
     applicantAadhaar: String,
     applicantPhoto: String,
+    applicantPhotoSource: String,
     applicationDate: String,
 
 
@@ -43,7 +44,8 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
         occupation: String,
         aadhaar: String,
         mobile: String,
-        photo: String
+        photo: String,
+        photoSource: String
       }
     ],
 
@@ -75,14 +77,14 @@ const PedhinamuFormDetailsSchema = new mongoose.Schema(
     jaminSurveyNo: String,
     jaminKhatano: String,
     makanMilkatAkarniNo: {
-  type: String,
-  default: ""
-},
+      type: String,
+      default: ""
+    },
 
-any: {
-  type: String,
-  default: ""
-},
+    any: {
+      type: String,
+      default: ""
+    },
 
     reasonForPedhinamu: String,
 
