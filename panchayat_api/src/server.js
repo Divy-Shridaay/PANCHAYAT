@@ -41,7 +41,7 @@ const seedDefaultCategories = async () => {
   for (const cat of defaultCategories) {
     await Category.findOneAndUpdate(
       { name: cat.name, type: cat.type },
-      { $set: { isDefault: true } },
+      { $set: { isDefault: true, isDeleted: false } },
       { upsert: true, new: true }
     );
   }

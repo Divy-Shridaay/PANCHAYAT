@@ -202,6 +202,18 @@ export const saveFullForm = async (req, res) => {
       });
     }
 
+    // ---------- BACKEND VALIDATION ----------
+    for (let i = 0; i < panch.length; i++) {
+      const p = panch[i];
+      if (!p.name || !String(p.name).trim()) {
+        return res.status(400).json({ error: `પંચ નં ${i + 1} નું નામ જરૂરી છે` });
+      }
+      const ageNum = parseInt(p.age);
+      if (!p.age || isNaN(ageNum) || ageNum < 18) {
+        return res.status(400).json({ error: `પંચ નં ${i + 1} ની ઉંમર 18 વર્ષથી વધુ હોવી જોઈએ` });
+      }
+    }
+
     // =====================================================
     // ✅ FILE UPLOAD HANDLING
     // =====================================================

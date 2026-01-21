@@ -23,59 +23,65 @@ const RecursiveFamilyMember = ({ member, t, level = 0 }) => {
     // Determine children: support both subFamily.children and direct children property
     const children = member.subFamily?.children || member.children || [];
 
-    // console.log(`[RecursiveFamilyMember] name=${member.name} level=${level} childrenCount=${children.length}`, children);
-
     return (
         <Box
             mb={2}
-            p={3}
-            ml={level * 4} // Indent based on level
+            p={level === 0 ? 2 : 2}
+            ml={0} // Align with parent's spouse box
             borderWidth="1px"
             rounded="md"
-            borderColor={member.isDeceased ? "red.400" : "gray.200"}
+            borderColor={member.isDeceased ? "red.400" : (level === 0 ? "gray.200" : "gray.300")}
             bg={member.isDeceased ? "#F9EAEA" : "white"}
-            borderLeftWidth={level > 0 ? "4px" : "1px"}
-            borderLeftColor={level > 0 ? "blue.400" : (member.isDeceased ? "red.400" : "gray.200")}
         >
-            <Text
-                fontWeight="600"
-                textDecoration={member.isDeceased ? "line-through" : "none"}
-                color={member.isDeceased ? "red.600" : "black"}
-            >
-                {member.name} {member.isDeceased && t("isDeceasedShort")}
-            </Text>
+            {level === 0 ? (
+                <Text
+                    fontWeight="600"
+                    textDecoration={member.isDeceased ? "line-through" : "none"}
+                    color={member.isDeceased ? "red.600" : "black"}
+                >
+                    {member.name} {member.isDeceased && t("isDeceasedShort")}
+                </Text>
+            ) : (
+                <Text
+                    fontSize="sm"
+                    textDecoration={member.isDeceased ? "line-through" : "none"}
+                    color={member.isDeceased ? "red.600" : "black"}
+                >
+                    <b>{t("name")}:</b> {member.name} {member.isDeceased && t("isDeceasedShort")}
+                </Text>
+            )}
 
-            <Text><b>{t("age")}:</b> {member.age}</Text>
-            <Text><b>{t("relation")}:</b> {t(member.relation)}</Text>
+            <Text fontSize={level === 0 ? "md" : "sm"}><b>{t("age")}:</b> {member.age}</Text>
+            <Text fontSize={level === 0 ? "md" : "sm"}><b>{t("relation")}:</b> {t(member.relation)}</Text>
 
             {/* SPOUSE of this member */}
             {member.spouse?.name?.trim() && (
-                <Box
-                    mt={2}
-                    p={2}
-                    bg="white"
-                    borderWidth="1px"
-                    rounded="md"
-                    borderColor={member.spouse.isDeceased ? "red.400" : "gray.300"}
-                >
+                <>
                     <Text
                         fontWeight="600"
                         fontSize="sm"
                         color={member.spouse.isDeceased ? "red.600" : "green.600"}
+                        mt={2}
                     >
                         {t("spouse")} {member.spouse.isDeceased && t("isDeceasedShort")}
                     </Text>
-                    <Text fontSize="sm"><b>{t("name")}:</b> {member.spouse.name}</Text>
-                    <Text fontSize="sm"><b>{t("age")}:</b> {member.spouse.age || "-"}</Text>
-                    <Text fontSize="sm"><b>{t("relation")}:</b> {t(member.spouse.relation)}</Text>
-                </Box>
+                    <Box
+                        p={2}
+                        bg="white"
+                        borderWidth="1px"
+                        rounded="md"
+                        borderColor={member.spouse.isDeceased ? "red.400" : "gray.300"}
+                    >
+                        <Text fontSize="sm"><b>{t("name")}:</b> {member.spouse.name}</Text>
+                        <Text fontSize="sm"><b>{t("age")}:</b> {member.spouse.age || "-"}</Text>
+                        <Text fontSize="sm"><b>{t("relation")}:</b> {t(member.spouse.relation)}</Text>
+                    </Box>
+                </>
             )}
-
-
 
             {/* Recursively render children */}
             {children.length > 0 && (
-                <Box mt={2}>
+                <Box mt={2} pl={0}>
                     {children.map((child, index) => (
                         <RecursiveFamilyMember key={index} member={child} t={t} level={level + 1} />
                     ))}
@@ -277,11 +283,11 @@ export default function RecordView() {
         const charWidth = isRotated ? 8.5 : 32;
         const minWidth = isRotated ? 120 : 400;
         const hGap = isRotated ? 30 : 120;
-        const vGap = isRotated ? 45 : (isSmall ? 264 : 594); // Increased by 10%
+        const vGap = isRotated ? 120 : (isSmall ? 300 : 660); // Increased to make lines longer
         const paddingH = isRotated ? 20 : 80;
-        const topMargin = isRotated ? 20 : 100;
-        const marginX = isRotated ? 20 : 100;
-        const depthOffset = isRotated ? 55 : (isSmall ? 238 : 396); // Increased by 10%
+        const topMargin = isRotated ? 5 : 100;
+        const marginX = isRotated ? 5 : 100;
+        const depthOffset = isRotated ? 130 : (isSmall ? 280 : 440); // Increased to make lines longer
 
         const strokeWidth = isRotated ? 2 : 5;
         const strokeColor = "#000";
@@ -417,7 +423,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
 
         if (isRotated) {
             return `
-            <svg width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 270mm; max-width: 100%; height: auto; display: block; margin: 0 auto; page-break-inside: avoid;">
+            <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 280mm; max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: 0; page-break-inside: avoid;">
                 <g transform="translate(${totalHeight}, 0) rotate(90)">
                     ${svgLines}
                     ${svgNodes}
@@ -558,21 +564,26 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
 
                 applicantPhotoHtml = `<img 
         src="${import.meta.env.VITE_API_BASE_URL}${photoPath}" 
-        style="width:120px; height:140px; object-fit:cover; border:1px solid #000;" 
+        style="width:120px; height:120px; object-fit:cover; border:1px solid #000;" 
         alt="Applicant Photo" 
-        onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:140px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
+        onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
       />`;
-
                 console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
             } else {
-                applicantPhotoHtml = `<div style="width:120px; height:140px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
+                applicantPhotoHtml = `<div style="width:120px; height:120px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
                 console.log('⚠️ No applicant photo available');
             }
 
             replacements.applicantPhotoHtml = applicantPhotoHtml;
 
+            // Determine if tree will be rotated
+            const isRotatedTree = pedhinamu?.heirs?.length > 4;
+            replacements.treeSectionTitle = isRotatedTree
+                ? `<div class="page-break"></div><h3 class="section-title">વિગતવાર પેઢીઆંબા</h3>`
+                : `<h3 class="section-title">વિગતવાર પેઢીઆંબા</h3>`;
+
             // Replace all placeholders
-            const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml'];
+            const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml', 'treeSectionTitle'];
             Object.entries(replacements).forEach(([key, value]) => {
                 const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
                 htmlTemplate = htmlTemplate.replace(
@@ -684,35 +695,34 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
                     }
 
                     return `
-        <table style="margin-bottom:40px; width:100%;">
-    <tr>
-        <!-- Photo -->
-        <td style="width:160px; text-align:center; vertical-align:top;">
-            ${photoHtml}
-        </td>
+        <table class="panch-photo-table" style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #000;">
+            <tr style="height: 160px;">
+                <!-- Photo -->
+                <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                    ${photoHtml}
+                </td>
 
-        <!-- Details -->
-        <td>
-            <p>
-                <b>પંચનું નામ :</b> ${p.name} <br>
-                <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b> ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
-                <b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}
-            </p>
-        </td>
+                <!-- Details -->
+                <td style="width: 40%; text-align: left; vertical-align: top; padding: 12px; border: 1px solid #000;">
+                    <p style="margin: 0; line-height: 1.5; font-size: 15px;">
+                        <b>પંચનું નામ :</b> ${p.name} <br>
+                        <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b><br>
+                        ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
+                        <b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}
+                    </p>
+                </td>
 
-        <!-- Thumb -->
-        <td style="width:160px; text-align:center; vertical-align:middle;">
-    <b>અંગુઠાનુ નિશાન</b>
-</td>
+                <!-- Thumb -->
+                <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                    <b>અંગુઠાનું નિશાન</b>
+                </td>
 
-<!-- Signature -->
-<td style="width:160px; text-align:center; vertical-align:middle;">
-    <b>સહી</b>
-</td>
-
-    </tr>
-</table>
-
+                <!-- Signature -->
+                <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                    <b>સહી</b>
+                </td>
+            </tr>
+        </table>
         `;
                 })
                 .join("");
@@ -775,7 +785,6 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
             });
 
             const svgTree = generateSvgTree(rootPerson);
-
             htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, svgTree);
 
             /* -----------------------------------------
@@ -921,7 +930,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
                             {h.subFamily?.spouse?.name?.trim() && (
                                 <Box
                                     mt={4}
-                                    p={3}
+                                    p={2}
                                     bg="#fff"
                                     borderWidth="1px"
                                     rounded="md"
@@ -953,7 +962,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
                             {h.subFamily?.children?.length > 0 && (
                                 <Box
                                     mt={4}
-                                    p={3}
+                                    p={2}
                                     bg="#fff"
                                     borderWidth="1px"
                                     rounded="md"

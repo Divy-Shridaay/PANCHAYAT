@@ -30,6 +30,7 @@ import Pagination from "../components/Pagination";
 import { apiFetch } from "../utils/api.js";
 
 import { useTranslation } from "react-i18next";
+import EditConfirmationModal from "../components/EditConfirmationModal";
 
 
 export default function PedhinamuList() {
@@ -48,6 +49,12 @@ export default function PedhinamuList() {
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10); // ✅ ADD THIS
   const [refresh, setRefresh] = useState(0);
+  const [editTargetUrl, setEditTargetUrl] = useState(null);
+  const {
+    isOpen: isEditModalOpen,
+    onOpen: onEditModalOpen,
+    onClose: onEditModalClose
+  } = useDisclosure();
 
 
 
@@ -119,6 +126,23 @@ export default function PedhinamuList() {
   const handleItemsPerPageChange = (newLimit) => {
     setItemsPerPage(newLimit);
     setCurrentPage(1); // Reset to first page when changing limit
+  };
+
+  const handleEditClick = (item) => {
+    const editUrl = `/pedhinamu/edit/${item._id}`;
+    if (item.hasFullForm) {
+      setEditTargetUrl(editUrl);
+      onEditModalOpen();
+    } else {
+      navigate(editUrl);
+    }
+  };
+
+  const confirmEdit = () => {
+    if (editTargetUrl) {
+      navigate(editTargetUrl);
+      onEditModalClose();
+    }
   };
 
   return (
@@ -232,7 +256,7 @@ export default function PedhinamuList() {
                         variant="ghost"
                         colorScheme="blue"
                         rounded="full"
-                        onClick={() => navigate(`/pedhinamu/edit/${item._id}`)}
+                        onClick={() => handleEditClick(item)}
                       />
 
                       {/* Delete */}
@@ -354,6 +378,12 @@ export default function PedhinamuList() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <EditConfirmationModal
+        isOpen={isEditModalOpen}
+        onClose={onEditModalClose}
+        onConfirm={confirmEdit}
+      />
 
     </Box>
   );

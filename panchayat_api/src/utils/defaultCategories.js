@@ -4,6 +4,7 @@ module.exports = [
   { name: "સા.પા વેરો", type: "aavak" },
   { name: "ખા.પા વેરો", type: "aavak" },
   { name: "સફાઈ વેરો", type: "aavak" },
+  { name: "સફાઇ વેરો", type: "aavak" },
   { name: "ગટર વેરો", type: "aavak" },
   { name: "લાઈટ વેરો", type: "aavak" },
   { name: "કુંડી વેરો", type: "aavak" },

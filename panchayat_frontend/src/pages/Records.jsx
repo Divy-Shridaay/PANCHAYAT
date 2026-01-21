@@ -28,6 +28,7 @@ import { useToast } from "@chakra-ui/react";
 import Pagination from "../components/Pagination";
 import LoaderSpinner from "../components/LoaderSpinner";
 import { apiFetch } from "../utils/api.js";
+import EditConfirmationModal from "../components/EditConfirmationModal";
 
 
 
@@ -44,6 +45,12 @@ export default function Records() {
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10); // Added state for items per page
   const [refresh, setRefresh] = useState(0);
+  const [editTargetUrl, setEditTargetUrl] = useState(null);
+  const {
+    isOpen: isEditModalOpen,
+    onOpen: onEditModalOpen,
+    onClose: onEditModalClose
+  } = useDisclosure();
 
 
   useEffect(() => {
@@ -54,9 +61,9 @@ export default function Records() {
     setLoading(true);
     // Use itemsPerPage instead of hardcoded 10
     const { response, data } = await apiFetch(
-      `/api/pedhinamu?page=${page}&limit=${itemsPerPage}`, 
-      {}, 
-      navigate, 
+      `/api/pedhinamu?page=${page}&limit=${itemsPerPage}`,
+      {},
+      navigate,
       toast
     );
 
@@ -101,6 +108,23 @@ export default function Records() {
         duration: 3000,
         position: "top",
       });
+    }
+  };
+
+  const handleEditClick = (item) => {
+    const editUrl = `/pedhinamu/form/${item._id}?from=records`;
+    if (item.hasFullForm) {
+      setEditTargetUrl(editUrl);
+      onEditModalOpen();
+    } else {
+      navigate(editUrl);
+    }
+  };
+
+  const confirmEdit = () => {
+    if (editTargetUrl) {
+      navigate(editTargetUrl);
+      onEditModalClose();
     }
   };
 
@@ -193,8 +217,9 @@ export default function Records() {
                         variant="ghost"
                         colorScheme="blue"
                         rounded="full"
-                        onClick={() => navigate(`/pedhinamu/form/${item._id}?from=records`)}
+                        onClick={() => handleEditClick(item)}
                       />
+
                       <IconButton
                         size="sm"
                         icon={<DeleteIcon />}
@@ -217,7 +242,7 @@ export default function Records() {
 
         )}
       </Box>
-      
+
       {/* Updated Pagination with itemsPerPage props */}
       <Pagination
         currentPage={currentPage}
@@ -317,6 +342,12 @@ export default function Records() {
 
         </ModalContent>
       </Modal>
+
+      <EditConfirmationModal
+        isOpen={isEditModalOpen}
+        onClose={onEditModalClose}
+        onConfirm={confirmEdit}
+      />
     </Box>
   );
 }

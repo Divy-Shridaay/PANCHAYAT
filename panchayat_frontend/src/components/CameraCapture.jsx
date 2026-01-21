@@ -44,18 +44,43 @@ const CameraCapture = ({ src, onCapture, onClear, showRetake = true }) => {
     const canvas = canvasRef.current;
 
     if (video && canvas) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // --- IMAGE COMPRESSION LOGIC ---
+      // 1. Determine target dimensions (Max 800px)
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+      let width = video.videoWidth;
+      let height = video.videoHeight;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
 
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0);
+      // Use standard smoothing for resizing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
-      const imageUrl = canvas.toDataURL("image/png");
+      ctx.drawImage(video, 0, 0, width, height);
+
+      // 2. Export as JPEG with lower quality (0.7) to drastically reduce size
+      const imageUrl = canvas.toDataURL("image/jpeg", 0.7);
 
       canvas.toBlob((blob) => {
-        const file = new File([blob], "photo.png", { type: "image/png" });
+        // Name it as jpg since we changed format
+        const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
         onCapture(file, imageUrl);
-      });
+      }, "image/jpeg", 0.7);
 
       stopCamera();
       setCameraOpen(false);

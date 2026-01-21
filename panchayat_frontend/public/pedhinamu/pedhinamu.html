@@ -37,8 +37,9 @@
         table td,
         table th {
             border: 1px solid #444;
-            padding: 6px 8px;
+            padding: 4px 6px;
             vertical-align: top;
+            line-height: 1.2;
         }
 
         .placeholder-photo {
@@ -71,7 +72,10 @@
 
         p {
             margin: 4px 0;
+            text-align: justify;
         }
+
+
 
 
         /* -------------------------
@@ -80,7 +84,11 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 14mm 12mm 14mm 12mm;
+                margin: 10mm 12mm 10mm 12mm;
+            }
+
+            body {
+                padding-top: 0 !important;
             }
 
             svg {
@@ -132,12 +140,31 @@
             }
 
             .panch-table {
-                font-size: 19px;
+                font-size: 15px;
             }
 
             .panch-table th,
             .panch-table td {
-                padding: 8px 10px;
+                padding: 6px 8px;
+            }
+
+            .tree-title {
+                text-align: center;
+                margin-top: 0 !important;
+            }
+
+
+
+            .panch-photo-table {
+                width: 100% !important;
+                border-collapse: collapse;
+            }
+
+            svg.rotated-tree {
+                width: auto !important;
+                margin-left: auto !important;
+                margin-right: 0 !important;
+                display: block !important;
             }
         }
     </style>
@@ -183,7 +210,7 @@
         થી સોગંદનામા ના આધારે
     </p>
 
-    <p style="text-indent: 80px; text-align: justify;">
+    <p style="text-indent: 80px;">
         સવિનય ઉપરોકત વિષય અને સંદર્ભ અન્વયે અમો અરજદારશ્રી <b><u>{{applicantName}}</u></b> ,
         <b><u> રહેવાસી. {{mukkamAddress}} </u></b>,
 
@@ -301,8 +328,7 @@
 
 
 
-    <div class="page-break"></div>
-
+    <!-- Tree Section -->
     <div class="tree-block">
         <h2 class="tree-title">પેઢીનામું (પેઢીઆંબા)</h2>
 
@@ -389,7 +415,7 @@
     <!-- <h3>પંચોની સહી</h3>
     {{panchSignatureBlocks}} -->
 
-    <h3 class="section-title">વિગતવાર પેઢીઆંબા</h3>
+    {{treeSectionTitle}}
 
     <div class="tree-container">
         <div class="tree">
@@ -453,25 +479,25 @@
     </p>
 
 
-    <table>
-        <tr>
-            <td style="width:160px; text-align:center; vertical-align:top;">
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #000;">
+        <tr style="height: 160px;">
+            <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
                 {{applicantPhotoHtml}}
             </td>
 
-            <td>
-                <p>
+            <td style="width: 40%; text-align: left; vertical-align: top; padding: 12px; border: 1px solid #000;">
+                <p style="margin: 0; line-height: 1.5; font-size: 15px;">
                     <b>અરજદાર :</b> {{applicantName}} <br>
                     <b>સરનામું :</b> {{mukkamAddress}} <br>
                     <b>મોબાઇલ :</b> {{applicantMobile}} <br>
-                    <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b> {{applicantAadhaar}}
+                    <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b><br>
+                    {{applicantAadhaar}}
                 </p>
             </td>
-            <td style="width:160px;">
-
-                <b> અંગુઠા નો નિશાન</b>
+            <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                <b>અંગુઠાનું નિશાન</b>
             </td>
-            <td style="width:160px;">
+            <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
                 <b>સહી</b>
             </td>
         </tr>

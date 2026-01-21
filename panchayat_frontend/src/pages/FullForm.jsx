@@ -23,7 +23,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import CameraCapture from "../components/CameraCapture";
 import { apiFetch } from "../utils/api.js";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.shridaay.com";
 
 
 const gujaratiToEnglishDigits = (str) => {
@@ -388,40 +388,44 @@ export default function FullForm() {
 
     form.panch.forEach((p, i) => {
       if (isEmpty(p.name)) {
-        errors.push(`${t("panchNameMissing")} #${i + 1}`);
-        invalid[`panch_${i}_name`] = t("panchNameMissing");
+        errors.push(`પંચ નં ${i + 1} નું નામ જરૂરી છે`);
+        invalid[`panch_${i}_name`] = "required";
       }
 
-      const ageNum = Number(p.age);
+      const pAge = String(p.age || "").trim();
+      const ageNum = Number(pAge);
 
-      if (!ageNum || ageNum < 18) {
-        errors.push(`પંચની ઉંમર 18 વર્ષથી વધુ હોવી જોઈએ #${i + 1}`);
+      if (!pAge) {
+        errors.push(`પંચ નં ${i + 1} ની ઉંમર જરૂરી છે`);
+        invalid[`panch_${i}_age`] = "required";
+      } else if (isNaN(ageNum) || ageNum < 18) {
+        errors.push(`પંચ નં ${i + 1} ની ઉંમર 18 વર્ષથી વધુ હોવી જોઈએ`);
         invalid[`panch_${i}_age`] = "18+ required";
       }
 
       if (isEmpty(p.occupation)) {
-        errors.push(`${t("panchOccupationMissing")} #${i + 1}`);
+        errors.push(`પંચ નં ${i + 1} નો ધંધો ફરજિયાત છે`);
         invalid[`panch_${i}_occupation`] = true;
       }
 
-      let pm = p.mobile.replace(/\D/g, "");
+      let pm = (p.mobile || "").replace(/\D/g, "");
       if ((pm.startsWith("91") || pm.startsWith("091")) && pm.length > 10) {
         pm = pm.slice(pm.length - 10);
       }
 
       if (pm && pm.length !== 10) {
-        errors.push(`${t("panchMobileInvalid")} #${i + 1}`);
-        invalid[`panch_${i}_mobile`] = t("panchMobileInvalid");
+        errors.push(`પંચ નં ${i + 1} નો મોબાઇલ નંબર ખોટો છે`);
+        invalid[`panch_${i}_mobile`] = "invalid";
       }
 
-      const pa = p.aadhaar.replace(/\D/g, "");
+      const pa = (p.aadhaar || "").replace(/\D/g, "");
       if (pa === "" || pa.length !== 12) {
-        errors.push(`${t("panchAadhaarInvalid")} #${i + 1}`);
-        invalid[`panch_${i}_aadhaar`] = t("panchAadhaarInvalid");
+        errors.push(`પંચ નં ${i + 1} નો આધાર નંબર ખોટો છે`);
+        invalid[`panch_${i}_aadhaar`] = "invalid";
       }
 
       if (!p.photoPreview) {
-        errors.push(`પંચ #${i + 1} નો ફોટો ફરજિયાત છે`);
+        errors.push(`પંચ નં ${i + 1} નો ફોટો ફરજિયાત છે`);
       }
     });
 
@@ -516,8 +520,8 @@ export default function FullForm() {
       applicantAadhaar: form.applicantAadhaar.replace(/\D/g, ""),
       panch: form.panch.map((p) => ({
         ...p,
-        mobile: p.mobile.replace(/\D/g, ""),
-        aadhaar: p.aadhaar.replace(/\D/g, ""),
+        mobile: (p.mobile || "").replace(/\D/g, ""),
+        aadhaar: (p.aadhaar || "").replace(/\D/g, ""),
       })),
     };
 
@@ -563,38 +567,48 @@ export default function FullForm() {
       }
     });
 
-    const res = await fetch(
-      `${API_BASE_URL}/api/pedhinamu/form/${id}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+    try {
+      const { response: res, data: resData } = await apiFetch(
+        `/api/pedhinamu/form/${id}`,
+        {
+          method: "POST",
+          body: formData,
         },
-        body: formData,
+        navigate,
+        toast
+      );
+
+      if (!res.ok) {
+        toast({
+          title: t("error"),
+          description: resData.error || t("failedToSave"),
+          status: "error",
+          duration: 3000,
+          position: "top",
+        });
+        return;
       }
-    );
 
+      toast({
+        title: t("success"),
+        status: "success",
+        duration: 3000,
+        position: "top",
+      });
 
-    if (!res.ok) {
+      setTimeout(() => {
+        navigate("/records");
+      }, 900);
+    } catch (err) {
+      console.error("SAVE ERROR:", err);
       toast({
         title: t("error"),
+        description: t("connectionError"),
         status: "error",
         duration: 3000,
         position: "top",
       });
-      return;
     }
-
-    toast({
-      title: t("success"),
-      status: "success",
-      duration: 3000,
-      position: "top",
-    });
-
-    setTimeout(() => {
-      navigate("/records");
-    }, 900);
   };
   if (loading) return <Text p={10}>Loading...</Text>;
 
