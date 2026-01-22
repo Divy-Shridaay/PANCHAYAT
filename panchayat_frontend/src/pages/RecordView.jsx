@@ -438,374 +438,383 @@ export default function RecordView() {
     `;
     }
 
-    const handlePedhinamuPrint = async () => {
-        try {
-            // 🔴 FIRST increment & check limit
-            const res = await apiFetch(
-                "/api/register/user/increment-print",
-                { method: "POST" },
-                navigate,
-                toast
-            );
+  const handlePedhinamuPrint = async () => {
+    try {
+        // 🔴 FIRST increment & check limit
+        const res = await apiFetch(
+            "/api/register/user/increment-print",
+            { method: "POST" },
+            navigate,
+            toast
+        );
 
-            if (!res.data.canPrint) {
-                setShowPaymentPopup(true);
-                return;
-            }
+        if (!res.data.canPrint) {
+            setShowPaymentPopup(true);
+            return;
+        }
 
-            // ✅ Only allowed prints reach here
-            const response2 = await fetch("/pedhinamu/pedhinamu.html");
-            let htmlTemplate = await response2.text();
+        // ✅ Only allowed prints reach here
+        const response2 = await fetch("/pedhinamu/pedhinamu.html");
+        let htmlTemplate = await response2.text();
 
-            const { pedhinamu, form } = data;
+        const { pedhinamu, form } = data;
 
-            // Get logged-in user data
-            const user = JSON.parse(localStorage.getItem("user") || "null");
+        // Get logged-in user data
+        const user = JSON.parse(localStorage.getItem("user") || "null");
 
-            // 🔥 DEBUG: Log the applicant photo value
-            console.log('🖼️ Applicant Photo Path:', form?.applicantPhoto);
-            console.log('🖼️ Full Photo URL:', form?.applicantPhoto ? `${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}` : 'No photo');
+        // 🔥 DEBUG: Log the applicant photo value
+        console.log('🖼️ Applicant Photo Path:', form?.applicantPhoto);
+        console.log('🖼️ Full Photo URL:', form?.applicantPhoto ? `${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}` : 'No photo');
 
-            /* -----------------------------------------
-               BASIC PLACEHOLDER REPLACEMENTS
-            ----------------------------------------- */
+        /* -----------------------------------------
+           BASIC PLACEHOLDER REPLACEMENTS
+        ----------------------------------------- */
 
-            const replacements = {
-                applicantName: form?.applicantName || "",
-                mukkamAddress: form?.mukkamAddress || "",
-                multipleWifeLine: multipleWifeLine,
+        const replacements = {
+            applicantName: form?.applicantName || "",
+            mukkamAddress: form?.mukkamAddress || "",
+            multipleWifeLine: multipleWifeLine,
 
-                talatiName: form?.talatiName || "",
-                javadNo: form?.javadNo || "",
-                totalHeirsCount: form?.totalHeirsCount || "",
-                // ✅ ADD THESE
-                referenceNo: form?.referenceNo || "",
+            talatiName: form?.talatiName || "",
+            javadNo: form?.javadNo || "",
+            totalHeirsCount: form?.totalHeirsCount || "",
+            // ✅ ADD THESE
+            referenceNo: form?.referenceNo || "",
 
-                jaminSurveyNo: form?.jaminSurveyNo || "",
-                jaminKhatano: form?.jaminKhatano || "",
+            jaminSurveyNo: form?.jaminSurveyNo || "",
+            jaminKhatano: form?.jaminKhatano || "",
 
-                makanMilkatAkarniNo: form?.makanMilkatAkarniNo || "",
-                any: form?.any || "",
+            makanMilkatAkarniNo: form?.makanMilkatAkarniNo || "",
+            any: form?.any || "",
 
-                mukhyoName: pedhinamu?.mukhya?.name || "",
+            mukhyoName: pedhinamu?.mukhya?.name || "",
 
-                reasonForPedhinamu: form?.reasonForPedhinamu || "",
+            reasonForPedhinamu: form?.reasonForPedhinamu || "",
 
+            // 🔥 ADD THESE (THIS WAS MISSING)
+            mukhyoPrefix: pedhinamu?.mukhya?.isDeceased ? "મૈયત શ્રી" : "શ્રી",
 
-                // 🔥 ADD THESE (THIS WAS MISSING)
-                mukhyoPrefix: pedhinamu?.mukhya?.isDeceased ? "મૈયત શ્રી" : "શ્રી",
-
-                deathLine:
-                    pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
-                        ? ` (મૈયત  તા. ${pedhinamu.mukhya.dodDisplay})`
-                        : "",
-
-                notarySerialNo: form?.notarySerialNo || "",
-                notaryBookNo: form?.notaryBookNo || "",
-                notaryPageNo: form?.notaryPageNo || "",
-                notaryName: form?.notaryName || "",
-                notaryDate: form?.notaryDate
-                    ? formatDateToGujarati(form.notaryDate)
+            deathLine:
+                pedhinamu?.mukhya?.isDeceased && pedhinamu?.mukhya?.dodDisplay
+                    ? ` (મૈયત  તા. ${pedhinamu.mukhya.dodDisplay})`
                     : "",
 
-                applicationDate: form?.applicationDate
-                    ? formatDateToGujarati(form.applicationDate)
-                    : formatDateToGujarati(pedhinamu.createdAt),
+            notarySerialNo: form?.notarySerialNo || "",
+            notaryBookNo: form?.notaryBookNo || "",
+            notaryPageNo: form?.notaryPageNo || "",
+            notaryName: form?.notaryName || "",
+            notaryDate: form?.notaryDate
+                ? formatDateToGujarati(form.notaryDate)
+                : "",
 
-                applicantMobile: formatMobile(form?.applicantMobile),
-                applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
+            applicationDate: form?.applicationDate
+                ? formatDateToGujarati(form.applicationDate)
+                : formatDateToGujarati(pedhinamu.createdAt),
 
-                taluko: user?.gam || "",
-                userTaluko: user?.taluko || "",
-                userJillo: user?.jillo || "",
-            };
+            applicantMobile: formatMobile(form?.applicantMobile),
+            applicantAadhaar: formatAadhaar(form?.applicantAadhaar),
 
+            taluko: user?.gam || "",
+            userTaluko: user?.taluko || "",
+            userJillo: user?.jillo || "",
+        };
 
+        // ✅ PROPERTY EXTRA ROWS (NO HANDLEBARS)
+        let propertyExtraRows = "";
 
-
-            // ✅ PROPERTY EXTRA ROWS (NO HANDLEBARS)
-            let propertyExtraRows = "";
-
-            if (form?.makanMilkatAkarniNo?.trim()) {
-                propertyExtraRows += `
+        if (form?.makanMilkatAkarniNo?.trim()) {
+            propertyExtraRows += `
   <tr>
     <td></td>
     <td>મકાનના</td>
     <td>મિલકત આકરણી નંબર</td>
     <td class="center">${toGujaratiDigits(form.makanMilkatAkarniNo)}</td>
   </tr>`;
-            }
+        }
 
-            if (form?.any?.trim()) {
-                propertyExtraRows += `
+        if (form?.any?.trim()) {
+            propertyExtraRows += `
   <tr>
     <td></td>
     <td>અન્ય</td>
     <td></td>
     <td class="center">${form.any}</td>
   </tr>`;
-            }
+        }
 
-            replacements.propertyExtraRows = propertyExtraRows;
+        replacements.propertyExtraRows = propertyExtraRows;
 
-            console.log('userTaluko:', replacements.userTaluko);
-            console.log('userJillo:', replacements.userJillo);
-            console.log('taluko:', replacements.taluko);
+        console.log('userTaluko:', replacements.userTaluko);
+        console.log('userJillo:', replacements.userJillo);
+        console.log('taluko:', replacements.taluko);
 
-            // 🔥 IMPORTANT: Handle applicant photo separately with proper error handling
-            let applicantPhotoHtml = '';
+        // 🔥 IMPORTANT: Handle applicant photo separately with proper error handling
+        let applicantPhotoHtml = '';
 
-            if (form?.applicantPhoto) {
-                const photoPath = form.applicantPhoto.startsWith('/uploads')
-                    ? form.applicantPhoto
-                    : `/uploads/${form.applicantPhoto}`;
+        if (form?.applicantPhoto) {
+            const photoPath = form.applicantPhoto.startsWith('/uploads')
+                ? form.applicantPhoto
+                : `/uploads/${form.applicantPhoto}`;
 
-                applicantPhotoHtml = `<img 
-        src="${import.meta.env.VITE_API_BASE_URL}${photoPath}" 
-        style="width:120px; height:120px; object-fit:cover; border:1px solid #000;" 
-        alt="Applicant Photo" 
-        onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
-      />`;
-                console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
-            } else {
-                applicantPhotoHtml = `<div style="width:120px; height:120px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
-                console.log('⚠️ No applicant photo available');
-            }
+            applicantPhotoHtml = `<img 
+    src="${import.meta.env.VITE_API_BASE_URL}${photoPath}" 
+    style="width:120px; height:120px; object-fit:cover; border:1px solid #000;" 
+    alt="Applicant Photo" 
+    onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
+  />`;
+            console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
+        } else {
+            applicantPhotoHtml = `<div style="width:120px; height:120px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
+            console.log('⚠️ No applicant photo available');
+        }
 
-            replacements.applicantPhotoHtml = applicantPhotoHtml;
+        replacements.applicantPhotoHtml = applicantPhotoHtml;
 
-            replacements.treeSectionTitle = `<h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`;
+        // 🔥 REMOVED - Don't set treeSectionTitle here anymore
+        // It will be combined with the tree later
 
-            // Replace all placeholders
-            const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml', 'treeSectionTitle'];
-            Object.entries(replacements).forEach(([key, value]) => {
-                const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
-                htmlTemplate = htmlTemplate.replace(
-                    new RegExp(`{{\\s*${key}\\s*}}`, "g"),
-                    processedValue
-                );
-            });
+        // Replace all placeholders
+        const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml'];
+        Object.entries(replacements).forEach(([key, value]) => {
+            const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
+            htmlTemplate = htmlTemplate.replace(
+                new RegExp(`{{\\s*${key}\\s*}}`, "g"),
+                processedValue
+            );
+        });
 
-            /* -----------------------------------------
-               HEIRS TABLE (SAFE + CLEAN)
-            ----------------------------------------- */
+        /* -----------------------------------------
+           HEIRS TABLE (SAFE + CLEAN)
+        ----------------------------------------- */
 
-            let heirsHtml = pedhinamu.heirs
-                .map((h) => {
-                    let spouseRow = "";
-                    let childrenRows = "";
+        let heirsHtml = pedhinamu.heirs
+            .map((h) => {
+                let spouseRow = "";
+                let childrenRows = "";
 
-                    // spouse
-                    if (h.subFamily?.spouse?.name?.trim()) {
-                        spouseRow = `
-            <tr>
-                <td style="padding-left:25px;">➤ ${h.subFamily.spouse.name}</td>
-                <td>${toGujaratiDigits(h.subFamily.spouse.age || "-")}</td>
-                <td>${relationToGujarati(h.subFamily.spouse.relation)}</td>
-            </tr>
-          `;
-                    }
-
-                    // children
-                    if (h.subFamily?.children?.length > 0) {
-                        childrenRows = h.subFamily.children
-                            .map((c) => `
-              <tr>
-                  <td style="padding-left:40px;">• ${c.name}</td>
-                  <td>${toGujaratiDigits(c.age)}</td>
-                  <td>${relationToGujarati(c.relation)}</td>
-              </tr>
-            `)
-                            .join("");
-                    }
-
-                    return `
-            <tr>
-                <td><b>${h.name}</b></td>
-                <td>${toGujaratiDigits(h.age)}</td>
-                <td>${relationToGujarati(h.relation)}</td>
-            </tr>
-            ${spouseRow}
-            ${childrenRows}
-        `;
-                })
-                .join("");
-
-            htmlTemplate = htmlTemplate.replace("{{heirsTable}}", heirsHtml);
-
-            /* -----------------------------------------
-               PANCH TABLE
-            ----------------------------------------- */
-            let panchHtml = form.panch
-                .map(
-                    (p) => `
-          <tr>
-              <td>${p.name}</td>
-              <td>${toGujaratiDigits(p.age)}</td>
-              <td>${p.occupation}</td>
-             <td>${replacements.taluko || "-"}</td>
-          </tr>`
-                )
-                .join("");
-
-            htmlTemplate = htmlTemplate.replace("{{panchTable}}", panchHtml);
-
-            /* -----------------------------------------
-               PANCH SIGNATURE BLOCKS
-            ----------------------------------------- */
-            let panchSignHtml = form.panch
-                .map(
-                    (p) => `
-          <p>
-              <b>${p.name}</b><br>
-              સહી: _______________________<br>
-              અંગુઠાનો નિશાન: _____________
-          </p>`
-                )
-                .join("");
-
-            htmlTemplate = htmlTemplate.replace("{{panchSignatureBlocks}}", panchSignHtml);
-
-            /* -----------------------------------------
-               PANCH PHOTO BLOCKS
-            ----------------------------------------- */
-            let panchPhotoHtml = form.panch
-                .map((p) => {
-                    let photoHtml = '';
-
-                    if (p.photo) {
-                        const panchPhotoPath = p.photo.startsWith('/uploads')
-                            ? p.photo
-                            : `/uploads/${p.photo}`;
-
-                        photoHtml = `<img 
-            src="${import.meta.env.VITE_API_BASE_URL}${panchPhotoPath}" 
-            style="width:120px; height:120px; object-fit:cover; border:1px solid #ccc;" 
-            alt="Panch Photo"
-            onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;background:#f5f5f5;\\'>No Photo</div>';"
-          />`;
-                    } else {
-                        photoHtml = '<div style="width:120px; height:120px; border:1px solid #ccc; background:#f5f5f5;"></div>';
-                    }
-
-                    return `
-        <table class="panch-photo-table" style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #000;">
-            <tr style="height: 160px;">
-                <!-- Photo -->
-                <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
-                    ${photoHtml}
-                </td>
-
-                <!-- Details -->
-                <td style="width: 40%; text-align: left; vertical-align: top; padding: 12px; border: 1px solid #000;">
-                    <p style="margin: 0; line-height: 1.5; font-size: 15px;">
-                        <b>પંચનું નામ :</b> ${p.name} <br>
-                        <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b><br>
-                        ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
-                        <b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}
-                    </p>
-                </td>
-
-                <!-- Thumb -->
-                <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
-                    <b>અંગુઠાનું નિશાન</b>
-                </td>
-
-                <!-- Signature -->
-                <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
-                    <b>સહી</b>
-                </td>
-            </tr>
-        </table>
-        `;
-                })
-                .join("");
-
-            htmlTemplate = htmlTemplate.replace("{{panchPhotoBlocks}}", panchPhotoHtml);
-
-            /* -----------------------------------------
-                FAMILY TREE BUILDER (Dynamic)
-            ----------------------------------------- */
-
-            function buildNode(person) {
-                if (!person) return null;
-
-                const node = {
-                    name: person.name,
-                    age: person.age || "",
-
-                    // 🔥 THESE WERE MISSING
-                    dob: person.dobDisplay || person.dob || "",
-                    dod: person.dodDisplay || person.dod || "",
-                    dodDisplay: person.dodDisplay || person.dod || "",
-
-                    relation: relationToGujarati(person.relation),
-                    isDeceased: person.isDeceased || false,
-                    isRoot: person.isRoot || false,
-                    children: []
-                };
-
-                const spouse = person.spouse || person.subFamily?.spouse;
-
-                if (spouse?.name?.trim()) {
-                    node.children.push({
-                        name: spouse.name,
-                        age: spouse.age || "",
-                        dob: spouse.dobDisplay || spouse.dob || "",
-                        dod: spouse.dodDisplay || spouse.dod || "",
-                        dodDisplay: spouse.dodDisplay || spouse.dod || "",
-                        relation: relationToGujarati(spouse.relation),
-                        isDeceased: spouse.isDeceased || false,
-                        children: []
-                    });
+                // spouse
+                if (h.subFamily?.spouse?.name?.trim()) {
+                    spouseRow = `
+        <tr>
+            <td style="padding-left:25px;">➤ ${h.subFamily.spouse.name}</td>
+            <td>${toGujaratiDigits(h.subFamily.spouse.age || "-")}</td>
+            <td>${relationToGujarati(h.subFamily.spouse.relation)}</td>
+        </tr>
+      `;
                 }
 
-                const personChildren = person.subFamily?.children || person.children || [];
+                // children
+                if (h.subFamily?.children?.length > 0) {
+                    childrenRows = h.subFamily.children
+                        .map((c) => `
+          <tr>
+              <td style="padding-left:40px;">• ${c.name}</td>
+              <td>${toGujaratiDigits(c.age)}</td>
+              <td>${relationToGujarati(c.relation)}</td>
+          </tr>
+        `)
+                        .join("");
+                }
 
-                personChildren.forEach(c => {
-                    node.children.push(buildNode(c));
+                return `
+        <tr>
+            <td><b>${h.name}</b></td>
+            <td>${toGujaratiDigits(h.age)}</td>
+            <td>${relationToGujarati(h.relation)}</td>
+        </tr>
+        ${spouseRow}
+        ${childrenRows}
+    `;
+            })
+            .join("");
+
+        htmlTemplate = htmlTemplate.replace("{{heirsTable}}", heirsHtml);
+
+        /* -----------------------------------------
+           PANCH TABLE
+        ----------------------------------------- */
+        let panchHtml = form.panch
+            .map(
+                (p) => `
+      <tr>
+          <td>${p.name}</td>
+          <td>${toGujaratiDigits(p.age)}</td>
+          <td>${p.occupation}</td>
+         <td>${replacements.taluko || "-"}</td>
+      </tr>`
+            )
+            .join("");
+
+        htmlTemplate = htmlTemplate.replace("{{panchTable}}", panchHtml);
+
+        /* -----------------------------------------
+           PANCH SIGNATURE BLOCKS
+        ----------------------------------------- */
+        let panchSignHtml = form.panch
+            .map(
+                (p) => `
+      <p>
+          <b>${p.name}</b><br>
+          સહી: _______________________<br>
+          અંગુઠાનો નિશાન: _____________
+      </p>`
+            )
+            .join("");
+
+        htmlTemplate = htmlTemplate.replace("{{panchSignatureBlocks}}", panchSignHtml);
+
+        /* -----------------------------------------
+           PANCH PHOTO BLOCKS
+        ----------------------------------------- */
+        let panchPhotoHtml = form.panch
+            .map((p) => {
+                let photoHtml = '';
+
+                if (p.photo) {
+                    const panchPhotoPath = p.photo.startsWith('/uploads')
+                        ? p.photo
+                        : `/uploads/${p.photo}`;
+
+                    photoHtml = `<img 
+        src="${import.meta.env.VITE_API_BASE_URL}${panchPhotoPath}" 
+        style="width:120px; height:120px; object-fit:cover; border:1px solid #ccc;" 
+        alt="Panch Photo"
+        onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;background:#f5f5f5;\\'>No Photo</div>';"
+      />`;
+                } else {
+                    photoHtml = '<div style="width:120px; height:120px; border:1px solid #ccc; background:#f5f5f5;"></div>';
+                }
+
+                return `
+    <table class="panch-photo-table" style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #000;">
+        <tr style="height: 160px;">
+            <!-- Photo -->
+            <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                ${photoHtml}
+            </td>
+
+            <!-- Details -->
+            <td style="width: 40%; text-align: left; vertical-align: top; padding: 12px; border: 1px solid #000;">
+                <p style="margin: 0; line-height: 1.5; font-size: 15px;">
+                    <b>પંચનું નામ :</b> ${p.name} <br>
+                    <b>આધાર નંબર / ચુંટણી કાર્ડ નંબર :</b><br>
+                    ${toGujaratiDigits(formatAadhaar(p.aadhaar))} <br>
+                    <b>મો. નંબર :</b> ${toGujaratiDigits(formatMobile(p.mobile))}
+                </p>
+            </td>
+
+            <!-- Thumb -->
+            <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                <b>અંગુઠાનું નિશાન</b>
+            </td>
+
+            <!-- Signature -->
+            <td style="width: 20%; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #000;">
+                <b>સહી</b>
+            </td>
+        </tr>
+    </table>
+    `;
+            })
+            .join("");
+
+        htmlTemplate = htmlTemplate.replace("{{panchPhotoBlocks}}", panchPhotoHtml);
+
+        /* -----------------------------------------
+            FAMILY TREE BUILDER (Dynamic)
+        ----------------------------------------- */
+
+        function buildNode(person) {
+            if (!person) return null;
+
+            const node = {
+                name: person.name,
+                age: person.age || "",
+
+                // 🔥 THESE WERE MISSING
+                dob: person.dobDisplay || person.dob || "",
+                dod: person.dodDisplay || person.dod || "",
+                dodDisplay: person.dodDisplay || person.dod || "",
+
+                relation: relationToGujarati(person.relation),
+                isDeceased: person.isDeceased || false,
+                isRoot: person.isRoot || false,
+                children: []
+            };
+
+            const spouse = person.spouse || person.subFamily?.spouse;
+
+            if (spouse?.name?.trim()) {
+                node.children.push({
+                    name: spouse.name,
+                    age: spouse.age || "",
+                    dob: spouse.dobDisplay || spouse.dob || "",
+                    dod: spouse.dodDisplay || spouse.dod || "",
+                    dodDisplay: spouse.dodDisplay || spouse.dod || "",
+                    relation: relationToGujarati(spouse.relation),
+                    isDeceased: spouse.isDeceased || false,
+                    children: []
                 });
-
-                return node;
             }
 
+            const personChildren = person.subFamily?.children || person.children || [];
 
-            const rootPerson = buildNode({
-                ...pedhinamu.mukhya,
-                relation: "",
-                isRoot: true,
-                spouse: pedhinamu.mukhya.spouse || null,
-                children: pedhinamu.heirs
+            personChildren.forEach(c => {
+                node.children.push(buildNode(c));
             });
 
-            const svgTree = generateSvgTree(rootPerson);
-            htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, svgTree);
-
-            /* -----------------------------------------
-               PRINT WINDOW
-            ----------------------------------------- */
-            const printWindow = window.open("", "_blank", "width=1000,height=1200");
-            printWindow.document.write(htmlTemplate);
-            await printWindow.document.fonts.ready;
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-
-
-            console.log('✅ PDF generation completed successfully');
-
-        } catch (err) {
-            console.error("❌ PRINT ERROR:", err);
-            toast({
-                title: "પ્રિન્ટ ભૂલ",
-                description: "PDF જનરેટ કરવામાં નિષ્ફળતા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.",
-
-                status: "error",
-                duration: 3000,
-                position: "top",
-            });
+            return node;
         }
-    };
+
+        const rootPerson = buildNode({
+            ...pedhinamu.mukhya,
+            relation: "",
+            isRoot: true,
+            spouse: pedhinamu.mukhya.spouse || null,
+            children: pedhinamu.heirs
+        });
+
+        const svgTree = generateSvgTree(rootPerson);
+
+        // 🔥 NEW: Combine title and tree together in a centered container
+        const centeredTreeHtml = `
+<div style="text-align: center; margin: 30px 0; page-break-inside: avoid;">
+    <h3 style="margin: 0 0 20px 0; padding: 10px 0; font-size: 22px; font-weight: bold;">
+         પેઢીઆંબા
+    </h3>
+    <div style="display: inline-block;">
+        ${svgTree}
+    </div>
+</div>`;
+
+        htmlTemplate = htmlTemplate.replace(/{{\s*familyTreeHtml\s*}}/g, centeredTreeHtml);
+        
+        // 🔥 Also replace treeSectionTitle placeholder if it exists (will be empty now)
+        htmlTemplate = htmlTemplate.replace(/{{\s*treeSectionTitle\s*}}/g, "");
+
+        /* -----------------------------------------
+           PRINT WINDOW
+        ----------------------------------------- */
+        const printWindow = window.open("", "_blank", "width=1000,height=1200");
+        printWindow.document.write(htmlTemplate);
+        await printWindow.document.fonts.ready;
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+
+        console.log('✅ PDF generation completed successfully');
+
+    } catch (err) {
+        console.error("❌ PRINT ERROR:", err);
+        toast({
+            title: "પ્રિન્ટ ભૂલ",
+            description: "PDF જનરેટ કરવામાં નિષ્ફળતા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+            status: "error",
+            duration: 3000,
+            position: "top",
+        });
+    }
+};
     return (
         <Box bg="#F8FAF9" minH="100vh" p={10}>
             <Flex justify="space-between" mb={5}>
