@@ -275,21 +275,25 @@ export default function RecordView() {
 
         const totalNodes = countNodes(root);
         const isSmall = totalNodes < 6;
-
         const isRotated = root.children && root.children.length > 4;
 
-        // Optimized Parameters for Horizontal Mode (60px Font)
-        // Optimized Parameters for Horizontal Mode (60px Font)
-        const charWidth = isRotated ? 8.5 : 32;
-        const minWidth = isRotated ? 120 : 400;
-        const hGap = isRotated ? 30 : 120;
-        const vGap = isRotated ? 120 : (isSmall ? 300 : 660); // Increased to make lines longer
-        const paddingH = isRotated ? 20 : 80;
-        const topMargin = isRotated ? 5 : 100;
-        const marginX = isRotated ? 5 : 100;
-        const depthOffset = isRotated ? 130 : (isSmall ? 280 : 440); // Increased to make lines longer
+        // Dynamic scaling for large rotated trees
+        let scale = 1.0;
+        if (isRotated && totalNodes > 15) {
+            scale = Math.max(0.65, 1.0 - (totalNodes - 15) * 0.02);
+        }
 
-        const strokeWidth = isRotated ? 2 : 5;
+        // Optimized Parameters for Horizontal Mode (60px Font)
+        const charWidth = (isRotated ? 8.5 : 32) * scale;
+        const minWidth = (isRotated ? 120 : 400) * scale;
+        const hGap = (isRotated ? 30 : 120) * scale;
+        const vGap = (isRotated ? 120 : (isSmall ? 300 : 660)) * scale;
+        const paddingH = (isRotated ? 20 : 80) * scale;
+        const topMargin = (isRotated ? 5 : 100) * scale;
+        const marginX = (isRotated ? 5 : 100) * scale;
+        const depthOffset = (isRotated ? 130 : (isSmall ? 280 : 440)) * scale;
+
+        const strokeWidth = (isRotated ? 2 : 5) * scale;
         const strokeColor = "#000";
 
         function getNodeDimensions(node) {
@@ -306,8 +310,8 @@ export default function RecordView() {
             const contentWidth = Math.max(nameLen, relLen) * charWidth + paddingH;
             const nodeWidth = Math.max(minWidth, contentWidth);
             const nodeHeight = isRotated
-                ? (isDead ? 120 : 90)
-                : (isDead ? (isSmall ? 300 : 360) : (isSmall ? 200 : 260)); // Dynamic height
+                ? (isDead ? 120 : 90) * scale
+                : (isDead ? (isSmall ? 300 : 360) : (isSmall ? 200 : 260));
 
 
             return { width: nodeWidth, height: nodeHeight };
@@ -373,15 +377,12 @@ export default function RecordView() {
             }
 
             const bg = "#ffffff";
-            const fontSize = isRotated ? 22 : (node.isRoot ? 110 : 110);
-            const subFontSize = isRotated ? 20 : 90;
+            const fontSize = (isRotated ? 22 : (node.isRoot ? 110 : 110)) * scale;
+            const subFontSize = (isRotated ? 20 : 90) * scale;
 
             svgNodes += `
 <rect x="${x}" y="${yCenter - node.nodeHeight / 2}" width="${node.nodeWidth}" height="${node.nodeHeight}" rx="${isRotated ? 6 : 28}" ry="${isRotated ? 6 : 28}" fill="${bg}" stroke="none" />
-<text x="${xCenter}" 
-y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
-
- " text-anchor="middle" font-size="${fontSize}" font-weight="700" text-decoration="underline" font-family="Noto Serif Gujarati" fill="#000">${textName}</text>
+<text x="${xCenter}" y="${yCenter - (isDead ? (isRotated ? 22 * scale : 110) : (isRotated ? 12 * scale : 60))}" text-anchor="middle" font-size="${fontSize}" font-weight="700" text-decoration="underline" font-family="Noto Serif Gujarati" fill="#000">${textName}</text>
 `;
 
             if (isDead) {
@@ -392,15 +393,12 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
 
                 svgNodes += `
 <text x="${xCenter}" y="${yCenter + (isRotated ? 0 : 20)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">${dob ? `જન્મ: ${dob}` : ""}</text>
-<text x="${xCenter}" y="${yCenter + (isRotated ? 14 : 85)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">${secondLine}</text>
+<text x="${xCenter}" y="${yCenter + (isRotated ? 14 * scale : 85)}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">${secondLine}</text>
 `;
             }
 
             svgNodes += `
-<text x="${xCenter}"  
- y="${yCenter + (isDead ? (isRotated ? 38 : 160) : (isRotated ? 26 : 100))}"
-
- text-anchor="middle" font-size="${subFontSize}" font-weight="700" fill="#000" font-family="Noto Serif Gujarati">${relationText}</text>
+<text x="${xCenter}" y="${yCenter + (isDead ? (isRotated ? 38 * scale : 160) : (isRotated ? 26 * scale : 100))}" text-anchor="middle" font-size="${subFontSize}" font-weight="700" fill="#000" font-family="Noto Serif Gujarati">${relationText}</text>
 `;
 
             if (node.children) {
@@ -423,7 +421,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
 
         if (isRotated) {
             return `
-            <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 280mm; max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: 0; page-break-inside: avoid;">
+            <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 255mm; max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: 0; page-break-inside: avoid;">
                 <g transform="translate(${totalHeight}, 0) rotate(90)">
                     ${svgLines}
                     ${svgNodes}
@@ -576,11 +574,7 @@ y="${yCenter - (isDead ? (isRotated ? 22 : 110) : (isRotated ? 12 : 60))}"
 
             replacements.applicantPhotoHtml = applicantPhotoHtml;
 
-            // Determine if tree will be rotated
-            const isRotatedTree = pedhinamu?.heirs?.length > 4;
-            replacements.treeSectionTitle = isRotatedTree
-                ? `<div class="page-break"></div><h3 class="section-title">વિગતવાર પેઢીઆંબા</h3>`
-                : `<h3 class="section-title">વિગતવાર પેઢીઆંબા</h3>`;
+            replacements.treeSectionTitle = `<h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`;
 
             // Replace all placeholders
             const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml', 'treeSectionTitle'];

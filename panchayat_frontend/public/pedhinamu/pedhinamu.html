@@ -59,6 +59,7 @@
             padding: 0;
             text-align: center;
             page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         svg {
@@ -109,7 +110,9 @@
 
 
             .tree-block {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                display: block;
             }
 
 
@@ -415,11 +418,13 @@
     <!-- <h3>પંચોની સહી</h3>
     {{panchSignatureBlocks}} -->
 
-    {{treeSectionTitle}}
+    <div class="tree-block">
+        {{treeSectionTitle}}
 
-    <div class="tree-container">
-        <div class="tree">
-            {{familyTreeHtml}}
+        <div class="tree-container">
+            <div class="tree">
+                {{familyTreeHtml}}
+            </div>
         </div>
     </div>
 
