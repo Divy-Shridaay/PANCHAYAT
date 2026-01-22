@@ -215,6 +215,11 @@ export default function ChangePassword() {
                 ref={cancelRef}
                 onClick={() => {
                   onClose();
+                  setForm({
+                    oldPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                  });
                   toast({
                     title: "પાસવર્ડ સફળતાપૂર્વક બદલાઈ ગયો છે",
                     status: "success",

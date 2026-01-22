@@ -75,6 +75,24 @@ export default function Settings() {
      UPDATE USER PROFILE
   ======================= */
   const updateUserProfile = async () => {
+
+
+    // ✅ EMAIL VALIDATION (only on save)
+if (
+  formData.email &&
+  !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)
+) {
+  toast({
+    title: "ભૂલ",
+    description: "માન્ય ઇમેઇલ દાખલ કરો",
+    status: "error",
+    duration: 3000,
+    isClosable: true,
+    position: "top",
+  });
+  return;
+}
+
     setSaving(true);
     try {
       const { response, data } = await apiFetch(
@@ -242,16 +260,17 @@ export default function Settings() {
               />
             </FormControl> */}
 
-            <FormControl>
-              <FormLabel>ઇમેઇલ</FormLabel>
-              <Input
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                isReadOnly={!editing}
-                bg={editing ? "white" : "gray.50"}
-              />
-            </FormControl>
+  <FormControl>
+  <FormLabel>ઇમેઇલ</FormLabel>
+  <Input
+    type="email"
+    value={formData.email || ""}
+    onChange={(e) => handleInputChange("email", e.target.value)}
+    isReadOnly={!editing}
+    bg={editing ? "white" : "gray.50"}
+  />
+</FormControl>
+
 
             <FormControl>
               <FormLabel>મોબાઇલ નંબર</FormLabel>
@@ -332,16 +351,21 @@ export default function Settings() {
                 bg={editing ? "white" : "gray.50"}
               />
             </FormControl>
+<FormControl>
+  <FormLabel>પિન કોડ</FormLabel>
+  <Input
+    value={formData.pinCode || ""}
+    onChange={(e) => {
+      const val = e.target.value.replace(/\D/g, ""); // only numbers
+      if (val.length <= 6) {
+        handleInputChange("pinCode", val); // max 6 digits
+      }
+    }}
+    isReadOnly={!editing}
+    bg={editing ? "white" : "gray.50"}
+  />
+</FormControl>
 
-            <FormControl>
-              <FormLabel>પિન કોડ</FormLabel>
-              <Input
-                value={formData.pinCode || ""}
-                onChange={(e) => handleInputChange("pinCode", e.target.value)}
-                isReadOnly={!editing}
-                bg={editing ? "white" : "gray.50"}
-              />
-            </FormControl>
           </SimpleGrid>
 
           <Divider />
