@@ -8,54 +8,74 @@ const Master = require("../../db/MasterModel");
 
 exports.getEducationReport = asyncHandler(async (req, res) => {
   const { village, page = 1, limit = 10, financialYear } = req.query;
+
+  // 👉 જો ગામ પસંદ ન કરવામાં આવ્યું હોય તો error આપવી
   if (!village) {
-    throw new CustomError("Please Select Village.", 400);
+    throw new CustomError("કૃપા કરીને ગામ પસંદ કરો.", 400);
   }
 
+  // 👉 પસંદ કરેલા ગામના કુલ વીલેજર (pagination માટે)
   const totalDocs = await Villager.countDocuments({ village });
+
+  // 👉 વીલેજર લિસ્ટ લાવવી (accountNo અને createdAt પ્રમાણે)
   const villagers = await Villager.find({ village })
-    .sort({ createdAt : 1 , accountNo: 1 })
-    .skip((page - 1) * limit)
-    .limit(parseInt(limit));
+    .sort({ createdAt: 1, accountNo: 1 })
+    .skip((page - 1) * limit) // pagination skip
+    .limit(parseInt(limit)); // pagination limit
+
+  // 👉 Master table માંથી ટકા (percentage) સેટિંગ્સ લાવવી
   const master = await Master.findOne({ status: 1 });
 
+  // ==================================================
+  // 👉 કુલ રકમ માટેના variables (Last Row : કુલ)
+  // ==================================================
   const totals = {
-    maangnuLeft: 0,
-    maangnuRotating : 0,
-    fajal: 0,
-    pending: 0,
-    rotating: 0,
-    left: 0,
-    sarkari: 0,
-    sivay: 0,
-    collumnFourteen: 0,
-    collumnFifteen: 0,
+    maangnuLeft: 0,        // કુલ માંગણું બાકી
+    maangnuRotating: 0,   // કુલ માંગણું ચલ
+    fajal: 0,             // કુલ ફાજલ
+    pending: 0,           // કુલ બાકી
+    rotating: 0,          // કુલ ચલ
+    left: 0,              // કુલ બાકી
+    sarkari: 0,           // કુલ સરકાર
+    sivay: 0,             // કુલ સિવાય
+    collumnFourteen: 0,   // કુલ કોલમ 14
+    collumnFifteen: 0,    // કુલ કોલમ 15
   };
 
+  // ==================================================
+  // 👉 દરેક વીલેજર પર loop
+  // ==================================================
   await Promise.all(
     villagers.map(async (villager) => {
+
+      // ----------------------------------------------
+      // 👉 માંગણું (Maangnu) ની શરૂઆતની values
+      // ----------------------------------------------
       let maangnuData = {
-        rotating: 0,
-        pending: 0,
-        maangnuLeft: 0,
-        fajal: 0,
+        rotating: 0,      // માંગણું ચલ
+        pending: 0,       // માંગણું બાકી
+        maangnuLeft: 0,   // માંગણું બાકી (Left)
+        fajal: 0,         // ફાજલ
       };
+
+      // ----------------------------------------------
+      // 👉 વસુલાત (Revenue) ની શરૂઆતની values
+      // ----------------------------------------------
       let revenueData = {
-        rotating: 0,
-        pending: 0,
-        left: 0,
+        rotating: 0,      // વસુલાત ચલ
+        pending: 0,       // વસુલાત બાકી
+        left: 0,          // વસુલાત બાકી
         billNo: "",
         billDate: "",
       };
 
+      // 👉 આ વીલેજર માટેનું છેલ્લું માંગણું (financial year પ્રમાણે)
       const educationMaangnu = await EducationMaangnu.findOne({
         villager: villager._id,
         financialYear,
       }).sort({ updatedAt: -1 });
 
-
-      
-
+      // 👉 જો માંગણું હાજર હોય તો values assign કરવી
       if (educationMaangnu) {
         maangnuData = {
           rotating: parseFloat(educationMaangnu.rotating || 0),
@@ -65,129 +85,133 @@ exports.getEducationReport = asyncHandler(async (req, res) => {
         };
       }
 
-      // const educationRevenue = await EducationRevenue.findOne({
-      //   villager: villager._id, financialYear
-      // }).sort({ updatedAt: -1 });
-
-      // if (educationRevenue) {
-      //   revenueData = {
-      //     rotating: parseFloat(educationRevenue.rotating || 0),
-      //     pending: parseFloat(educationRevenue.pending || 0),
-      //     left: parseFloat(educationRevenue.left || 0),
-      //     billNo: educationRevenue.billNo || "",
-      //     billDate: educationRevenue.billDate || "",
-      //   };
-      // }
-
+      // 👉 આ વીલેજર માટેની બધી વસુલાત entries લાવવી
       const educationRevenues = await EducationRevenue.find({
         villager: villager._id,
         financialYear,
-      })
+      });
 
+      // 👉 જો વસુલાત entries હોય તો બધાનો સરવાળો કરવો
       if (Array.isArray(educationRevenues) && educationRevenues.length > 0) {
         revenueData = {
+          // ✔ વસુલાત ચલ = બધી entries નો કુલ
           rotating: educationRevenues.reduce(
             (sum, x) => sum + parseFloat(x.rotating || 0),
             0
           ),
+
+          // ✔ વસુલાત બાકી = બધી entries નો કુલ
           pending: educationRevenues.reduce(
             (sum, x) => sum + parseFloat(x.pending || 0),
             0
           ),
+
+          // ✔ વસુલાત બાકી (Left) = બધી entries નો કુલ
           left: educationRevenues.reduce(
             (sum, x) => sum + parseFloat(x.left || 0),
             0
           ),
+
+          // ✔ Bill નંબર અને તારીખ (પ્રથમ entry માંથી)
           billNo: educationRevenues[0].billNo || "",
           billDate: educationRevenues[0].billDate || "",
         };
       }
 
-      // Assign values to villager doc
-      villager._doc.maangnuLeft = maangnuData.maangnuLeft;
+      // ==================================================
+      // 👉 Report ના columns માં values નાખવી
+      // ==================================================
+      villager._doc.maangnuLeft = maangnuData.maangnuLeft;      // કોલમ: માંગણું બાકી
+      villager._doc.maangnuRotating = maangnuData.rotating;    // કોલમ: માંગણું ચલ
+      villager._doc.fajal = maangnuData.fajal;                 // કોલમ: ફાજલ
 
-      
-      villager._doc.maangnuRotating = maangnuData.rotating; 
-      villager._doc.fajal = maangnuData.fajal;
+      villager._doc.pending = revenueData.pending;             // કોલમ: બાકી
+      villager._doc.rotating = revenueData.rotating;           // કોલમ: ચલ
+      villager._doc.left = revenueData.left;                   // કોલમ: બાકી
+
       villager._doc.billNo = revenueData.billNo;
       villager._doc.billDate = revenueData.billDate;
-      villager._doc.pending = revenueData.pending;
-      villager._doc.rotating = revenueData.rotating;
-      villager._doc.left = revenueData.left;
+
+      // ✔ સરકાર = (વીલેજર સરકાર * master ટકાવારી) / 100
       villager._doc.sarkari = parseFloat(
         ((parseFloat(villager.sarkari || 0) * master.sSarkari) / 100)
       );
+
+      // ✔ સિવાય = (વીલેજર સિવાય * master ટકાવારી) / 100
       villager._doc.sivay = parseFloat(
         ((parseFloat(villager.sivay || 0) * master.sSivay) / 100)
       );
 
+      // ==================================================
+      // 🔢 મુખ્ય ગણતરી (IMPORTANT CALCULATION)
+      // ==================================================
+
+      // 👉 totalCalculated =
+      // 👉 વસુલાત બાકી + વસુલાત પેન્ડિંગ + ફાજલ + માંગણું ચલ
+      // 👉 ઉદાહરણ: કોલમ 3 + 4 + 5 + 6
       const totalCalculated =
-        revenueData.left + revenueData.pending + maangnuData.fajal + maangnuData.rotating;
+        revenueData.left +
+        revenueData.pending +
+        maangnuData.fajal +
+        maangnuData.rotating;
+
+      // 👉 totalCalc =
+      // 👉 માંગણું બાકી + સરકાર + સિવાય + વસુલાત ચલ
+      // 👉 ઉદાહરણ: કોલમ 7 + 8 + 9 + 6
       const totalCalc =
         maangnuData.maangnuLeft +
         villager._doc.sarkari +
         villager._doc.sivay +
         revenueData.rotating;
 
-      // villager._doc.collumnFourteen =
-      //   totalCalculated < totalCalc
-      //     ? parseFloat((totalCalc - totalCalculated).toFixed(2))
-      //     : 0;
-      // villager._doc.collumnFifteen =
-      //   totalCalculated > totalCalc
-      //     ? parseFloat((totalCalculated - totalCalc).toFixed(2))
-      //     : 0;
+      // ==================================================
+      // 👉 કોલમ 14 અને કોલમ 15 ની ગણતરી
+      // ==================================================
 
-           villager._doc.collumnFourteen =
+      // ✔ જો totalCalc વધારે હોય તો ફરક કોલમ 14 માં
+      villager._doc.collumnFourteen =
         totalCalculated < totalCalc
-          ? parseFloat((totalCalc - totalCalculated))
+          ? parseFloat(totalCalc - totalCalculated)
           : 0;
+
+      // ✔ જો totalCalculated વધારે હોય તો ફરક કોલમ 15 માં
       villager._doc.collumnFifteen =
         totalCalculated > totalCalc
-          ? parseFloat((totalCalculated - totalCalc))
+          ? parseFloat(totalCalculated - totalCalc)
           : 0;
 
-      // Totals
+      // ==================================================
+      // 👉 કુલ (Grand Total) માં ઉમેરવું
+      // ==================================================
       totals.maangnuLeft += maangnuData.maangnuLeft;
-      totals.maangnuRotating += maangnuData.rotating; 
+      totals.maangnuRotating += maangnuData.rotating;
       totals.fajal += maangnuData.fajal;
       totals.pending += revenueData.pending;
       totals.rotating += revenueData.rotating;
       totals.left += revenueData.left;
-      totals.sarkari += parseFloat(villager._doc.sarkari);
-      totals.sivay += parseFloat(villager._doc.sivay);
-
-      totals.collumnFourteen +=
-        totalCalculated < totalCalc
-          ? parseFloat((totalCalc - totalCalculated))
-          : 0;
-      totals.collumnFifteen +=
-        totalCalculated > totalCalc
-          ? parseFloat((totalCalculated - totalCalc))
-          : 0;
+      totals.sarkari += villager._doc.sarkari;
+      totals.sivay += villager._doc.sivay;
+      totals.collumnFourteen += villager._doc.collumnFourteen;
+      totals.collumnFifteen += villager._doc.collumnFifteen;
     })
   );
 
-  
+  // 👉 Account number numeric sorting
   villagers.sort((a, b) => {
-  const na = parseInt(a.accountNo, 10);
-  const nb = parseInt(b.accountNo, 10);
+    const na = parseInt(a.accountNo, 10);
+    const nb = parseInt(b.accountNo, 10);
+    return (isNaN(na) ? Infinity : na) - (isNaN(nb) ? Infinity : nb);
+  });
 
-  // push NaN/non-numeric to the end
-  const va = Number.isNaN(na) ? Number.POSITIVE_INFINITY : na;
-  const vb = Number.isNaN(nb) ? Number.POSITIVE_INFINITY : nb;
-  return va - vb;
-});
-
-
-
-  // Add totals row
+  // ==================================================
+  // 👉 છેલ્લી લાઇન : કુલ (TOTAL ROW)
+  // ==================================================
   villagers.push({
     isTotalRow: true,
     accountNo: "કુલ",
     name: "",
     maangnuLeft: totals.maangnuLeft,
-    maangnuRotating : totals.maangnuRotating, 
+    maangnuRotating: totals.maangnuRotating,
     fajal: totals.fajal,
     pending: totals.pending,
     rotating: totals.rotating,
@@ -202,6 +226,7 @@ exports.getEducationReport = asyncHandler(async (req, res) => {
 
   const lastPage = Math.ceil(totalDocs / limit);
 
+  // 👉 Response મોકલવો
   res.status(200).json(
     new SuccessResponse(
       {
@@ -213,7 +238,8 @@ exports.getEducationReport = asyncHandler(async (req, res) => {
           limit: parseInt(limit),
         },
       },
-      "Fetched education cess report with totals"
+      "શિક્ષણ સેસ રિપોર્ટ સફળતાપૂર્વક મેળવાયો"
     )
   );
 });
+

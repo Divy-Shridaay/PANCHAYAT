@@ -54,7 +54,7 @@ export default function Villagers() {
   const [status, setStatus] = useState(1);
   const [mode, setMode] = useState("create");
   const [id, setId] = useState(null);
-
+ 
   const fetchVillagers = async () => {
     const response = await fetchVillagersPage(
       page,
@@ -111,6 +111,7 @@ export default function Villagers() {
     // },
   ];
 
+   
   const handlePrint = async () => {
     try {
       // 1. Open the print window immediately to avoid popup blocking
@@ -590,7 +591,7 @@ export default function Villagers() {
           isDelete={user?.role.permissions.includes("VILLAGERS_DELETE")}
         />
 
-        {isOpen && (
+        {/* {isOpen && (
           <VillagerCreateModal
             isOpen={isOpen}
             onClose={() => {
@@ -602,7 +603,7 @@ export default function Villagers() {
             mode={mode}
             id={id}
           />
-        )}
+        )} */}
 
         <>
           {/* Example button to open the dialog */}

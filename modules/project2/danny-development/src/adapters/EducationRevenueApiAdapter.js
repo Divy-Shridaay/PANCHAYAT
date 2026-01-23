@@ -17,12 +17,12 @@ export const fetchEducationCessPage = async (
   const response = await callApi({
     url:
       pipeline && pipeline.length > 0
-        ? `${BASE_URL}?pipeline=${JSON.stringify(
-            pipeline
+        ? `${BASE_URL}?pipeline=${encodeURIComponent(
+            JSON.stringify(pipeline)
           )}&page=${page}&limit=${limit}`
-        : `${BASE_URL}?page=${page}&limit=${limit}&search=${search}&join=${join}&filter=${JSON.stringify(
+        : `${BASE_URL}?page=${page}&limit=${limit}&search=${search}&join=${join}&filter=${encodeURIComponent(JSON.stringify(
             filter
-          )}&status=${status}`,
+          ))}&status=${status}`,
     method: "GET",
     Token: localStorage.getItem("accessToken"),
     showSuccessToast: false,

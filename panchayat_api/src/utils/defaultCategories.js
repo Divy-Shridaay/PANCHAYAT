@@ -1,4 +1,4 @@
-module.exports = [
+export default [
   // ================= આવક (AAVAK) =================
   { name: "ઘર વેરો", type: "aavak" },
   { name: "સા.પા વેરો", type: "aavak" },

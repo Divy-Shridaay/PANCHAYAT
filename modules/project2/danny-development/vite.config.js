@@ -9,5 +9,5 @@ export default defineConfig({
     host: true,
    
   },
-  base:'/p2/'
+  // base:'/p2/'
 })
