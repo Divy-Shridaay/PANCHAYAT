@@ -27,15 +27,17 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.shridaay.
 
 
 const gujaratiToEnglishDigits = (str) => {
+  if (typeof str !== 'string') str = String(str || "");
   return str.replace(/[૦-૯]/g, (d) => "૦૧૨૩૪૫૬૭૮૯".indexOf(d));
 };
 
 const formatMobile = (value) => {
-  value = gujaratiToEnglishDigits(value);
-  value = value.replace("+91", "").trim();
-  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (!value) return "";
+  const eng = gujaratiToEnglishDigits(value);
+  const normalized = eng.replace("+91", "").trim();
+  const digits = normalized.replace(/\D/g, "").slice(0, 10);
 
-  if (!digits) return "+91 ";
+  if (!digits) return "";
 
   if (digits.length <= 5) {
     return `+91 ${digits}`;
@@ -163,8 +165,8 @@ export default function FullForm() {
       });
       const applicantName = savedForm.applicantName || "";
       const applicantSurname = savedForm.applicantSurname || "";
-      const applicantMobile = savedForm.applicantMobile || "";
-      const applicantAadhaar = savedForm.applicantAadhaar || "";
+      const applicantMobile = formatMobile(savedForm.applicantMobile || "");
+      const applicantAadhaar = formatAadhaar(savedForm.applicantAadhaar || "");
 
       const mappedHeirs = heirs.map((h) => ({
         ...h,
@@ -294,8 +296,8 @@ export default function FullForm() {
               name: p.name || "",
               age: p.age || "",
               occupation: p.occupation || "",
-              aadhaar: p.aadhaar || "",
-              mobile: p.mobile || "",
+              aadhaar: formatAadhaar(p.aadhaar || ""),
+              mobile: formatMobile(p.mobile || ""),
 
               // 🔥 DB path
               photo: p.photo || null,
@@ -413,8 +415,8 @@ export default function FullForm() {
         pm = pm.slice(pm.length - 10);
       }
 
-      if (pm && pm.length !== 10) {
-        errors.push(`પંચ નં ${i + 1} નો મોબાઇલ નંબર ખોટો છે`);
+      if (!pm || pm.length !== 10) {
+        errors.push(`પંચ નં ${i + 1} નો મોબાઇલ નંબર જરૂરી છે અને 10 આંકડાનો હોવો જોઈએ`);
         invalid[`panch_${i}_mobile`] = "invalid";
       }
 

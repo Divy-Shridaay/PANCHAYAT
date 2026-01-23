@@ -832,6 +832,9 @@ export default function Pedhinamu() {
                 dod: h.dod || "",
                 dodDisplay: h.dodDisplay || "",
                 showSubFamily: true,
+                 // ✅ THIS IS THE FIX (FOR "કુલ સંતાન")
+  childCount: (h.subFamily?.children || []).length,
+
 
                 subFamily: {
                     spouse: {
@@ -856,7 +859,12 @@ export default function Pedhinamu() {
                         dod: c.dod || "",
                         dodDisplay: c.dodDisplay || "",
                         showSpouse: !!c.spouse?.name,
+                        
+                          // ✅ FIX: initialize total children count for edit mode
+  childCount: (c.children || []).length,
 
+    // ✅ THIS IS THE FIX
+  grandCount: (c.children || []).length,
                         spouse: c.spouse
                             ? {
                                 name: c.spouse?.name || "",
@@ -915,7 +923,7 @@ export default function Pedhinamu() {
 
             {/* Progress Bar */}
             <Progress
-                value={step === 1 ? 50 : 100}
+                value={step === 1 ? 0 : 50}
                 size="sm"
                 colorScheme="green"
                 borderRadius="md"
@@ -1131,6 +1139,8 @@ export default function Pedhinamu() {
                                                     dod: "",
                                                     dodDisplay: "",
                                                     showSubFamily: true,
+                                           childCount: 0,
+
                                                     subFamily: {
                                                         spouse: {
                                                             name: "",
