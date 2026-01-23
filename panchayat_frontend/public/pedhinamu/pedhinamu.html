@@ -132,12 +132,15 @@
         -------------------------- */
         @media print {
             @page {
-                size: A4 portrait;
-                margin: 10mm 12mm 10mm 12mm;
-            }
+        size: A4 portrait;
+        margin: 10mm 12mm 10mm 12mm;
+        counter-increment: page;
+        @bottom-right {
+            content: "પાના " counter(page);
+        } }
 
             body {
-                padding-top: 0 !important;
+               counter-reset: page 1; /* Start from 1 by default */
             }
 
             svg {
@@ -246,7 +249,7 @@
 
     <br>
 
-    <p><b>વિષય :-</b> પેઢીનામું મેળવવા બાબત અરજ </p>
+    <p><b>વિષય :-</b> પેઢીનામું મેળવવા બાબત અરજ</p>
 
     <p>
         <b>સંદર્ભ :-</b><br>
@@ -461,13 +464,8 @@
     ના વારસદારોનું પેઢીનામું નીચે મુજબ લખાવીએ છીએ.
 </p>
 
-<!-- <div style="position: relative; height: 200px; margin: 20px 0; margin-top: 190px;">
-    <p style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60px; font-style: italic; color: #2563eb; white-space: nowrap; font-weight: 700; opacity: 0.15; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
-        પેઢીઆંબા પાનાં ન-૨ પ્રિન્ટ છે
-    </p>
-</div>
 
-<div style="page-break-before: always; margin-top: 0;">
+<!-- <div style="page-break-before: always; margin-top: 0;">
     <div class="tree-container" style="margin-top: 5px;">
         <div class="tree">
             {{familyTreeHtml}}
