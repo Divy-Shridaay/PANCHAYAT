@@ -478,6 +478,12 @@ export default function RecordView() {
                 talatiName: form?.talatiName || "",
                 javadNo: form?.javadNo || "",
                 totalHeirsCount: form?.totalHeirsCount || "",
+
+                // Rotated Tree Message
+                rotatedTreeMessage: ((pedhinamu?.heirs?.length || 0) + (pedhinamu?.mukhya?.spouse?.name?.trim() ? 1 : 0)) > 4
+                    ? '<div style="text-align:center; font-weight:bold; font-size: 32px; margin-top: 150px; margin-bottom: 150px; transform: rotate(-15deg); color: rgba(0,0,0,0.8); white-space: nowrap;">પેઢીઆંબા વિસ્તૃત પ્રમાણ માં હોઈ <br> આગળ ના પાના પર પ્રિન્ટ થયેલ છે .</div>'
+                    : "",
+
                 // ✅ ADD THESE
                 referenceNo: form?.referenceNo || "",
 
@@ -574,10 +580,13 @@ export default function RecordView() {
 
             replacements.applicantPhotoHtml = applicantPhotoHtml;
 
-            replacements.treeSectionTitle = `<h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`;
+            const isDetailed = ((pedhinamu?.heirs?.length || 0) + (pedhinamu?.mukhya?.spouse?.name?.trim() ? 1 : 0)) > 4;
+            replacements.treeSectionTitle = isDetailed
+                ? `<div class="page-break"></div><h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`
+                : `<h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`;
 
             // Replace all placeholders
-            const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml', 'treeSectionTitle'];
+            const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml', 'treeSectionTitle', 'rotatedTreeMessage'];
             Object.entries(replacements).forEach(([key, value]) => {
                 const processedValue = htmlFields.includes(key) ? (value || "") : toGujaratiDigits(value || "");
                 htmlTemplate = htmlTemplate.replace(
