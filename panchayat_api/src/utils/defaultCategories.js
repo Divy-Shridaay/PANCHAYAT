@@ -4,12 +4,14 @@ export default [
   { name: "સા.પા વેરો", type: "aavak" },
   { name: "ખા.પા વેરો", type: "aavak" },
   { name: "સફાઈ વેરો", type: "aavak" },
-  { name: "સફાઇ વેરો", type: "aavak" },
-  { name: "ગટર વેરો", type: "aavak" },
-  { name: "લાઈટ વેરો", type: "aavak" },
-  { name: "કુંડી વેરો", type: "aavak" },
+  { name: "ગટર/કુંડી વેરો", type: "aavak" },
+  { name: "વીજળી વેરો", type: "aavak" },
   { name: "સ્પેસિયલ પાણી ફી", type: "aavak" },
   { name: "વ્યવસાય વેરો", type: "aavak" },
+  { name: "અન્ય આવક", type: "aavak" },
+
+
+
   { name: "નળ કનેક્શન ફી", type: "aavak" },
   { name: "ગટર કનેક્શન ફી", type: "aavak" },
   { name: "જન્મ-મરણ ફી", type: "aavak" },
@@ -29,7 +31,7 @@ export default [
   { name: "ઓ.એન.જી.સી ગ્રાન્ટ", type: "aavak" },
   { name: "લોકફાળો", type: "aavak" },
   { name: "અનામત", type: "aavak" },
-  { name: "અન્ય આવક", type: "aavak" },
+  
   { name: "પરચુરણ આવક", type: "aavak" },
 
   // ================= જાવક (JAVAK) =================

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
     Box,
@@ -117,6 +116,21 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         return display.replace(/\d/g, (d) => guj(d));
     };
 
+    const Date_To_Gujarati = (display) => {
+    if (!display) return "";
+
+    // YYYY-MM-DD → [YYYY, MM, DD]
+    const [year, month, day] = display.split("-");
+
+    const formatted = `${day}-${month}-${year}`;
+
+    // Convert digits to Gujarati
+    return formatted.replace(/\d/g, (d) => guj(d));
+};
+
+
+    
+
     const formatDisplayDate = (input) => {
         const digits = input.replace(/\D/g, "").slice(0, 8);
         if (digits.length <= 2) return digits;
@@ -139,6 +153,8 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             return recordDate >= fromDate && recordDate <= toDate;
         });
     };
+
+    
 
     const isFromAfterTo = (from, to) => {
         if (!from || !to) return false;
@@ -171,10 +187,21 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
         return selected > today;
     };
-
-    const handleReportChange = (key, value) => {
+const handleReportChange = (key, value) => {
         setReport((prev) => {
             const updated = { ...prev, [key]: value };
+
+            // 🔥 Reset dates when report type changes
+            if (key === "type") {
+                updated.from = "";
+                updated.to = "";
+                updated.singleDate = "";
+                updated.fy = "";
+                updated.selectedYear = "";
+                updated.selectedBank = "";
+                dateErrorShownRef.current = false;
+                return updated;
+            }
 
             // 🔥 If FY is selected, auto-set from and to dates
             if (key === "fy" && value) {
@@ -332,7 +359,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     rowsHtml += `
 <tr>
     <td>${guj(i + 1)}</td>
-    <td>${formatDateToGujarati(r.date?.slice(0, 10))}</td>
+    <td>${Date_To_Gujarati(r.date?.slice(0, 10))}</td>
     <td>${r.ddCheckNum || ""}</td>
     <td class="text-right">${guj(r.amount || 0)}</td>
     <td>${r.receiptPaymentNo || ""}</td>
@@ -373,7 +400,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 return;
             }
 
-            // ROJMEL REPORT
+            // ROJMEL REPORT-----------------------------------------------------------------
             if (report.type === "rojmel") {
                 // 🔥 FIX: Fetch ALL records from beginning for proper account balances
                 const qs = `?to=${toDate}`;
@@ -460,26 +487,24 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     console.error("Error calculating opening balance:", err);
                 }
 
-                /* ================= AAVAK CATEGORIES ================= */
-                const allAavakCategories = (customCategories?.aavak || [])
-                    .filter(cat => !cat.isDeleted)
-                    .map(cat => cat.name);
-
-                if (allAavakCategories.length === 0) {
-                    const fallbackSet = new Set();
-                    selectedDateRecords.forEach(r => {
-                        if (r.vyavharType === "aavak" && r.category) {
-                            fallbackSet.add(r.category);
-                        }
-                    });
-                    allAavakCategories.push(...Array.from(fallbackSet));
-                }
+            /* ================= AAVAK CATEGORIES ================= */
+                // 🔥 FIX: Use only these 9 fixed categories for rojmel
+                const allAavakCategories = [
+                    "ઘર વેરો",
+                    "સા.પા વેરો", 
+                    "ખા.પા વેરો",
+                    "સફાઈ વેરો",
+                    "ગટર/કુંડી",
+                    "વીજળી વેરો",
+                    "સ્પેસિયલ પાણી ફી",
+                    "વ્યવસાય વેરો",
+                    "અન્ય આવક"
+                ];
 
                 const incomeColspan = allAavakCategories.length + 1;
                 const totalIncomeCols = incomeColspan;
 
                 const incomeHeadersHTML = allAavakCategories.map(cat => `<th>${cat}</th>`).join("");
-
                 /* ================= DATE MAP ================= */
                 const dateMap = {};
                 selectedDateRecords.forEach(r => {
@@ -518,10 +543,19 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                         let categoryCells = "";
 
                         if (a && a.name !== "ઉઘડતી સિલક") {
+                            let matchedCategory = false;
                             categoryCells = allAavakCategories.map(cat => {
                                 if (a.category === cat) {
                                     categoryTotals[cat] += a.amount;
                                     totalAavakAmount += a.amount;
+                                    matchedCategory = true;
+                                    return `<td class="text-right">${guj(a.amount)}</td>`;
+                                }
+                                // If this is the "અન્ય આવક" column and no match found yet
+                                if (cat === "અન્ય આવક" && !matchedCategory && !allAavakCategories.slice(0, -1).includes(a.category)) {
+                                    categoryTotals[cat] += a.amount;
+                                    totalAavakAmount += a.amount;
+                                    matchedCategory = true;
                                     return `<td class="text-right">${guj(a.amount)}</td>`;
                                 }
                                 return `<td class="text-right">૦</td>`;
@@ -729,7 +763,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             }
 
         // ======================================================
-        // ======= AAVAK / JAVAK / TARIJ REPORTS ===============
+        // ======= AAVAK / JAVAK / TARIJ REPORTS ===============-----------------------------------
         // ======================================================
         const templateRes = await fetch(templateFile);
         if (!templateRes.ok) throw new Error("Template missing");
@@ -795,7 +829,7 @@ if (!hasValidRecords) {
         }
 
         // ================================
-        // TARIJ REPORT (તરીજ પત્રક)
+        // TARIJ REPORT (તરીજ પત્રક)--------------------------------------------------------------------
         // ================================
         if (report.type === "tarij") {
             const fromDateObj = new Date(fromDate + "T00:00:00Z");
@@ -940,7 +974,7 @@ if (!hasValidRecords) {
         }
 
         // ================================
-        // AAVAK / JAVAK MONTHLY REPORT
+        // AAVAK / JAVAK MONTHLY REPORT------------------------------------------------------------
         // ================================
         const records = allRecords.filter(r => r.vyavharType === report.type);
         const monthGroups = {};

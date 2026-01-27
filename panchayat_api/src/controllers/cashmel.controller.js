@@ -107,7 +107,7 @@ export const uploadExcel = async (req, res, next) => {
     }
 
     const buffer = req.file.buffer;
-    const wb = XLSX.read(buffer);
+    const wb = XLSX.read(buffer, { cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
@@ -116,7 +116,7 @@ export const uploadExcel = async (req, res, next) => {
     const errors = [];
 
     // ===============================
-    // 🔁 MAPPINGS (VERY IMPORTANT)
+    // 🔁 MAPPINGS
     // ===============================
     const vyavharTypeMap = {
       "આવક": "aavak",
@@ -125,44 +125,97 @@ export const uploadExcel = async (req, res, next) => {
       "javak": "javak",
     };
 
-  const paymentMethodMap = {
-  "બેંક": "bank",
-  "રોકડ": "rokad",
-  "bank": "bank",
-  "rokad": "rokad",
-};
+    const paymentMethodMap = {
+      "બેંક": "bank",
+      "રોકડ": "rokad",
+      "bank": "bank",
+      "rokad": "rokad",
+    };
 
+    const mapVyavhar = (v) =>
+      vyavharTypeMap[String(v || "").trim()] || "";
 
-    function mapVyavhar(val) {
-      return vyavharTypeMap[String(val || "").trim()] || "";
-    }
-
-    function mapPaymentMethod(val) {
-      return paymentMethodMap[String(val || "").trim()] || "";
-    }
+    const mapPaymentMethod = (v) =>
+      paymentMethodMap[String(v || "").trim()] || "";
 
     // ===============================
-    // 📅 DATE PARSER
+    // 📅 DATE PARSER (STRICT + SAFE)
     // ===============================
     function parseExcelDate(val) {
       if (!val) return null;
 
-      const s = String(val).trim();
+      let dt = null;
 
-      // DD/MM/YYYY
-      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
-        const [d, m, y] = s.split("/");
-        return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+      // ✅ JS Date object
+      if (val instanceof Date && !isNaN(val)) {
+        dt = val;
       }
 
-      // Excel serial date
-      const num = Number(s);
-      if (!isNaN(num)) {
-        const dt = new Date((num - 25569) * 86400 * 1000);
-        return dt.toISOString().split("T")[0];
+      // ✅ DD/MM/YYYY
+      else if (
+        typeof val === "string" &&
+        /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val.trim())
+      ) {
+        const [d, m, y] = val.split("/");
+        dt = new Date(`${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`);
       }
 
-      return null;
+      // ✅ YYYY-MM-DD
+      else if (
+        typeof val === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(val.trim())
+      ) {
+        dt = new Date(val);
+      }
+
+      // ✅ Excel serial number
+      else if (!isNaN(Number(val))) {
+        dt = new Date(Math.round((Number(val) - 25569) * 86400 * 1000));
+      }
+
+      if (!dt || isNaN(dt)) return null;
+
+      // normalize time (important)
+      dt.setHours(0, 0, 0, 0);
+      return dt;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // ===============================
+    // ❌ PRE-VALIDATION: CHECK FOR FUTURE DATES
+    // ===============================
+    let hasFutureDate = false;
+    let futureDateRow = -1;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const entryDate = parseExcelDate(r.date);
+      if (entryDate && entryDate > today) {
+        hasFutureDate = true;
+        futureDateRow = i + 2; // Row number (1-based, plus header)
+        break;
+      }
+    }
+
+    if (hasFutureDate) {
+      return res.status(400).send("ભવિષ્યની તારીખ માન્ય નથી");
+    }
+
+    // ===============================
+    // ❌ PRE-VALIDATION: CHECK FOR ROKAD WITH BANK DETAILS
+    // ===============================
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const paymentMethod = mapPaymentMethod(r.paymentMethod);
+      const bank = String(r.bank || "").trim();
+      const ddCheckNum = String(r.ddCheckNum || "").trim();
+
+      if (paymentMethod === "rokad" && (bank || ddCheckNum)) {
+        return res.status(400).send(
+          `રોકડ ચુકવણીમાં બેંક વિગતો માન્ય નથી (પંક્તિ ${i + 2})`
+        );
+      }
     }
 
     // ===============================
@@ -171,73 +224,87 @@ export const uploadExcel = async (req, res, next) => {
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
 
-      const dateISO = parseExcelDate(r.date);
+      const entryDate = parseExcelDate(r.date);
       const name = String(r.name || "").trim();
       const receiptPaymentNo = String(r.receiptPaymentNo || "").trim();
       const vyavharType = mapVyavhar(r.vyavharType);
       const category = String(r.category || "").trim();
       const amount = Number(r.amount || 0);
 
-      // ✅ NEW FIELDS (FIX)
-    const paymentMethod = mapPaymentMethod(r.paymentMethod);
-const bank = String(r.bank || "").trim();
-
-const ddCheckNum =
-  paymentMethod === "bank"
-    ? String(r.ddCheckNum || "").trim()
-    : "";
-
-    const remarks = String(r.remarks || "").trim();
-
+      const paymentMethod = mapPaymentMethod(r.paymentMethod);
+      const bank = String(r.bank || "").trim();
+      const ddCheckNum =
+        paymentMethod === "bank"
+          ? String(r.ddCheckNum || "").trim()
+          : "";
+      const remarks = String(r.remarks || "").trim();
 
       // ===============================
-      // ❗ REQUIRED VALIDATION
+      // ❌ DATE VALIDATION
       // ===============================
-      if (!dateISO || !name || !vyavharType || !category || !amount) {
+      if (!entryDate) {
         errors.push({
           row: i + 2,
-          reason: "Missing required fields",
+          reason: "તારીખ માન્ય નથી",
           raw: r,
         });
         continue;
       }
 
-      const alreadyExists = await CashMel.findOne({
-  panchayatId: req.user.gam,
-  date: dateISO,
-  name,
-  receiptPaymentNo,
-  vyavharType,
-  category,
-  amount,
-  isDeleted: false
-});
+      const dateISO = entryDate.toISOString().split("T")[0];
 
+      // ===============================
+      // ❗ REQUIRED FIELD VALIDATION
+      // ===============================
+      if (!name || !vyavharType || !category || !amount) {
+        errors.push({
+          row: i + 2,
+          reason: "જરૂરી માહિતી અધૂરી છે",
+          raw: r,
+        });
+        continue;
+      }
+
+      // ===============================
+      // 🔍 DUPLICATE CHECK
+      // ===============================
+      const alreadyExists = await CashMel.findOne({
+        panchayatId: req.user.gam,
+        date: dateISO,
+        name,
+        receiptPaymentNo,
+        vyavharType,
+        category,
+        amount,
+        isDeleted: false
+      });
 
       if (alreadyExists) {
         skipped.push({
           row: i + 2,
-          reason: "Duplicate entry",
+          reason: "ડુપ્લિકેટ એન્ટ્રી",
           raw: r,
         });
         continue;
       }
 
-await CashMel.create({
-  panchayatId: req.user.gam,
-  date: dateISO,
-  name,
-  receiptPaymentNo,
-  vyavharType,
-  category,
-  amount,
-  paymentMethod ,
-bank,
-ddCheckNum,
-  remarks,
-  isDeleted: false
-});
-
+      // ===============================
+      // 💾 SAVE
+      // ===============================
+      await CashMel.create({
+        panchayatId: req.user.gam,
+        date: dateISO,
+        name,
+        receiptPaymentNo,
+        vyavharType,
+        category,
+        amount,
+        paymentMethod,
+        bank,
+        ddCheckNum,
+        remarks,
+        isDeleted: false
+      });
 
       saved.push(r);
     }

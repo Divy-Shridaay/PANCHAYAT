@@ -195,33 +195,33 @@ const paymentMethodGujarati = (method) => {
   }, [id]);
 
   // Filter entries based on search and type
-  useEffect(() => {
-    if (!id) {
-      let filtered = allEntries;
+ useEffect(() => {
+  if (!id) {
+    let filtered = allEntries;
 
-      if (filterType !== "all") {
-        filtered = filtered.filter(
-          (entry) => entry.vyavharType?.toLowerCase() === filterType
-        );
-      }
-
-      if (searchTerm) {
-        filtered = filtered.filter(
-          (entry) =>
-            entry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            entry.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            entry.receiptPaymentNo
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            entry.ddCheckNum?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      setFilteredEntries(filtered);
-      setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-      setCurrentPage(1);
+    if (filterType !== "all") {
+      filtered = filtered.filter(
+        (entry) => entry.vyavharType?.toLowerCase() === filterType
+      );
     }
-  }, [searchTerm, filterType, allEntries, id, itemsPerPage]);
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (entry) =>
+          entry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          entry.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          entry.receiptPaymentNo
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          entry.ddCheckNum?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredEntries(filtered);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+    setCurrentPage(1);
+  }
+}, [searchTerm, filterType, allEntries, id, itemsPerPage]);
 
   const getPaginatedData = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -496,7 +496,7 @@ const paymentMethodGujarati = (method) => {
               </Table>
             </TableContainer>
 
-            {totalPages > 1 && (
+            
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -504,7 +504,7 @@ const paymentMethodGujarati = (method) => {
                 itemsPerPage={itemsPerPage}
                 setItemsPerPage={setItemsPerPage}
               />
-            )}
+            
           </>
         )}
 
