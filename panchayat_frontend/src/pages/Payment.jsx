@@ -23,6 +23,7 @@ import {
     ModalBody,
     useDisclosure,
     useToast,
+    Spinner,
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +46,8 @@ export default function Payment() {
     });
     const [gstNumber, setGstNumber] = useState("");
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
 
     const validateGst = (gst) => {
         const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
@@ -126,38 +129,60 @@ export default function Payment() {
     };
 
     const handleSubmit = async () => {
+        setIsSubmitting(true);
+        setSubmitError("");
+        
         try {
-            // Logic for submission
-            console.log("Submitting payment...", {
-                modules: selectedModules,
-                baseAmount: baseAmount,
-                gstNumber: gstNumber,
-                gstAmount: gstAmount,
-                totalAmount: totalAmount,
-                method: paymentMethod,
-                screenshot: selectedFile
-            });
+            // Create FormData to handle file upload
+            const formData = new FormData();
+            formData.append("modules", JSON.stringify(selectedModules));
+            formData.append("baseAmount", baseAmount);
+            formData.append("gstNumber", gstNumber);
+            formData.append("gstAmount", gstAmount);
+            formData.append("totalAmount", totalAmount);
+            formData.append("paymentMethod", paymentMethod);
+            formData.append("screenshot", selectedFile);
 
-            // Call backend to set pending verification status
-            const { response, data } = await apiFetch("/api/register/user/set-pending-verification", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            }, navigate, toast);
-
-            if (response.ok) {
-                onOpen();
-            } else {
-                throw new Error(data.message || "વિનંતી સબમિટ કરવામાં નિષ્ફળ");
+            // Get token from localStorage
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setSubmitError("લૉગિન ટોકન મળ્યો નથી. કૃપા કરીને ફરીથી લૉગિન કરો.");
+                setIsSubmitting(false);
+                return;
             }
-        } catch (err) {
-            toast({
-                title: "ભૂલ",
-                description: err.message || "સર્વર ભૂલ",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-                position: "top"
+
+            // Get API URL from environment or use default
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+            // Submit payment
+            const response = await fetch(`${apiUrl}/api/payment/submit`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: formData
             });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "ચુકવણી સબમિટ કરવામાં ભૂલ આવી");
+            }
+
+            // Store payment submission info
+            const username = localStorage.getItem("username");
+            if (username) {
+                localStorage.setItem(`paymentPendingVerification_${username}`, "true");
+                localStorage.setItem(`paymentSubmissionTime_${username}`, new Date().toISOString());
+            }
+
+            // Show success modal
+            onOpen();
+        } catch (error) {
+            console.error("Payment submission error:", error);
+            setSubmitError(error.message || "ચુકવણી સબમિટ કરવામાં ભૂલ આવી");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -448,6 +473,15 @@ export default function Payment() {
                                 </VStack>
                             </Box>
 
+                            {/* Error Message */}
+                            {submitError && (
+                                <Box bg="red.50" p={4} rounded="lg" border="1px solid" borderColor="red.200">
+                                    <Text color="red.700" fontWeight="600">
+                                        ⚠️ {submitError}
+                                    </Text>
+                                </Box>
+                            )}
+
                             {/* Submit Button */}
                             <Button
                                 colorScheme="green"
@@ -457,11 +491,18 @@ export default function Payment() {
                                 fontWeight="bold"
                                 rounded="2xl"
                                 shadow="xl"
-                                isDisabled={!selectedFile}
+                                isDisabled={!selectedFile || isSubmitting}
                                 onClick={handleSubmit}
                                 _hover={{ transform: "translateY(-2px)", shadow: "2xl" }}
                             >
-                                સબમિટ
+                                {isSubmitting ? (
+                                    <Flex align="center" gap={2}>
+                                        <Spinner size="sm" color="white" />
+                                        સબમિટ કરી રહ્યા છીએ...
+                                    </Flex>
+                                ) : (
+                                    "સબમિટ"
+                                )}
                             </Button>
                         </>
                     )}
