@@ -111,10 +111,6 @@ export const uploadExcel = async (req, res, next) => {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-    const saved = [];
-    const skipped = [];
-    const errors = [];
-
     // ===============================
     // 🔁 MAPPINGS
     // ===============================
@@ -139,19 +135,16 @@ export const uploadExcel = async (req, res, next) => {
       paymentMethodMap[String(v || "").trim()] || "";
 
     // ===============================
-    // 📅 DATE PARSER (STRICT + SAFE)
+    // 📅 DATE PARSER
     // ===============================
     function parseExcelDate(val) {
       if (!val) return null;
 
       let dt = null;
 
-      // ✅ JS Date object
       if (val instanceof Date && !isNaN(val)) {
         dt = val;
       }
-
-      // ✅ DD/MM/YYYY
       else if (
         typeof val === "string" &&
         /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val.trim())
@@ -159,23 +152,18 @@ export const uploadExcel = async (req, res, next) => {
         const [d, m, y] = val.split("/");
         dt = new Date(`${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`);
       }
-
-      // ✅ YYYY-MM-DD
       else if (
         typeof val === "string" &&
         /^\d{4}-\d{2}-\d{2}$/.test(val.trim())
       ) {
         dt = new Date(val);
       }
-
-      // ✅ Excel serial number
       else if (!isNaN(Number(val))) {
         dt = new Date(Math.round((Number(val) - 25569) * 86400 * 1000));
       }
 
       if (!dt || isNaN(dt)) return null;
 
-      // normalize time (important)
       dt.setHours(0, 0, 0, 0);
       return dt;
     }
@@ -184,45 +172,13 @@ export const uploadExcel = async (req, res, next) => {
     today.setHours(0, 0, 0, 0);
 
     // ===============================
-    // ❌ PRE-VALIDATION: CHECK FOR FUTURE DATES
+    // ✅ PRE-VALIDATION: બધી ROWS ચેક કરો
     // ===============================
-    let hasFutureDate = false;
-    let futureDateRow = -1;
+    const validationErrors = [];
+
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const entryDate = parseExcelDate(r.date);
-      if (entryDate && entryDate > today) {
-        hasFutureDate = true;
-        futureDateRow = i + 2; // Row number (1-based, plus header)
-        break;
-      }
-    }
-
-    if (hasFutureDate) {
-      return res.status(400).send("ભવિષ્યની તારીખ માન્ય નથી");
-    }
-
-    // ===============================
-    // ❌ PRE-VALIDATION: CHECK FOR ROKAD WITH BANK DETAILS
-    // ===============================
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
-      const paymentMethod = mapPaymentMethod(r.paymentMethod);
-      const bank = String(r.bank || "").trim();
-      const ddCheckNum = String(r.ddCheckNum || "").trim();
-
-      if (paymentMethod === "rokad" && (bank || ddCheckNum)) {
-        return res.status(400).send(
-          `રોકડ ચુકવણીમાં બેંક વિગતો માન્ય નથી (પંક્તિ ${i + 2})`
-        );
-      }
-    }
-
-    // ===============================
-    // 🔁 ROW LOOP
-    // ===============================
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
+      const rowNum = i + 2; // Excel row number
 
       const entryDate = parseExcelDate(r.date);
       const name = String(r.name || "").trim();
@@ -230,44 +186,78 @@ export const uploadExcel = async (req, res, next) => {
       const vyavharType = mapVyavhar(r.vyavharType);
       const category = String(r.category || "").trim();
       const amount = Number(r.amount || 0);
+      const paymentMethod = mapPaymentMethod(r.paymentMethod);
+      const bank = String(r.bank || "").trim();
+      const ddCheckNum = String(r.ddCheckNum || "").trim();
 
+      const missingFields = [];
+
+      // Check all required fields
+      if (!entryDate) missingFields.push("તારીખ");
+      if (!name) missingFields.push("આપનાર અથવા લેનાર નું નામ");
+      if (!receiptPaymentNo) missingFields.push("રસીદ / ચુકવણી નંબર");
+      if (!vyavharType) missingFields.push("વ્યવહાર પ્રકાર");
+      if (!category) missingFields.push("કેટેગરી");
+      if (!amount || amount <= 0) missingFields.push("રકમ");
+      if (!paymentMethod) missingFields.push("કેવી રીતે આપ્યા");
+
+      if (missingFields.length > 0) {
+        validationErrors.push({
+          row: rowNum,
+          reason: `જરૂરી ફીલ્ડ ખૂટે છે: ${missingFields.join(", ")}`,
+        });
+        continue;
+      }
+
+      // Future date check
+      if (entryDate > today) {
+        validationErrors.push({
+          row: rowNum,
+          reason: "ભવિષ્યની તારીખ માન્ય નથી",
+        });
+      }
+
+      // Rokad with bank details check
+      if (paymentMethod === "rokad" && (bank || ddCheckNum)) {
+        validationErrors.push({
+          row: rowNum,
+          reason: "રોકડ ચુકવણીમાં બેંક વિગતો માન્ય નથી",
+        });
+      }
+    }
+
+    // ❌ જો કોઈ પણ validation error હોય તો UPLOAD નહીં કરો
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Excel માં ભૂલો મળી આવી. કૃપા કરીને સુધારો અને ફરી પ્રયાસ કરો.",
+        errors: validationErrors,
+      });
+    }
+
+    // ===============================
+    // 💾 હવે SAVE કરો (બધું valid છે)
+    // ===============================
+    const saved = [];
+    const skipped = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+
+      const entryDate = parseExcelDate(r.date);
+      const dateISO = entryDate.toISOString().split("T")[0];
+      const name = String(r.name || "").trim();
+      const receiptPaymentNo = String(r.receiptPaymentNo || "").trim();
+      const vyavharType = mapVyavhar(r.vyavharType);
+      const category = String(r.category || "").trim();
+      const amount = Number(r.amount || 0);
       const paymentMethod = mapPaymentMethod(r.paymentMethod);
       const bank = String(r.bank || "").trim();
       const ddCheckNum =
-        paymentMethod === "bank"
-          ? String(r.ddCheckNum || "").trim()
-          : "";
+        paymentMethod === "bank" ? String(r.ddCheckNum || "").trim() : "";
       const remarks = String(r.remarks || "").trim();
 
-      // ===============================
-      // ❌ DATE VALIDATION
-      // ===============================
-      if (!entryDate) {
-        errors.push({
-          row: i + 2,
-          reason: "તારીખ માન્ય નથી",
-          raw: r,
-        });
-        continue;
-      }
-
-      const dateISO = entryDate.toISOString().split("T")[0];
-
-      // ===============================
-      // ❗ REQUIRED FIELD VALIDATION
-      // ===============================
-      if (!name || !vyavharType || !category || !amount) {
-        errors.push({
-          row: i + 2,
-          reason: "જરૂરી માહિતી અધૂરી છે",
-          raw: r,
-        });
-        continue;
-      }
-
-      // ===============================
-      // 🔍 DUPLICATE CHECK
-      // ===============================
+      // Duplicate check
       const alreadyExists = await CashMel.findOne({
         panchayatId: req.user.gam,
         date: dateISO,
@@ -276,21 +266,17 @@ export const uploadExcel = async (req, res, next) => {
         vyavharType,
         category,
         amount,
-        isDeleted: false
+        isDeleted: false,
       });
 
       if (alreadyExists) {
         skipped.push({
           row: i + 2,
           reason: "ડુપ્લિકેટ એન્ટ્રી",
-          raw: r,
         });
         continue;
       }
 
-      // ===============================
-      // 💾 SAVE
-      // ===============================
       await CashMel.create({
         panchayatId: req.user.gam,
         date: dateISO,
@@ -303,7 +289,7 @@ export const uploadExcel = async (req, res, next) => {
         bank,
         ddCheckNum,
         remarks,
-        isDeleted: false
+        isDeleted: false,
       });
 
       saved.push(r);
@@ -314,11 +300,10 @@ export const uploadExcel = async (req, res, next) => {
     // ===============================
     return res.json({
       success: true,
+      message: "Excel સફળતાપૂર્વક અપલોડ થઈ ગયું!",
       savedCount: saved.length,
       skippedCount: skipped.length,
-      errorCount: errors.length,
       skipped,
-      errors,
     });
 
   } catch (err) {

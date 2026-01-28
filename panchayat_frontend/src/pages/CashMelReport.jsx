@@ -505,14 +505,47 @@ const handleReportChange = (key, value) => {
                 const totalIncomeCols = incomeColspan;
 
                 const incomeHeadersHTML = allAavakCategories.map(cat => `<th>${cat}</th>`).join("");
-                /* ================= DATE MAP ================= */
-                const dateMap = {};
+                
+                /* ================= 🔥 FIX: CONSOLIDATE BY RECEIPT NUMBER ================= */
+                // Group records by receiptPaymentNo for aavak entries
+                const receiptGroups = {};
+                
                 selectedDateRecords.forEach(r => {
-                    const d = r.date.slice(0, 10);
-                    if (!dateMap[d]) dateMap[d] = { aavak: [], javak: [] };
+                    if (r.vyavharType === "aavak" && r.receiptPaymentNo) {
+                        const key = r.receiptPaymentNo;
+                        if (!receiptGroups[key]) {
+                            receiptGroups[key] = {
+                                receiptPaymentNo: r.receiptPaymentNo,
+                                name: r.name,
+                                date: r.date,
+                                categories: {},
+                                totalAmount: 0
+                            };
+                        }
+                        
+                        const category = r.category || "અન્ય આવક";
+                        receiptGroups[key].categories[category] = (receiptGroups[key].categories[category] || 0) + (r.amount || 0);
+                        receiptGroups[key].totalAmount += (r.amount || 0);
+                    }
+                });
 
-                    if (r.vyavharType === "aavak") dateMap[d].aavak.push(r);
-                    else dateMap[d].javak.push(r);
+                /* ================= DATE MAP WITH CONSOLIDATED RECEIPTS ================= */
+                const dateMap = {};
+                
+                // Add consolidated aavak entries
+                Object.values(receiptGroups).forEach(group => {
+                    const d = group.date.slice(0, 10);
+                    if (!dateMap[d]) dateMap[d] = { aavak: [], javak: [] };
+                    dateMap[d].aavak.push(group);
+                });
+                
+                // Add javak entries (unchanged)
+                selectedDateRecords.forEach(r => {
+                    if (r.vyavharType === "javak") {
+                        const d = r.date.slice(0, 10);
+                        if (!dateMap[d]) dateMap[d] = { aavak: [], javak: [] };
+                        dateMap[d].javak.push(r);
+                    }
                 });
 
                 /* ================= TOTALS ================= */
@@ -543,21 +576,36 @@ const handleReportChange = (key, value) => {
                         let categoryCells = "";
 
                         if (a && a.name !== "ઉઘડતી સિલક") {
+                            // 🔥 FIX: Handle consolidated categories from receiptGroups
                             let matchedCategory = false;
                             categoryCells = allAavakCategories.map(cat => {
-                                if (a.category === cat) {
-                                    categoryTotals[cat] += a.amount;
-                                    totalAavakAmount += a.amount;
+                                const categoryAmount = a.categories?.[cat] || 0;
+                                
+                                if (categoryAmount > 0) {
+                                    categoryTotals[cat] += categoryAmount;
+                                    totalAavakAmount += categoryAmount;
                                     matchedCategory = true;
-                                    return `<td class="text-right">${guj(a.amount)}</td>`;
+                                    return `<td class="text-right">${guj(categoryAmount)}</td>`;
                                 }
+                                
                                 // If this is the "અન્ય આવક" column and no match found yet
-                                if (cat === "અન્ય આવક" && !matchedCategory && !allAavakCategories.slice(0, -1).includes(a.category)) {
-                                    categoryTotals[cat] += a.amount;
-                                    totalAavakAmount += a.amount;
-                                    matchedCategory = true;
-                                    return `<td class="text-right">${guj(a.amount)}</td>`;
+                                if (cat === "અન્ય આવક" && !matchedCategory) {
+                                    // Check if there's any category not in our fixed list
+                                    const otherCategories = Object.keys(a.categories || {}).filter(
+                                        c => !allAavakCategories.slice(0, -1).includes(c)
+                                    );
+                                    
+                                    if (otherCategories.length > 0) {
+                                        const otherAmount = otherCategories.reduce((sum, c) => sum + (a.categories[c] || 0), 0);
+                                        if (otherAmount > 0) {
+                                            categoryTotals[cat] += otherAmount;
+                                            totalAavakAmount += otherAmount;
+                                            matchedCategory = true;
+                                            return `<td class="text-right">${guj(otherAmount)}</td>`;
+                                        }
+                                    }
                                 }
+                                
                                 return `<td class="text-right">૦</td>`;
                             }).join("");
                         } else {
@@ -573,7 +621,7 @@ const handleReportChange = (key, value) => {
     <td>${a?.receiptPaymentNo ? guj(a.receiptPaymentNo) : ""}</td>
     <td>${a?.name || ""}</td>
     ${categoryCells}
-    <td class="text-right">${a ? guj(a.amount || 0) : ""}</td>
+    <td class="text-right">${a ? guj(a.totalAmount || a.amount || 0) : ""}</td>
 
     <td>${j?.ddCheckNum ? guj(j.ddCheckNum) : ""}</td>
     <td>${j?.receiptPaymentNo ? guj(j.receiptPaymentNo) : ""}</td>
@@ -584,15 +632,13 @@ const handleReportChange = (key, value) => {
 </tr>`;
                     }
                     
-                    // 🔥 NEW: Update opening balance for next date
-                    // Calculate day's total income and expense
+                    // 🔥 Update opening balance for next date
                     let dayAavak = 0;
                     let dayJavak = 0;
                     
-                    day.aavak.forEach(a => dayAavak += a.amount || 0);
+                    day.aavak.forEach(a => dayAavak += a.totalAmount || 0);
                     day.javak.forEach(j => dayJavak += j.amount || 0);
                     
-                    // Next date's opening = current opening + today's income - today's expense
                     openingBalance = openingBalance + dayAavak - dayJavak;
                 });
 

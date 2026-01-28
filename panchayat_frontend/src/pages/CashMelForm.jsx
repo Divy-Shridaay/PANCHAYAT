@@ -360,57 +360,90 @@ const cancelExcelUpload = () => {
     };
 
 const uploadExcelToServer = async () => {
-    if (!form.excelFile) {
-      toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
-      return;
-    }
+  if (!form.excelFile) {
+    toast({ title: "પહેલા ફાઇલ પસંદ કરો", status: "error" });
+    return;
+  }
 
-    const fd = new FormData();
-    fd.append("file", form.excelFile);
+  const fd = new FormData();
+  fd.append("file", form.excelFile);
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast({ title: "લૉગિન જરૂરી છે", status: "error" });
-      return;
-    }
+  const token = localStorage.getItem("token");
+  if (!token) {
+    toast({ title: "લૉગિન જરૂરી છે", status: "error" });
+    return;
+  }
 
-    setBulkLoading(true);
+  setBulkLoading(true);
 
-    try {
-      const res = await fetch(`${API_BASE}/cashmel/upload-excel`, {
-        method: "POST",
-        body: fd,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  try {
+    const res = await fetch(`${API_BASE}/cashmel/upload-excel`, {
+      method: "POST",
+      body: fd,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Upload failed");
+    const data = await res.json(); // ✅ JSON parse કરો
+
+    // ❌ Error Response
+    if (!res.ok || !data.success) {
+      if (data.errors && data.errors.length > 0) {
+        // બધી errors એક સાથે show કરો
+        const errorList = data.errors
+          .map(err => `પંક્તિ ${err.row}: ${err.reason}`)
+          .join('\n\n');
+
+        toast({
+          title: "Excel માં ભૂલો મળી આવી",
+          description: errorList,
+          status: "error",
+          duration: 8000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: "અપલોડમાં ભૂલ",
+          description: data.message || "કૃપા કરીને ફરી પ્રયાસ કરો",
+          status: "error",
+          duration: 5000,
+        });
       }
-
-      toast({
-        title: "Excel સફળતાપૂર્વક અપલોડ થઈ ગયું!",
-        status: "success",
-        duration: 4000,
-      });
-
-      // Reset for next upload
-      cancelExcelUpload();
-
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "અપલોડમાં ભૂલ",
-        description: err.message,
-        status: "error",
-        duration: 5000,
-      });
-    } finally {
-      setBulkLoading(false);
+      return;
     }
-  };
+
+    // ✅ Success Response
+    let successMsg = `${data.savedCount} entries સફળતાપૂર્વક સેવ થઈ!`;
+    if (data.skippedCount > 0) {
+      successMsg += `\n${data.skippedCount} ડુપ્લિકેટ entries skip થઈ.`;
+    }
+
+    toast({
+      title: "સફળતા!",
+      description: successMsg,
+      status: "success",
+      duration: 4000,
+    });
+
+    // Reset for next upload
+    cancelExcelUpload();
+
+    // ✅ Data refresh કરો
+    // fetchAllEntries(); // તમારું data refresh function call કરો
+
+  } catch (err) {
+    console.error(err);
+    toast({
+      title: "અપલોડમાં ભૂલ",
+      description: "કૃપા કરીને ફરી પ્રયાસ કરો",
+      status: "error",
+      duration: 5000,
+    });
+  } finally {
+    setBulkLoading(false);
+  }
+};
 
   const isCategoryValidForType = (type, category) => {
     if (!type || !category) return false;
