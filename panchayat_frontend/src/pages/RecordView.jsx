@@ -289,7 +289,7 @@ export default function RecordView() {
         const hGap = (isRotated ? 30 : 120) * scale;
         const vGap = (isRotated ? 120 : (isSmall ? 300 : 660)) * scale;
         const paddingH = (isRotated ? 20 : 80) * scale;
-        const topMargin = (isRotated ? 5 : 100) * scale;
+        const topMargin = (isRotated ? 80 : 100) * scale;
         const marginX = (isRotated ? 5 : 100) * scale;
         const depthOffset = (isRotated ? 130 : (isSmall ? 280 : 440)) * scale;
 
@@ -420,6 +420,11 @@ export default function RecordView() {
         const totalHeight = maxReachedY + 10;
 
         if (isRotated) {
+            svgNodes += `<text x="${totalTreeWidth / 2 + marginX}" y="${topMargin - 55 * scale}" text-anchor="middle" font-size="${30 * scale}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">પેઢીનામું</text>`;
+        }
+
+
+        if (isRotated) {
             return `
             <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 255mm; max-width: 100%; height: auto; display: block; margin-left: 0; margin-right: auto; page-break-inside: avoid;">
                 <g transform="translate(0, ${totalWidth}) rotate(-90)">
@@ -469,6 +474,7 @@ export default function RecordView() {
             /* -----------------------------------------
                BASIC PLACEHOLDER REPLACEMENTS
             ----------------------------------------- */
+            const isDetailed = ((pedhinamu?.heirs?.length || 0) + (pedhinamu?.mukhya?.spouse?.name?.trim() ? 1 : 0)) > 4;
 
             const replacements = {
                 applicantName: form?.applicantName || "",
@@ -524,6 +530,7 @@ export default function RecordView() {
                 taluko: user?.gam || "",
                 userTaluko: user?.taluko || "",
                 userJillo: user?.jillo || "",
+                treeTitle1: isDetailed ? "" : `<h2 class="tree-title">પેઢીનામું</h2>`,
             };
 
 
@@ -580,10 +587,9 @@ export default function RecordView() {
 
             replacements.applicantPhotoHtml = applicantPhotoHtml;
 
-            const isDetailed = ((pedhinamu?.heirs?.length || 0) + (pedhinamu?.mukhya?.spouse?.name?.trim() ? 1 : 0)) > 4;
             replacements.treeSectionTitle = isDetailed
-                ? `<div class="page-break"></div><h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`
-                : `<h3 class="section-title tree-title">વિગતવાર પેઢીઆંબા</h3>`;
+                ? `<div class="page-break"></div><h3 class="section-title tree-title">${isDetailed ? "" : "પેઢીનામું"}</h3>`
+                : `<h3 class="section-title tree-title">પેઢીનામું</h3>`;
 
             // Replace all placeholders
             const htmlFields = ['applicantPhotoHtml', 'panchTable', 'panchSignatureBlocks', 'panchPhotoBlocks', 'heirsHtml', 'treeSectionTitle', 'rotatedTreeMessage'];
