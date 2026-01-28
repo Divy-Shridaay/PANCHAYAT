@@ -421,8 +421,8 @@ export default function RecordView() {
 
         if (isRotated) {
             return `
-            <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 255mm; max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: 0; page-break-inside: avoid;">
-                <g transform="translate(${totalHeight}, 0) rotate(90)">
+            <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 255mm; max-width: 100%; height: auto; display: block; margin-left: 0; margin-right: auto; page-break-inside: avoid;">
+                <g transform="translate(0, ${totalWidth}) rotate(-90)">
                     ${svgLines}
                     ${svgNodes}
                 </g>
