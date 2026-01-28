@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
  */
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://api.shridaay.com";   // 👈 YOUR LIVE BACKEND URL
+  "http://panchayat.shridaay.com:5000";   // 👈 YOUR LIVE BACKEND URL
 
 
 /**

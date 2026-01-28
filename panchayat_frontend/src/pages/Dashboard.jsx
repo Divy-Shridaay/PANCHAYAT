@@ -8,6 +8,7 @@ import {
   Button,
   Flex,
   useToast,
+  CloseButton,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -22,6 +23,7 @@ import { HiOutlineDocumentCurrencyRupee } from "react-icons/hi2";
 import { useEffect, useState } from "react";
 import { useApiFetch } from "../utils/api";
 import PaymentPopup from "../components/PaymentPopup";
+import TrialWelcomePopup from "../components/TrialWelcomePopup";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -37,6 +39,8 @@ export default function Dashboard() {
   });
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [popupType, setPopupType] = useState("module");
+  const [showTrialWelcome, setShowTrialWelcome] = useState(false);
+  const [showVerificationNotice, setShowVerificationNotice] = useState(false);
 
   /* =======================
      FETCH LOGGED IN USER
@@ -143,10 +147,72 @@ export default function Dashboard() {
   useEffect(() => {
     fetchUsers();
     fetchUserStatus();
+
+    // Check for trial welcome popup
+    const welcomeFlag = localStorage.getItem("showTrialWelcome");
+    if (welcomeFlag === "true") {
+      setShowTrialWelcome(true);
+      localStorage.removeItem("showTrialWelcome");
+    }
   }, []);
+
+  /* =======================
+     MANAGE VERIFICATION NOTICE
+  ======================= */
+  useEffect(() => {
+    const username = localStorage.getItem("username");
+    if (username && userStatus?.user) {
+      const pendingKey = `paymentPendingVerification_${username}`;
+      const isPending = localStorage.getItem(pendingKey) === "true";
+      const isPaid = userStatus.user.isPaid;
+
+      if (isPaid) {
+        // If user has paid, clear the pending flag and hide notice
+        localStorage.removeItem(pendingKey);
+        setShowVerificationNotice(false);
+      } else if (isPending) {
+        // Show notice only if pending and NOT paid
+        setShowVerificationNotice(true);
+      } else {
+        setShowVerificationNotice(false);
+      }
+    }
+  }, [userStatus]);
 
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
+      {/* VERIFICATION NOTICE */}
+      {showVerificationNotice && (
+        <Box
+          bg="blue.50"
+          p={5}
+          rounded="2xl"
+          border="1px solid"
+          borderColor="blue.200"
+          mb={8}
+          shadow="sm"
+          position="relative"
+        >
+          <Flex align="center" justify="space-between">
+            <Box pr={10}>
+              <Text fontWeight="bold" color="blue.800" fontSize="lg">
+                તમારી ચુકવણી પ્રાપ્ત થઈ ગઈ છે અને હાલમાં ચકાસણી હેઠળ છે.
+              </Text>
+              <Text color="blue.700" fontSize="md" mt={2}>
+                એડમિન દ્વારા ચુકવણીની પુષ્ટિ થયા બાદ, તમે પસંદ કરેલા મોડ્યુલ્સ માટેની ઍક્સેસ સક્રિય કરવામાં આવશે.
+              </Text>
+            </Box>
+            <CloseButton
+              position="absolute"
+              right={4}
+              top={4}
+              size="lg"
+              color="blue.600"
+              onClick={() => setShowVerificationNotice(false)}
+            />
+          </Flex>
+        </Box>
+      )}
       {/* HEADER */}
       <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700">
@@ -309,6 +375,11 @@ export default function Dashboard() {
         isOpen={showPaymentPopup}
         onClose={() => setShowPaymentPopup(false)}
         type={popupType}
+      />
+
+      <TrialWelcomePopup
+        isOpen={showTrialWelcome}
+        onClose={() => setShowTrialWelcome(false)}
       />
     </Box>
   );

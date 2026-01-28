@@ -70,7 +70,7 @@ export default function Register() {
     // Validate form
     if (
       !formData.firstName ||
-      
+
       !formData.email ||
       !formData.phone ||
       !formData.pinCode ||
@@ -215,6 +215,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
         setOtp("");
         setStep(1);
         onClose();
+        localStorage.setItem("showTrialWelcome", "true");
 
         setTimeout(() => {
           navigate("/login");
@@ -272,7 +273,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  નામ (First Name)  
+                  નામ
                 </FormLabel>
 
                 <Input
@@ -308,7 +309,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             {/* Row 2: Last Name */}
             <FormControl>
               <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                અંતિમ નામ (Last Name) 
+                અંતિમ નામ
               </FormLabel>
 
               <Input
@@ -327,7 +328,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             <HStack spacing={3} width="100%">
               <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
-                  જાતિ  (Gender) 
+                  જાતિ
                 </FormLabel>
 
                 <Select
@@ -350,17 +351,17 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   જન્મતારીખ
                 </FormLabel>
 
-            <Input
-  type="date"
-  name="dob"
-  value={formData.dob}
-  max={new Date().toISOString().split("T")[0]} // 🔒 future date block
-  onChange={handleInputChange}
-  bg="#f8fafc"
-  border="1px solid #cbd5e1"
-  _focus={{ borderColor: "#2563eb", bg: "white" }}
-  fontSize="sm"
-/>
+                <Input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  max={new Date().toISOString().split("T")[0]} // 🔒 future date block
+                  onChange={handleInputChange}
+                  bg="#f8fafc"
+                  border="1px solid #cbd5e1"
+                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  fontSize="sm"
+                />
 
               </FormControl>
             </HStack>
@@ -390,28 +391,28 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                 મોબાઇલ નંબર <Text as="span" color="red.500">*</Text>
               </FormLabel>
 
-            <Input
-  type="tel"
-  placeholder="9876543210"
-  name="phone"
-  value={formData.phone}
-  maxLength={10}
-  inputMode="numeric"
-  pattern="[0-9]*"
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, ""); // sirf digits
-    if (value.length <= 10) {
-      setFormData((prev) => ({
-        ...prev,
-        phone: value,
-      }));
-    }
-  }}
-  bg="#f8fafc"
-  border="1px solid #cbd5e1"
-  _focus={{ borderColor: "#2563eb", bg: "white" }}
-  fontSize="sm"
-/>
+              <Input
+                type="tel"
+                placeholder="9876543210"
+                name="phone"
+                value={formData.phone}
+                maxLength={10}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ""); // sirf digits
+                  if (value.length <= 10) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone: value,
+                    }));
+                  }
+                }}
+                bg="#f8fafc"
+                border="1px solid #cbd5e1"
+                _focus={{ borderColor: "#2563eb", bg: "white" }}
+                fontSize="sm"
+              />
 
             </FormControl>
 
@@ -506,33 +507,33 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                 />
               </FormControl> */}
 
-               <FormControl>
+              <FormControl>
                 <FormLabel color="#475569" fontSize="sm" fontWeight="600">
                   પિન કોડ <Text as="span" color="red.500">*</Text>
                 </FormLabel>
 
-               <Input
-  type="text"
-  placeholder="380001"
-  name="pinCode"
-  value={formData.pinCode}
-  maxLength={6}
-  inputMode="numeric"
-  pattern="[0-9]*"
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, ""); // sirf digits
-    if (value.length <= 6) {
-      setFormData((prev) => ({
-        ...prev,
-        pinCode: value,
-      }));
-    }
-  }}
-  bg="#f8fafc"
-  border="1px solid #cbd5e1"
-  _focus={{ borderColor: "#2563eb", bg: "white" }}
-  fontSize="sm"
-/>
+                <Input
+                  type="text"
+                  placeholder="380001"
+                  name="pinCode"
+                  value={formData.pinCode}
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ""); // sirf digits
+                    if (value.length <= 6) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        pinCode: value,
+                      }));
+                    }
+                  }}
+                  bg="#f8fafc"
+                  border="1px solid #cbd5e1"
+                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  fontSize="sm"
+                />
 
               </FormControl>
 
@@ -552,7 +553,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
               isLoading={loading}
               onClick={handleSendOTP}
             >
-            Register
+              નોંધણી કરો
             </Button>
 
             {/* Login Link */}
@@ -569,7 +570,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                 onClick={() => navigate("/login")}
                 _hover={{ textDecoration: "underline" }}
               >
-                અહીં login કરો
+                અહીં લોગિન કરો
               </Text>
             </HStack>
           </VStack>

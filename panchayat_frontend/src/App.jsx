@@ -42,6 +42,7 @@ import RecordView from "./pages/RecordView";
 import CashMelForm from "./pages/CashMelForm";
 import CashMelDetails from "./pages/CashMelDetails";
 import CashMelView from "./pages/CashMelView";
+import Payment from "./pages/Payment";
 
 // Components
 import PrivateRoute from "./components/PrivateRoute";
@@ -75,13 +76,13 @@ export default function App() {
         />
 
         <Route
-  path="/settings/help/documents/view/:filename"
-  element={
-    <PrivateRoute>
-      <PdfViewer />
-    </PrivateRoute>
-  }
-/>
+          path="/settings/help/documents/view/:filename"
+          element={
+            <PrivateRoute>
+              <PdfViewer />
+            </PrivateRoute>
+          }
+        />
 
 
         <Route
@@ -198,25 +199,30 @@ export default function App() {
         />
 
 
-<Route
-  path="/settings/help/videos/login-register"
-  element={<PrivateRoute><LoginRegisterVideo /></PrivateRoute>}
-/>
+        <Route
+          path="/settings/help/videos/login-register"
+          element={<PrivateRoute><LoginRegisterVideo /></PrivateRoute>}
+        />
 
-<Route
-  path="/settings/help/videos/pedhinamu"
-  element={<PrivateRoute><PedhinamuVideo /></PrivateRoute>}
-/>
+        <Route
+          path="/settings/help/videos/pedhinamu"
+          element={<PrivateRoute><PedhinamuVideo /></PrivateRoute>}
+        />
 
-<Route
-  path="/settings/help/videos/rojmel"
-  element={<PrivateRoute><RojmelVideo /></PrivateRoute>}
-/>
+        <Route
+          path="/settings/help/videos/rojmel"
+          element={<PrivateRoute><RojmelVideo /></PrivateRoute>}
+        />
 
-<Route
-  path="/settings/security/change-password"
-  element={<ChangePassword />}
-/>
+        <Route
+          path="/settings/security/change-password"
+          element={<ChangePassword />}
+        />
+
+        <Route
+          path="/payment"
+          element={<PrivateRoute><Payment /></PrivateRoute>}
+        />
 
 
       </Routes>

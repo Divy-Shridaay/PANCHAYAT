@@ -6,66 +6,75 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  ModalCloseButton,
   Button,
   Text,
   VStack,
   Box,
+  HStack,
   useToast
 } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 
 export default function PaymentPopup({ isOpen, onClose, type }) {
   const toast = useToast();
+  const navigate = useNavigate();
 
-  const handlePayment = () => {
-    toast({
-      title: "ભૂલ",
-      description: "ઑનલાઇન પેમેન્ટ હજુ ઉપલબ્ધ નથી. કૃપા કરીને એડમિનને રૂપિયા નગદ આપો.",
-      status: "info",
-      duration: 5000,
-      isClosable: true,
-      position: "top"
-    });
+  const handlePayKaro = () => {
+    onClose();
+    navigate("/payment");
+  };
+
+  const handleAtyareNai = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("user");
+    onClose();
+    navigate("/login");
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader color="#1e293b" textAlign="center">
-          {type === "module" ? "મોડ્યુલ ઍક્સેસ માટે પેમેન્ટ જરૂરી" : "પ્રિન્ટ માટે પેમેન્ટ જરૂરી"}
+    <Modal isOpen={isOpen} onClose={() => { }} size="md" isCentered closeOnOverlayClick={false}>
+      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(5px)" />
+      <ModalContent borderRadius="2xl">
+        <ModalHeader color="red.600" textAlign="center" pt={8}>
+          {type === "module" ? "ટ્રાયલ પિરિયડ સમાપ્ત" : "પ્રિન્ટ મર્યાદા સમાપ્ત"}
         </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody pb={6}>
-          <VStack spacing={4} align="center">
+        <ModalBody pb={8} px={8}>
+          <VStack spacing={6} align="center">
             <Box textAlign="center">
-              <Text fontSize="lg" color="gray.700" mb={2}>
-                {type === "module" 
-                  ? "તમારી 7 દિવસની ટ્રાયલ પીરિયડ સમાપ્ત થઈ ગઈ છે."
-                  : "તમે 5 ફ્રી પ્રિન્ટ્સની મર્યાદા પાર કરી ગયા છો."
-                }
-              </Text>
-              <Text fontSize="md" color="gray.600">
-                સિસ્ટમનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને પેમેન્ટ કરો.
+              <Text fontSize="lg" color="gray.700" fontWeight="600" lineHeight="tall">
+                તમારો 7 દિવસનો ટ્રાયલ પૂર્ણ થયો છે<br />
+                એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને સબ્સ્ક્રિપ્શન લો.
               </Text>
             </Box>
 
-            {/* <Box bg="yellow.50" p={4} rounded="md" w="full" textAlign="center">
-              <Text fontSize="sm" color="yellow.800">
-                💰 નોંધ: ઑનલાઇન પેમેન્ટ હજુ ઉપલબ્ધ નથી.
-              </Text>
-              <Text fontSize="sm" color="yellow.800">
-                કૃપા કરીને એડમિનને રૂપિયા નગદ આપો અને એડમિન પેનલમાંથી એક્ટિવેટ કરાવો.
-              </Text>
-            </Box> */}
+            <VStack spacing={3} w="full">
+              <Button
+                colorScheme="green"
+                onClick={handlePayKaro}
+                w="full"
+                size="lg"
+                borderRadius="xl"
+                fontWeight="bold"
+              >
+                પેમેન્ટ કરો
+              </Button>
+              <Button
+                variant="outline"
+                colorScheme="red"
+                onClick={handleAtyareNai}
+                w="full"
+                size="lg"
+                borderRadius="xl"
+                fontWeight="500"
+              >
+                અત્યારે નહીં
+              </Button>
+            </VStack>
 
-            {/* <Button
-              colorScheme="blue"
-              onClick={handlePayment}
-              w="full"
-            >
-              પેમેન્ટ પ્રક્રિયા શરૂ કરો
-            </Button> */}
+            <Text fontSize="xs" color="gray.400" textAlign="center">
+              * અત્યારે નહીં પર ક્લિક કરવાથી તમે લોગઆઉટ થઈ જશો.
+            </Text>
           </VStack>
         </ModalBody>
       </ModalContent>
