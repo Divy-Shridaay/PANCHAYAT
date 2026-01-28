@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
  * 🌐 API BASE URL
  * Works with or without .env
  */
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://panchayat.shridaay.com:5000";   // 👈 YOUR LIVE BACKEND URL
+const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
+  ? "http://localhost:5000"
+  : (import.meta.env.VITE_API_BASE_URL || "http://panchayat.shridaay.com:5000");   // 👈 YOUR LIVE BACKEND URL
 
 
 /**
@@ -27,13 +27,13 @@ export const apiFetch = async (url, options = {}, navigate, toast) => {
   const fullUrl = buildUrl(API_BASE_URL, url);
 
   const fetchOptions = {
+    ...options,
     method: options.method || "GET",
     headers: {
       ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
-    ...options,
   };
 
   try {

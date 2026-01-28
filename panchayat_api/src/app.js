@@ -7,6 +7,7 @@ import pedhinamuRoutes from "./routes/pedhinamu.routes.js";
 import cashmelRoutes from "./routes/cashmel.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import bankRoutes from "./routes/bank.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
 
 const app = express();
 app.use(cors({
@@ -31,6 +32,7 @@ app.use("/api/pedhinamu", pedhinamuRoutes);
 app.use("/api/cashmel", cashmelRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/banks", bankRoutes);
+app.use("/api/settings", settingsRoutes);
 // global error handler
 app.use(errorHandler);
 

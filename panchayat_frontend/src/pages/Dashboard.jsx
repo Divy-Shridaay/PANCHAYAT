@@ -160,18 +160,15 @@ export default function Dashboard() {
      MANAGE VERIFICATION NOTICE
   ======================= */
   useEffect(() => {
-    const username = localStorage.getItem("username");
-    if (username && userStatus?.user) {
-      const pendingKey = `paymentPendingVerification_${username}`;
-      const isPending = localStorage.getItem(pendingKey) === "true";
+    if (userStatus?.user) {
       const isPaid = userStatus.user.isPaid;
+      const isPending = userStatus.user.isPendingVerification;
+      const username = localStorage.getItem("username");
 
       if (isPaid) {
-        // If user has paid, clear the pending flag and hide notice
-        localStorage.removeItem(pendingKey);
+        if (username) localStorage.removeItem(`paymentPendingVerification_${username}`);
         setShowVerificationNotice(false);
       } else if (isPending) {
-        // Show notice only if pending and NOT paid
         setShowVerificationNotice(true);
       } else {
         setShowVerificationNotice(false);

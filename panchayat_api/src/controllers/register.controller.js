@@ -90,27 +90,27 @@ export const sendOTP = async (req, res) => {
     } = req.body;
 
     // Validate required fields
- // 1. Required fields
-if (!firstName || !email || !phone || !pinCode || !taluko || !gam || !jillo) {
-  return res.status(400).json({
-    message: "જરૂરી ફીલ્ડ ભરો"
-  });
-}
+    // 1. Required fields
+    if (!firstName || !email || !phone || !pinCode || !taluko || !gam || !jillo) {
+      return res.status(400).json({
+        message: "જરૂરી ફીલ્ડ ભરો"
+      });
+    }
 
-// 2. Email format
-if (!emailRegex.test(email)) {
-  return res.status(400).json({
-    message: "યોગ્ય ઇમેઇલ સરનામું દાખલ કરો"
-  });
-}
+    // 2. Email format
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        message: "યોગ્ય ઇમેઇલ સરનામું દાખલ કરો"
+      });
+    }
 
-// 3. Email domain
-const emailDomain = email.split('@')[1];
-if (!allowedDomains.includes(emailDomain)) {
-  return res.status(400).json({
-    message: "આ ઇમેઇલ ડોમેન સપોર્ટેડ નથી "
-  });
-}
+    // 3. Email domain
+    const emailDomain = email.split('@')[1];
+    if (!allowedDomains.includes(emailDomain)) {
+      return res.status(400).json({
+        message: "આ ઇમેઇલ ડોમેન સપોર્ટેડ નથી "
+      });
+    }
 
 
     // Check if email already exists
@@ -148,7 +148,7 @@ if (!allowedDomains.includes(emailDomain)) {
     );
 
     // Send OTP via email
-  const htmlContent = `
+    const htmlContent = `
 <!-- Header -->
 
 
@@ -269,13 +269,13 @@ export const verifyOTP = async (req, res) => {
     user.otpExpiry = null;
     user.name = `${user.firstName} ${user.middleName || ""} ${user.lastName}`.trim();
     user.trialStartDate = new Date(); // Start trial period
-    
+
     await user.save();
 
     // Send credentials via email
-  
 
-const htmlContent = `
+
+    const htmlContent = `
 <!-- Header -->
 <div style="text-align:center;">
   
@@ -341,7 +341,7 @@ Regards,<br/>
 </p>
 `;
 
-    
+
 
     await sendMail(email, "Panchayat Dashboard - Login Credentials", htmlContent);
 
@@ -393,9 +393,9 @@ export const getAllUsers = async (req, res) => {
 export const getUserDetail = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const user = await User.findById(userId).select("-password -otp -otpExpiry");
-    
+
     if (!user || user.isDeleted) {
       return res.status(404).json({
         message: "ઉપયોગકર્તા મળ્યો નથી "
@@ -420,13 +420,13 @@ export const getUserDetail = async (req, res) => {
 export const activateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const user = await User.findByIdAndUpdate(
       userId,
-      { isPaid: true },
+      { isPaid: true, isPendingVerification: false },
       { new: true }
     ).select("-password -otp -otpExpiry");
-    
+
     if (!user) {
       return res.status(404).json({
         message: "ઉપયોગકર્તા મળ્યો નથી "
@@ -450,13 +450,13 @@ export const activateUser = async (req, res) => {
 export const deactivateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const user = await User.findByIdAndUpdate(
       userId,
-      { isPaid: false },
+      { isPaid: false, isPendingVerification: false },
       { new: true }
     ).select("-password -otp -otpExpiry");
-    
+
     if (!user) {
       return res.status(404).json({
         message: "ઉપયોગકર્તા મળ્યો નથી "
@@ -494,6 +494,9 @@ export const updateUserModules = async (req, res) => {
       updateData.pedhinamuPrintAllowed = !!pedhinamuPrintAllowed;
     }
 
+    // Always clear pending verification when admin updates modules manually
+    updateData.isPendingVerification = false;
+
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password -otp -otpExpiry");
 
     if (!user) {
@@ -512,9 +515,9 @@ export const updateUserModules = async (req, res) => {
 export const getUserStatus = async (req, res) => {
   try {
     const userId = req.user._id; // Assuming auth middleware sets req.user
-    
+
     const user = await User.findById(userId).select("-password -otp -otpExpiry");
-    
+
     if (!user || user.isDeleted) {
       return res.status(404).json({
         message: "ઉપયોગકર્તા મળ્યો નથી "
@@ -715,4 +718,24 @@ export const updateCurrentUserProfile = async (req, res) => {
     });
   }
 };
+// ---------- Set User Pending Verification Status ----------
+export const setPendingVerification = async (req, res) => {
+  try {
+    const userId = req.user._id;
 
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isPendingVerification: true },
+      { new: true }
+    ).select("-password -otp -otpExpiry");
+
+    if (!user) {
+      return res.status(404).json({ message: "વપરાશકર્તા મળ્યો નથી " });
+    }
+
+    return res.json({ message: "પેમેન્ટ વેરિફિકેશન વિનંતી સબમિટ થઈ", user });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "વિનંતી સબમિટ કરવામાં નિષ્ફળ", error: err.message });
+  }
+};

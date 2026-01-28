@@ -5,7 +5,7 @@
 node_modules/
 
 # uploads (multer files)
-uploads/
+# uploads/
 
 # build folders
 build/

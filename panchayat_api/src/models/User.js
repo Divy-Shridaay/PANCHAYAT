@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
 
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
-  
+
   // Registration fields
   pinCode: { type: String, required: true },
   taluko: { type: String, required: true },
@@ -19,12 +19,12 @@ const UserSchema = new mongoose.Schema({
 
   // Auto-generated fields
   name: { type: String },
-  
+
   // ✅ FIX: Make username sparse so null values don't conflict
   // sparse: true allows multiple null values but enforces uniqueness for actual values
-  username: { 
-    type: String, 
-    unique: true, 
+  username: {
+    type: String,
+    unique: true,
     sparse: true  // This is the key fix!
   },
   password: { type: String },
@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema({
     enum: ["admin", "sarpanch", "clerk"],
     default: "clerk"
   },
-  
+
   // OTP fields
   otp: { type: String },
   otpExpiry: { type: Date },
@@ -51,6 +51,7 @@ const UserSchema = new mongoose.Schema({
 
   // Payment and print fields
   isPaid: { type: Boolean, default: false },
+  isPendingVerification: { type: Boolean, default: false },
   printCount: { type: Number, default: 0 },
 
   // Per-user module access controls

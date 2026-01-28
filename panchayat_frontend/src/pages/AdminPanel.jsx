@@ -54,6 +54,8 @@ export default function AdminPanel() {
   // Payment Verification State
   const [isPaymentVerified, setIsPaymentVerified] = useState(null); // null, true, false
   const [paymentReason, setPaymentReason] = useState("");
+  const [pricing, setPricing] = useState({ pedhinamu: 1, rojmel: 1, jaminMehsul: 1 });
+  const { isOpen: isPricingOpen, onOpen: onPricingOpen, onClose: onPricingClose } = useDisclosure();
 
   // Fetch all users
   const fetchUsers = async () => {
@@ -85,6 +87,36 @@ export default function AdminPanel() {
     setLoading(false);
   };
 
+  const fetchPricing = async () => {
+    try {
+      const { response, data } = await apiFetch("/api/settings/pricing", {}, navigate, toast);
+      if (response.ok) {
+        setPricing(data.pricing);
+      }
+    } catch (err) {
+      console.error("Error fetching pricing:", err);
+    }
+  };
+
+  const handleUpdatePricing = async () => {
+    try {
+      const { response, data } = await apiFetch("/api/settings/pricing", {
+        method: "PUT",
+        body: JSON.stringify({ pricing }),
+        headers: { "Content-Type": "application/json" }
+      }, navigate, toast);
+
+      if (response.ok) {
+        toast({ title: "સફળ", description: "કિંમતો અપડેટ થઈ ગઈ છે", status: "success", duration: 3000, isClosable: true, position: "top" });
+        onPricingClose();
+      } else {
+        throw new Error(data.message || `Update failed (Status: ${response.status})`);
+      }
+    } catch (err) {
+      toast({ title: "ભૂલ", description: err.message || "સર્વર ભૂલ", status: "error", duration: 3000, isClosable: true, position: "top" });
+    }
+  };
+
   // Check if admin
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -93,16 +125,20 @@ export default function AdminPanel() {
       return;
     }
 
-    // define async function
-    const loadUsers = async () => {
-      await fetchUsers(); // safe call
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsers(), fetchPricing()]);
+      setLoading(false);
     };
 
-    loadUsers(); // call async function
-
+    loadData();
   }, []);
 
-
+  // Helper to check if user needs payment verification (clicked submit button)
+  const shouldShowVerification = (user) => {
+    if (!user) return false;
+    return user.isPendingVerification === true;
+  };
 
   // View user details
   const handleViewUser = (user) => {
@@ -427,6 +463,24 @@ export default function AdminPanel() {
               {users.filter(u => u.role === "clerk").length}
             </Heading>
           </Box>
+
+          <Box
+            bg="white"
+            p={4}
+            rounded="lg"
+            border="1px solid #e2e8f0"
+            flex={1}
+            cursor="pointer"
+            onClick={onPricingOpen}
+            _hover={{ shadow: "md", borderColor: "blue.300" }}
+          >
+            <Text fontSize="xs" color="#64748b" fontWeight="600">
+              Settings
+            </Text>
+            <Heading size="lg" color="#f59e0b">
+              Set Pricing
+            </Heading>
+          </Box>
         </HStack>
 
         {/* Search & Filter */}
@@ -722,107 +776,128 @@ export default function AdminPanel() {
 
                 <Divider />
 
-                {/* Payment Verification Section */}
-                <VStack spacing={3} align="start" width="100%">
-                  <HStack justify="space-between" width="100%">
-                    <Text fontWeight="600" color="#475569" fontSize="sm">પેમેન્ટ વેરીફાઈડ:</Text>
-                    <HStack spacing={2}>
-                      <Button
-                        size="sm"
-                        colorScheme={isPaymentVerified === true ? "green" : "gray"}
-                        variant={isPaymentVerified === true ? "solid" : "outline"}
-                        onClick={() => {
-                          setIsPaymentVerified(true);
-                          setPaymentReason("");
-                        }}
-                      >
-                        હા
-                      </Button>
-                      <Button
-                        size="sm"
-                        colorScheme={isPaymentVerified === false ? "red" : "gray"}
-                        variant={isPaymentVerified === false ? "solid" : "outline"}
-                        onClick={() => setIsPaymentVerified(false)}
-                      >
-                        ના
-                      </Button>
-                    </HStack>
-                  </HStack>
-
-                  {/* Reason field if NO is clicked */}
-                  {isPaymentVerified === false && (
-                    <VStack align="stretch" width="100%" spacing={2}>
-                      <FormControl>
-                        <FormLabel fontSize="sm" color="#475569">કારણ (Reason):</FormLabel>
-                        <Input
-                          placeholder="કારણ લખો..."
+                {shouldShowVerification(selectedUser) && (
+                  <VStack spacing={3} align="start" width="100%">
+                    <HStack justify="space-between" width="100%">
+                      <Text fontWeight="600" color="#475569" fontSize="sm">પેમેન્ટ વેરીફાઈડ:</Text>
+                      <HStack spacing={2}>
+                        <Button
                           size="sm"
-                          value={paymentReason}
-                          onChange={(e) => setPaymentReason(e.target.value)}
-                        />
-                      </FormControl>
-                      <Button size="sm" colorScheme="blue" onClick={handleSubmitReason}>
-                        સબમિટ
-                      </Button>
-                    </VStack>
-                  )}
-                </VStack>
-
-                {/* Module toggles - only visible if YES is clicked */}
-                {isPaymentVerified === true && (
-                  <>
-                    <Divider />
-                    <VStack spacing={3} align="start" width="100%">
-                      <Text fontWeight="600" color="#475569" fontSize="sm">મોડ્યુલ અનુમતિ</Text>
-
-                      <HStack justify="space-between" width="100%">
-                        <Text>પેઢીનામું</Text>
-                        <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.pedhinamu} onChange={(e) => handleToggleModule('pedhinamu', e.target.checked)} />
+                          colorScheme={isPaymentVerified === true ? "green" : "gray"}
+                          variant={isPaymentVerified === true ? "solid" : "outline"}
+                          onClick={() => {
+                            setIsPaymentVerified(true);
+                            setPaymentReason("");
+                          }}
+                        >
+                          હા
+                        </Button>
+                        <Button
+                          size="sm"
+                          colorScheme={isPaymentVerified === false ? "red" : "gray"}
+                          variant={isPaymentVerified === false ? "solid" : "outline"}
+                          onClick={() => setIsPaymentVerified(false)}
+                        >
+                          ના
+                        </Button>
                       </HStack>
+                    </HStack>
 
-                      <HStack justify="space-between" width="100%">
-                        <Text>રોજમેળ</Text>
-                        <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.rojmel} onChange={(e) => handleToggleModule('rojmel', e.target.checked)} />
-                      </HStack>
-
-                      <HStack justify="space-between" width="100%">
-                        <Text>માગણું</Text>
-                        <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.magnu} onChange={(e) => handleToggleModule('magnu', e.target.checked)} />
-                      </HStack>
-
-                      <HStack justify="space-between" width="100%">
-                        <Text>પેઢીનામું પ્રિન્ટ </Text>
-                        <Switch size="md" colorScheme="teal" isChecked={selectedUserPedhinamuPrint} onChange={(e) => handleTogglePedhinamuPrint(e.target.checked)} />
-                      </HStack>
-                    </VStack>
-                  </>
+                    {/* Reason field if NO is clicked */}
+                    {isPaymentVerified === false && (
+                      <VStack align="stretch" width="100%" spacing={2}>
+                        <FormControl>
+                          <FormLabel fontSize="sm" color="#475569">કારણ (Reason):</FormLabel>
+                          <Input
+                            placeholder="કારણ લખો..."
+                            size="sm"
+                            value={paymentReason}
+                            onChange={(e) => setPaymentReason(e.target.value)}
+                          />
+                        </FormControl>
+                        <Button size="sm" colorScheme="blue" onClick={handleSubmitReason}>
+                          સબમિટ
+                        </Button>
+                      </VStack>
+                    )}
+                    <Divider my={2} />
+                  </VStack>
                 )}
 
-                {/* <HStack spacing={2} width="100%" mt={4}>
-            {!selectedUser.isPaid ? (
-              <Button
-                colorScheme="green"
-                onClick={() => handleActivateUser(selectedUser._id)}
-                flex={1}
-              >
-                યુઝરને એક્ટિવેટ કરો
-              </Button>
-            ) : (
-              <Button
-                colorScheme="red"
-                onClick={() => handleDeactivateUser(selectedUser._id)}
-                flex={1}
-              >
-                યુઝરને ડીએક્ટિવેટ કરો
-              </Button>
-            )}
-          </HStack> */}
+                {/* Module toggles - Shown by default for active users OR after verification for expired users */}
+                {(!shouldShowVerification(selectedUser) || isPaymentVerified === true) && (
+                  <VStack spacing={3} align="start" width="100%">
+                    <Text fontWeight="600" color="#475569" fontSize="sm">મોડ્યુલ અનુમતિ</Text>
+
+                    <HStack justify="space-between" width="100%">
+                      <Text>પેઢીનામું</Text>
+                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.pedhinamu} onChange={(e) => handleToggleModule('pedhinamu', e.target.checked)} />
+                    </HStack>
+
+                    <HStack justify="space-between" width="100%">
+                      <Text>રોજમેળ</Text>
+                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.rojmel} onChange={(e) => handleToggleModule('rojmel', e.target.checked)} />
+                    </HStack>
+
+                    <HStack justify="space-between" width="100%">
+                      <Text>માગણું</Text>
+                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.magnu} onChange={(e) => handleToggleModule('magnu', e.target.checked)} />
+                    </HStack>
+
+                    <HStack justify="space-between" width="100%">
+                      <Text>પેઢીનામું પ્રિન્ટ </Text>
+                      <Switch size="md" colorScheme="teal" isChecked={selectedUserPedhinamuPrint} onChange={(e) => handleTogglePedhinamuPrint(e.target.checked)} />
+                    </HStack>
+                  </VStack>
+                )}
               </VStack>
             )}
           </ModalBody>
         </ModalContent>
       </Modal>
 
+      {/* Pricing Modal */}
+      <Modal isOpen={isPricingOpen} onClose={onPricingClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>મોડ્યુલ કિંમત સેટ કરો</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel>પેઢીનામું (Price)</FormLabel>
+                <Input
+                  type="number"
+                  value={pricing.pedhinamu}
+                  onChange={(e) => setPricing({ ...pricing, pedhinamu: e.target.value })}
+                  min={1}
+                />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>રોજમેળ (Price)</FormLabel>
+                <Input
+                  type="number"
+                  value={pricing.rojmel}
+                  onChange={(e) => setPricing({ ...pricing, rojmel: e.target.value })}
+                  min={1}
+                />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>જમીન મહેસુલ (Price)</FormLabel>
+                <Input
+                  type="number"
+                  value={pricing.jaminMehsul}
+                  onChange={(e) => setPricing({ ...pricing, jaminMehsul: e.target.value })}
+                  min={1}
+                />
+              </FormControl>
+              <Button colorScheme="blue" width="100%" onClick={handleUpdatePricing}>
+                સેવ કરો
+              </Button>
+            </VStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

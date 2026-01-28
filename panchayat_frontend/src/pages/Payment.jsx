@@ -22,15 +22,18 @@ import {
     ModalFooter,
     ModalBody,
     useDisclosure,
+    useToast,
 } from "@chakra-ui/react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { FiArrowLeft, FiUpload, FiCheckCircle } from "react-icons/fi";
 import upiQR from "../assets/upi-qr.png";
+import { apiFetch } from "../utils/api.js";
 
 export default function Payment() {
     const navigate = useNavigate();
+    const toast = useToast();
     const fileInputRef = useRef(null);
     const [step, setStep] = useState(1);
     const [paymentMethod, setPaymentMethod] = useState("BANK"); // "BANK" or "UPI"
@@ -51,7 +54,7 @@ export default function Payment() {
     const isGstValid = gstNumber.trim() !== "" ? validateGst(gstNumber) : true;
     const showGstError = gstNumber.trim() !== "" && gstNumber.length === 15 && !isGstValid;
 
-    const modules = [
+    const [modules, setModules] = useState([
         {
             id: "pedhinamu",
             title: "પેઢીનામું",
@@ -70,7 +73,26 @@ export default function Payment() {
             description: "જમીન અને મકાન સંબંધિત વ્યવહારોની માહિતી માટેનું મોડ્યુલ.",
             price: 1,
         },
-    ];
+    ]);
+
+    const fetchPricing = async () => {
+        try {
+            const { response, data } = await apiFetch("/api/settings/pricing", {}, navigate, toast);
+            if (response.ok) {
+                const pricing = data.pricing;
+                setModules(prev => prev.map(mod => ({
+                    ...mod,
+                    price: pricing[mod.id] || mod.price
+                })));
+            }
+        } catch (err) {
+            console.error("Error fetching pricing:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchPricing();
+    }, []);
 
     const handleToggle = (id) => {
         setSelectedModules((prev) => ({
@@ -103,26 +125,43 @@ export default function Payment() {
         }
     };
 
-    const handleSubmit = () => {
-        // Logic for submission
-        console.log("Submitting payment...", {
-            modules: selectedModules,
-            baseAmount: baseAmount,
-            gstNumber: gstNumber,
-            gstAmount: gstAmount,
-            totalAmount: totalAmount,
-            method: paymentMethod,
-            screenshot: selectedFile
-        });
+    const handleSubmit = async () => {
+        try {
+            // Logic for submission
+            console.log("Submitting payment...", {
+                modules: selectedModules,
+                baseAmount: baseAmount,
+                gstNumber: gstNumber,
+                gstAmount: gstAmount,
+                totalAmount: totalAmount,
+                method: paymentMethod,
+                screenshot: selectedFile
+            });
 
-        onOpen();
+            // Call backend to set pending verification status
+            const { response, data } = await apiFetch("/api/register/user/set-pending-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            }, navigate, toast);
+
+            if (response.ok) {
+                onOpen();
+            } else {
+                throw new Error(data.message || "વિનંતી સબમિટ કરવામાં નિષ્ફળ");
+            }
+        } catch (err) {
+            toast({
+                title: "ભૂલ",
+                description: err.message || "સર્વર ભૂલ",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+                position: "top"
+            });
+        }
     };
 
     const handleModalClose = () => {
-        const username = localStorage.getItem("username");
-        if (username) {
-            localStorage.setItem(`paymentPendingVerification_${username}`, "true");
-        }
         onClose();
         navigate("/dashboard");
     };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile, updateUserModules } from "../controllers/register.controller.js";
+import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile, updateUserModules, setPendingVerification } from "../controllers/register.controller.js";
 import logger from "../middleware/logger.js";
 import auth from "../middleware/auth.js";
 
@@ -75,6 +75,13 @@ router.put(
   "/user/profile",
   auth,
   updateCurrentUserProfile
+);
+
+// Set pending verification status
+router.post(
+  "/user/set-pending-verification",
+  auth,
+  setPendingVerification
 );
 
 export default router;
