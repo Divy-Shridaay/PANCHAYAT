@@ -131,8 +131,19 @@ export default function Payment() {
     const handleSubmit = async () => {
         setIsSubmitting(true);
         setSubmitError("");
-        
+
         try {
+            // Logic for submission (Legacy console log)
+            console.log("Submitting payment...", {
+                modules: selectedModules,
+                baseAmount: baseAmount,
+                gstNumber: gstNumber,
+                gstAmount: gstAmount,
+                totalAmount: totalAmount,
+                method: paymentMethod,
+                screenshot: selectedFile
+            });
+
             // Create FormData to handle file upload
             const formData = new FormData();
             formData.append("modules", JSON.stringify(selectedModules));
@@ -154,8 +165,8 @@ export default function Payment() {
             // Get API URL from environment or use default
             const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-            // Submit payment
-            const response = await fetch(`${apiUrl}/api/payment/submit`, {
+            // 1. Submit payment details and file
+            const paymentResponse = await fetch(`${apiUrl}/api/payment/submit`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -163,10 +174,20 @@ export default function Payment() {
                 body: formData
             });
 
-            const data = await response.json();
+            const paymentData = await paymentResponse.json();
 
-            if (!response.ok) {
-                throw new Error(data.message || "ચુકવણી સબમિટ કરવામાં ભૂલ આવી");
+            if (!paymentResponse.ok) {
+                throw new Error(paymentData.message || "ચુકવણી સબમિટ કરવામાં ભૂલ આવી");
+            }
+
+            // 2. Call backend to set pending verification status (Legacy functionality)
+            const { response: verificationResponse, data: verificationData } = await apiFetch("/api/register/user/set-pending-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            }, navigate, toast);
+
+            if (!verificationResponse.ok) {
+                throw new Error(verificationData.message || "વિનંતી સબમિટ કરવામાં નિષ્ફળ");
             }
 
             // Store payment submission info
@@ -181,6 +202,15 @@ export default function Payment() {
         } catch (error) {
             console.error("Payment submission error:", error);
             setSubmitError(error.message || "ચુકવણી સબમિટ કરવામાં ભૂલ આવી");
+
+            toast({
+                title: "ભૂલ",
+                description: error.message || "સર્વર ભૂલ",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+                position: "top"
+            });
         } finally {
             setIsSubmitting(false);
         }

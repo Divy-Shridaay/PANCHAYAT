@@ -78,20 +78,20 @@ export default function Settings() {
 
 
     // ✅ EMAIL VALIDATION (only on save)
-if (
-  formData.email &&
-  !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)
-) {
-  toast({
-    title: "ભૂલ",
-    description: "માન્ય ઇમેઇલ દાખલ કરો",
-    status: "error",
-    duration: 3000,
-    isClosable: true,
-    position: "top",
-  });
-  return;
-}
+    if (
+      formData.email &&
+      !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)
+    ) {
+      toast({
+        title: "ભૂલ",
+        description: "માન્ય ઇમેઇલ દાખલ કરો",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -170,15 +170,15 @@ if (
       <Flex justify="space-between" align="center" mb={8}>
         <HStack>
           <Box width="180px">
-    <Button
-      leftIcon={<FiArrowLeft />}
-      colorScheme="green"
-      variant="outline"
-      onClick={() => navigate("/settings")}
-    >
-      પાછા જાવ
-    </Button>
-  </Box>
+            <Button
+              leftIcon={<FiArrowLeft />}
+              colorScheme="green"
+              variant="outline"
+              onClick={() => navigate("/settings")}
+            >
+              પાછા જાવ
+            </Button>
+          </Box>
           <Heading size="lg" color="#1E4D2B" fontWeight="700">
             ⚙️ સેટિંગ્સ - વપરાશકર્તા પ્રોફાઇલ
           </Heading>
@@ -235,22 +235,22 @@ if (
       >
         {user ? (
           <VStack spacing={6} align="stretch">
-          <Heading size="md" color="green.700" mb={4}>
-            વ્યક્તિગત માહિતી
-          </Heading>
+            <Heading size="md" color="green.700" mb={4}>
+              વ્યક્તિગત માહિતી
+            </Heading>
 
-          <SimpleGrid columns={[1, 2]} spacing={4}>
-            <FormControl>
-              <FormLabel>પૂર્ણ નામ</FormLabel>
-              <Input
-                value={formData.name || `${formData.firstName || ""} ${formData.middleName || ""} ${formData.lastName || ""}`.trim()}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                isReadOnly={!editing}
-                bg={editing ? "white" : "gray.50"}
-              />
-            </FormControl>
+            <SimpleGrid columns={[1, 2]} spacing={4}>
+              <FormControl>
+                <FormLabel>પૂર્ણ નામ</FormLabel>
+                <Input
+                  value={formData.name || `${formData.firstName || ""} ${formData.middleName || ""} ${formData.lastName || ""}`.trim()}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                />
+              </FormControl>
 
-            {/* <FormControl>
+              {/* <FormControl>
               <FormLabel>વપરાશકર્તા નામ</FormLabel>
               <Input
                 value={formData.username || ""}
@@ -260,34 +260,34 @@ if (
               />
             </FormControl> */}
 
-  <FormControl>
-  <FormLabel>ઇમેઇલ</FormLabel>
-  <Input
-    type="email"
-    value={formData.email || ""}
-    onChange={(e) => handleInputChange("email", e.target.value)}
-    isReadOnly={!editing}
-    bg={editing ? "white" : "gray.50"}
-  />
-</FormControl>
+              <FormControl>
+                <FormLabel>ઇમેઇલ</FormLabel>
+                <Input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                />
+              </FormControl>
 
 
-            <FormControl>
-              <FormLabel>મોબાઇલ નંબર</FormLabel>
-             <Input
-  value={formData.phone || ""}
-  onChange={(e) => {
-    const val = e.target.value.replace(/\D/g, ""); // sirf digits allow
-    if (val.length <= 10) handleInputChange("phone", val);
-  }}
-  isReadOnly={!editing}
-  bg={editing ? "white" : "gray.50"}
-  type="tel"
-/>
+              <FormControl>
+                <FormLabel>મોબાઇલ નંબર</FormLabel>
+                <Input
+                  value={formData.phone || ""}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, ""); // sirf digits allow
+                    if (val.length <= 10) handleInputChange("phone", val);
+                  }}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                  type="tel"
+                />
 
-            </FormControl>
+              </FormControl>
 
-            {/* <FormControl>
+              {/* <FormControl>
               <FormLabel>લિંગ</FormLabel>
               <Select
                 value={formData.gender || ""}
@@ -302,75 +302,104 @@ if (
               </Select>
             </FormControl> */}
 
-            <FormControl>
-              <FormLabel>જન્મ તારીખ</FormLabel>
-             <Input
-    type="date"
-    value={formData.dob || ""}
-    onChange={(e) => handleInputChange("dob", e.target.value)}
-    isReadOnly={!editing}
-    bg={editing ? "white" : "gray.50"}
-    max={new Date().toISOString().split("T")[0]} // ✅ future date block
-  />
-            </FormControl>
-          </SimpleGrid>
+              <FormControl>
+                <FormLabel>જન્મ તારીખ</FormLabel>
+                <Input
+                  type="date"
+                  value={formData.dob || ""}
+                  onChange={(e) => handleInputChange("dob", e.target.value)}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                  max={new Date().toISOString().split("T")[0]} // ✅ future date block
+                />
+              </FormControl>
+            </SimpleGrid>
 
-          <Divider />
+            <Divider />
 
-          <Heading size="md" color="green.700" mb={4}>
-            સરનામું
-          </Heading>
+            <Heading size="md" color="green.700" mb={4}>
+              સરનામું
+            </Heading>
 
-          <SimpleGrid columns={[1, 2]} spacing={4}>
-            <FormControl>
-              <FormLabel>ગામ</FormLabel>
-              <Input
-                value={formData.gam || ""}
-                onChange={(e) => handleInputChange("gam", e.target.value)}
-                isReadOnly={!editing}
-                bg={editing ? "white" : "gray.50"}
-              />
-            </FormControl>
+            <SimpleGrid columns={[1, 2]} spacing={4}>
+              <FormControl>
+                <FormLabel>ગામ</FormLabel>
+                <Input
+                  value={formData.gam || ""}
+                  onChange={(e) => handleInputChange("gam", e.target.value)}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>તાલુકો</FormLabel>
-              <Input
-                value={formData.taluko || ""}
-                onChange={(e) => handleInputChange("taluko", e.target.value)}
-                isReadOnly={!editing}
-                bg={editing ? "white" : "gray.50"}
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>તાલુકો</FormLabel>
+                <Input
+                  value={formData.taluko || ""}
+                  onChange={(e) => handleInputChange("taluko", e.target.value)}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>જિલ્લો</FormLabel>
-              <Input
-                value={formData.jillo || ""}
-                onChange={(e) => handleInputChange("jillo", e.target.value)}
-                isReadOnly={!editing}
-                bg={editing ? "white" : "gray.50"}
-              />
-            </FormControl>
-<FormControl>
-  <FormLabel>પિન કોડ</FormLabel>
-  <Input
-    value={formData.pinCode || ""}
-    onChange={(e) => {
-      const val = e.target.value.replace(/\D/g, ""); // only numbers
-      if (val.length <= 6) {
-        handleInputChange("pinCode", val); // max 6 digits
-      }
-    }}
-    isReadOnly={!editing}
-    bg={editing ? "white" : "gray.50"}
-  />
-</FormControl>
+              <FormControl>
+                <FormLabel>જિલ્લો</FormLabel>
+                <Input
+                  value={formData.jillo || ""}
+                  onChange={(e) => handleInputChange("jillo", e.target.value)}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>પિન કોડ</FormLabel>
+                <Input
+                  value={formData.pinCode || ""}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, ""); // only numbers
+                    if (val.length <= 6) {
+                      handleInputChange("pinCode", val); // max 6 digits
+                    }
+                  }}
+                  isReadOnly={!editing}
+                  bg={editing ? "white" : "gray.50"}
+                />
+              </FormControl>
 
-          </SimpleGrid>
+            </SimpleGrid>
 
-          <Divider />
+            {user?.isPaid &&
+              (user.modules?.pedhinamu === true || user.modules?.rojmel === true || user.modules?.jaminMehsul === true) &&
+              (user.paymentStartDate || user.paymentEndDate) && (
+                <>
+                  <Divider />
+                  <Heading size="md" color="green.700" mb={4}>
+                    સબ્સ્ક્રિપ્શન વિગતો
+                  </Heading>
+                  <SimpleGrid columns={[1, 2]} spacing={4}>
+                    <FormControl>
+                      <FormLabel>શરૂઆતની તારીખ</FormLabel>
+                      <Input
+                        value={user.paymentStartDate ? new Date(user.paymentStartDate).toLocaleDateString("en-GB") : "-"}
+                        isReadOnly={true}
+                        bg="gray.50"
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>સમાપ્તિ તારીખ</FormLabel>
+                      <Input
+                        value={user.paymentEndDate ? new Date(user.paymentEndDate).toLocaleDateString("en-GB") : "-"}
+                        isReadOnly={true}
+                        bg="gray.50"
+                      />
+                    </FormControl>
+                  </SimpleGrid>
+                </>
+              )}
 
-          {/* <FormControl>
+            <Divider />
+
+            {/* <FormControl>
             <FormLabel>ભૂમિકા</FormLabel>
             <Input
               value={formData.role || ""}

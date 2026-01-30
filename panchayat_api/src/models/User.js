@@ -56,12 +56,14 @@ const UserSchema = new mongoose.Schema({
 
   // Per-user module access controls
   modules: {
-    pedhinamu: { type: Boolean, default: false },
-    rojmel: { type: Boolean, default: false },
-    magnu: { type: Boolean, default: false }
+    pedhinamu: { type: Boolean },
+    rojmel: { type: Boolean },
+    jaminMehsul: { type: Boolean }
   },
   // Pedhinamu print override (admin can allow/deny printing irrespective of trial/payment)
-  pedhinamuPrintAllowed: { type: Boolean, default: false },
+  // Payment and subscription dates
+  paymentStartDate: { type: Date },
+  paymentEndDate: { type: Date },
 
 }, { timestamps: true });
 

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - Shridaay</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Noto Sans Gujarati';
+            color: #2D3748;
+            background: white;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page-container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: auto;
+            position: relative;
+            background: white;
+            padding: 10mm 15mm 30mm 15mm;
+            overflow: hidden;
+        }
+
+        /* Logo positioned within header */
+        .logo-container {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 2;
+        }
+
+        .logo-container img {
+            height: 85px;
+            width: auto;
+        }
+
+        /* INVOICE Title */
+        .invoice-title {
+            font-size: 27px;
+            font-weight: 800;
+            color: #2D3748;
+            margin-top: -5px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Dark Teal Bar with Diagonal Cut */
+        .header-teal-bar {
+            width: 51%;
+            height: 30px;
+            background: #0D3B4C;
+            position: absolute;
+            right: 0;
+            top: 95px;
+            z-index: 1;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 10% 100%);
+        }
+
+        /* Billing Details Section */
+        .details-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .billing-section {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .billing-section .label {
+            font-weight: 700;
+            font-size: 18px;
+            color: #2D3748;
+            margin-bottom: 4px;
+        }
+
+        .billing-section .value {
+            font-size: 16px;
+        }
+
+        .billing-section .panchayat {
+            font-weight: 600;
+        }
+
+        .company-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .date-line {
+            font-size: 14px;
+            margin-top: 10px;
+            margin-bottom: 16px;
+            text-align: right;
+            width: 100%;
+        }
+
+        .company-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .company-card h2 {
+            font-size: 22px;
+            color: #2D3748;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .company-card p {
+            font-size: 14px;
+        }
+
+        .company-card .invoice-num {
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* Items Table */
+        .table-wrapper {
+            border: 1px solid #2c7a7b;
+            margin-bottom: 0;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #2c7a7b;
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            border-right: 1px solid #2c7a7b;
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 14px;
+            border-right: 1px solid #2c7a7b;
+            border-bottom: 1px solid #2c7a7b;
+            color: #2D3748;
+        }
+
+        td:last-child {
+            border-right: none;
+        }
+
+        .module-cell {
+            text-align: left;
+            padding: 20px 16px;
+            font-weight: 600;
+        }
+
+        .total-row-label {
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .total-row-amount {
+            font-weight: 600;
+        }
+
+        .grand-total-row {
+            background: #f7f7f7;
+        }
+
+        .grand-total-label,
+        .grand-total-amount {
+            font-weight: 700;
+        }
+
+        /* Notes & Disclaimers */
+        .notes-container {
+            margin-top: 40px;
+        }
+
+        .notes-container h3 {
+            font-weight: 700;
+            font-size: 19px;
+            margin-bottom: 8px;
+            color: #2D3748;
+        }
+
+        .note-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: #4A5568;
+        }
+
+        .note-bullet {
+            margin-right: 8px;
+        }
+
+        .note-text {
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        /* Footer Bar */
+        .footer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0D3B4C;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .page-container {
+                width: 100%;
+                height: 100%;
+                min-height: initial;
+                padding: 10mm 15mm 20mm 15mm;
+            }
+
+            .footer-bar {
+                position: fixed;
+            }
+
+            @page {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <!-- Logo -->
+        <div class="logo-container">
+            <img src="/invoice/shridaay_logo.png" alt="Shridaay Logo">
+        </div>
+
+        <!-- Header -->
+        <h1 class="invoice-title">INVOICE</h1>
+        <div class="header-teal-bar"></div>
+
+        <!-- Details -->
+        <div class="details-container" style="margin-top: 55px;">
+            <div class="billing-section">
+                <span class="label">Billing to</span>
+                <span class="value panchayat">સરપંચ શ્રી,</span>
+                <span class="value">{{village}} ગ્રામ પંચાયત</span>
+            </div>
+            <div class="company-section">
+                <div class="date-line">Date:- {{paymentDate}}</div>
+                <div class="company-card">
+                    <h2>Shridaay</h2>
+                    <p>Address:- 812, SATYAMEV EMINENCE</p>
+                    <p>Sola, Ahmedabad, Gujarat 380060</p>
+                    <p>Email:- it@shridaay.com</p>
+                    <p class="invoice-num">Invoice Number:- {{invoiceNumber}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">Sr No</th>
+                        <th style="width: 32%;">Module</th>
+                        <th style="width: 18%;">Date of Service</th>
+                        <th style="width: 12%;">Quantity</th>
+                        <th style="width: 12%;">Price</th>
+                        <th style="width: 18%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{itemsHtml}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Notes -->
+        <div class="notes-container">
+            <h3>Notes & Disclaimers</h3>
+            <div class="note-item">
+                <span class="note-bullet">•</span>
+                <span class="note-text">Please submit payment by the due date to avoid late fees. For insurance claims,
+                    Contact our billing department at it@shridaay.com or questions or payment arrangements.</span>
+            </div>
+            <div class="note-item">
+                <span class="note-bullet">•</span>
+                <span class="note-text">Thank you for choosing Shridaay</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+            Please Remet To:- Shridaay, 812 Satyamev Eminence, Sola, Ahmedabad, Gujarat 380060
+        </div>
+    </div>
+</body>
+
+</html>

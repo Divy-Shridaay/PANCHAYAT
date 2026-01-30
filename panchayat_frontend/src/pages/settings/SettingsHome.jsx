@@ -6,10 +6,13 @@ import {
   VStack,
   Button,
   Flex,
+  useToast,
+  Spinner,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { FiUser, FiHelpCircle, FiShield, FiArrowLeft } from "react-icons/fi";
-import { FiList } from "react-icons/fi";
+import { FiUser, FiHelpCircle, FiShield, FiArrowLeft, FiList, FiFileText } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { useApiFetch } from "../../utils/api";
 
 
 /* Card exactly like Pedhinamu */
@@ -42,6 +45,49 @@ const Card = ({ icon: Icon, title, subtitle, onClick }) => (
 
 export default function SettingsHome() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const apiFetch = useApiFetch();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const { response, data } = await apiFetch("/api/register/user/status");
+        if (response.ok) {
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user status", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, []);
+
+  const handleInvoiceClick = () => {
+    toast({
+      title: "ટૂંક સમયમાં આવી રહ્યું છે",
+      description: "ઇનવોઇસ ડાઉનલોડ કરવાની સુવિધા ટૂંક સમયમાં શરૂ કરવામાં આવશે.",
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+    });
+  };
+
+  if (loading) {
+    return (
+      <Box bg="white" minH="100vh" p={10} display="flex" justifyContent="center" alignItems="center">
+        <Spinner size="xl" color="green.500" />
+      </Box>
+    );
+  }
+
+  // Same logic as Profile: hide if not paid OR if all modules are disabled
+  const showInvoice = user?.isPaid &&
+    (user.modules?.pedhinamu === true || user.modules?.rojmel === true || user.modules?.jaminMehsul === true);
 
   return (
     <Box bg="white" minH="100vh" p={10}>
@@ -97,15 +143,24 @@ export default function SettingsHome() {
         />
 
         <Card
-  icon={FiList}
-  title="કેટેગરી સેટિંગ્સ"
-  subtitle="આવક અને જાવક કેટેગરી મેનેજ કરો"
-  onClick={() => navigate("/settings/categories")}
-/>
+          icon={FiList}
+          title="કેટેગરી સેટિંગ્સ"
+          subtitle="આવક અને જાવક કેટેગરી મેનેજ કરો"
+          onClick={() => navigate("/settings/categories")}
+        />
+
+        {showInvoice && (
+          <Card
+            icon={FiFileText}
+            title="ઇનવોઇસ"
+            subtitle="તમારી ચુકવણીની રસીદ જુઓ"
+            onClick={() => navigate("/settings/invoices")}
+          />
+        )}
 
       </SimpleGrid>
     </Box>
 
-    
+
   );
 }

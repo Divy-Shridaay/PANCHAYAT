@@ -14,6 +14,8 @@ import AdminPanel from "./pages/AdminPanel";
 import SettingsHome from "./pages/settings/SettingsHome";
 import ProfileSettings from "./pages/settings/ProfileSettings";
 import SecuritySettings from "./pages/settings/SecuritySettings";
+import Invoices from "./pages/settings/Invoices";
+import InvoiceDetails from "./pages/settings/InvoiceDetails";
 
 // Help (under settings)
 import HelpSettings from "./pages/settings/help/HelpSettings";
@@ -107,6 +109,16 @@ export default function App() {
         <Route
           path="/settings/security"
           element={<PrivateRoute><SecuritySettings /></PrivateRoute>}
+        />
+
+        <Route
+          path="/settings/invoices"
+          element={<PrivateRoute><Invoices /></PrivateRoute>}
+        />
+
+        <Route
+          path="/settings/invoices/:id"
+          element={<PrivateRoute><InvoiceDetails /></PrivateRoute>}
         />
 
         {/* ===================== HELP (UNDER SETTINGS) ===================== */}

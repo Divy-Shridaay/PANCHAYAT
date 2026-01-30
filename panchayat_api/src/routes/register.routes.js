@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile, updateUserModules, setPendingVerification } from "../controllers/register.controller.js";
+import { sendOTP, verifyOTP, getAllUsers, getUserDetail, activateUser, deactivateUser, getUserStatus, incrementPrintCount, getCurrentUserProfile, updateCurrentUserProfile, updateUserModules, setPendingVerification, getUserInvoices } from "../controllers/register.controller.js";
 import logger from "../middleware/logger.js";
 import auth from "../middleware/auth.js";
 
@@ -83,5 +83,7 @@ router.post(
   auth,
   setPendingVerification
 );
+
+router.get("/user/invoices", auth, getUserInvoices);
 
 export default router;

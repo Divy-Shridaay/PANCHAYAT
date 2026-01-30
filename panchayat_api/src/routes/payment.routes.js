@@ -3,10 +3,10 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import auth from '../middleware/auth.js';
-import { 
-  submitPayment, 
+import {
+  submitPayment,
   getPaymentStatus,
-  getLatestPaymentStatus 
+  getLatestPaymentStatus
 } from '../controllers/payment.controller.js';
 
 const router = express.Router();
@@ -19,7 +19,13 @@ const __dirname = path.dirname(__filename);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '../../uploads/payments');
-    cb(null, uploadPath);
+    // Ensure directory exists
+    import('fs').then(fs => {
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    });
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

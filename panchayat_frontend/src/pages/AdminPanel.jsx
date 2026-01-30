@@ -46,7 +46,7 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedUserModules, setSelectedUserModules] = useState({ pedhinamu: false, rojmel: false, magnu: false });
+  const [selectedUserModules, setSelectedUserModules] = useState({ pedhinamu: false, rojmel: false, jaminMehsul: false });
   const [selectedUserPedhinamuPrint, setSelectedUserPedhinamuPrint] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -144,12 +144,21 @@ export default function AdminPanel() {
   const handleViewUser = (user) => {
     setSelectedUser(user);
     // Initialize module toggle states from user data (fallback to false)
+    // Calculate if user is currently under trial to set better defaults
+    let isUnderTrial = false;
+    if (user.trialStartDate) {
+      const now = new Date();
+      const trialStart = new Date(user.trialStartDate);
+      const daysSinceTrial = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
+      isUnderTrial = daysSinceTrial < 8;
+    }
+
     setSelectedUserModules({
-      pedhinamu: user.modules?.pedhinamu ?? false,
-      rojmel: user.modules?.rojmel ?? false,
-      magnu: user.modules?.magnu ?? false
+      pedhinamu: user.modules?.pedhinamu ?? isUnderTrial,
+      rojmel: user.modules?.rojmel ?? isUnderTrial,
+      jaminMehsul: user.modules?.jaminMehsul ?? isUnderTrial
     });
-    setSelectedUserPedhinamuPrint(user.pedhinamuPrintAllowed ?? false);
+    setSelectedUserPedhinamuPrint(user.pedhinamuPrintAllowed ?? isUnderTrial);
 
     // Reset payment verification state when viewing a new user
     setIsPaymentVerified(null);
@@ -158,7 +167,7 @@ export default function AdminPanel() {
     onOpen();
   };
 
-  const handleSubmitReason = () => {
+  const handleSubmitReason = async () => {
     if (!paymentReason.trim()) {
       toast({
         title: "ભૂલ",
@@ -171,27 +180,14 @@ export default function AdminPanel() {
       return;
     }
 
-    // For now, just show a success toast as requested for the UI flow
-    toast({
-      title: "સબમિટ કરેલ",
-      description: "કારણ સફળતાપૂર્વક સબમિટ કરવામાં આવ્યું છે",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-      position: "top"
-    });
-    // You can add API call here later if needed to save the reason
-  };
-
-  // Update module toggles on server
-  const handleToggleModule = async (field, value) => {
-    if (!selectedUser) return;
     try {
-      // optimistic UI and compute new state to send
-      const newModules = { ...selectedUserModules, [field]: value };
-      setSelectedUserModules(newModules);
-
-      const body = { modules: newModules };
+      setLoading(true);
+      const body = {
+        modules: selectedUserModules,
+        pedhinamuPrintAllowed: selectedUserPedhinamuPrint,
+        isRejected: true,
+        reason: paymentReason
+      };
 
       const { response, data } = await apiFetch(`/api/register/admin/users/${selectedUser._id}/modules`, {
         method: "PUT",
@@ -200,25 +196,53 @@ export default function AdminPanel() {
       }, navigate, toast);
 
       if (response.ok) {
-        toast({ title: "સફળ", description: "મોડ્યુલ અપડેટ થયાં", status: "success", duration: 2000, isClosable: true, position: "top" });
-        // refresh list
+        toast({
+          title: "સફળતા",
+          description: "ચુકવણી અસ્વીકાર કરવામાં આવી છે અને વપરાશકર્તાને ઇમેઇલ મોકલવામાં આવ્યો છે",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top"
+        });
         fetchUsers();
+        onClose();
       } else {
-        throw new Error(data.message || "Update failed");
+        throw new Error(data.message || "Rejection failed");
       }
     } catch (err) {
-      // revert on error
-      setSelectedUserModules(prev => ({ ...prev, [field]: !value }));
-      toast({ title: "ભૂલ", description: err.message || "સર્વર ભૂલ", status: "error", duration: 3000, isClosable: true, position: "top" });
+      toast({
+        title: "ભૂલ",
+        description: err.message || "સર્વર ભૂલ",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleTogglePedhinamuPrint = async (value) => {
-    if (!selectedUser) return;
-    try {
-      setSelectedUserPedhinamuPrint(value);
+  // Update module toggles locally
+  const handleToggleModule = (field, value) => {
+    setSelectedUserModules(prev => ({ ...prev, [field]: value }));
+  };
 
-      const body = { pedhinamuPrintAllowed: value };
+  const handleTogglePedhinamuPrint = (value) => {
+    setSelectedUserPedhinamuPrint(value);
+  };
+
+  const handleSaveVerification = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setLoading(true);
+      const body = {
+        modules: selectedUserModules,
+        pedhinamuPrintAllowed: selectedUserPedhinamuPrint,
+        // Only send isApproved if they were actually pending verification
+        isApproved: shouldShowVerification(selectedUser)
+      };
 
       const { response, data } = await apiFetch(`/api/register/admin/users/${selectedUser._id}/modules`, {
         method: "PUT",
@@ -227,14 +251,25 @@ export default function AdminPanel() {
       }, navigate, toast);
 
       if (response.ok) {
-        toast({ title: "સફળ", description: "પ્રિન્ટ toggled", status: "success", duration: 2000, isClosable: true, position: "top" });
+        toast({
+          title: "સફળતા",
+          description: shouldShowVerification(selectedUser)
+            ? "ચુકવણી મંજૂર કરવામાં આવી છે અને ઇમેઇલ મોકલવામાં આવ્યો છે"
+            : "મોડ્યુલ અપડેટ કરવામાં આવ્યા છે",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top"
+        });
         fetchUsers();
+        onClose();
       } else {
         throw new Error(data.message || "Update failed");
       }
     } catch (err) {
-      setSelectedUserPedhinamuPrint(prev => !prev);
       toast({ title: "ભૂલ", description: err.message || "સર્વર ભૂલ", status: "error", duration: 3000, isClosable: true, position: "top" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -807,7 +842,7 @@ export default function AdminPanel() {
                     {isPaymentVerified === false && (
                       <VStack align="stretch" width="100%" spacing={2}>
                         <FormControl>
-                          <FormLabel fontSize="sm" color="#475569">કારણ (Reason):</FormLabel>
+                          <FormLabel fontSize="sm" color="#475569">કારણ:</FormLabel>
                           <Input
                             placeholder="કારણ લખો..."
                             size="sm"
@@ -840,14 +875,24 @@ export default function AdminPanel() {
                     </HStack>
 
                     <HStack justify="space-between" width="100%">
-                      <Text>માગણું</Text>
-                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.magnu} onChange={(e) => handleToggleModule('magnu', e.target.checked)} />
+                      <Text>જમીન મહેસુલ</Text>
+                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.jaminMehsul} onChange={(e) => handleToggleModule('jaminMehsul', e.target.checked)} />
                     </HStack>
 
                     <HStack justify="space-between" width="100%">
                       <Text>પેઢીનામું પ્રિન્ટ </Text>
                       <Switch size="md" colorScheme="teal" isChecked={selectedUserPedhinamuPrint} onChange={(e) => handleTogglePedhinamuPrint(e.target.checked)} />
                     </HStack>
+
+                    <Button
+                      colorScheme="green"
+                      width="100%"
+                      mt={4}
+                      onClick={handleSaveVerification}
+                      isLoading={loading}
+                    >
+                      પૂર્ણ
+                    </Button>
                   </VStack>
                 )}
               </VStack>
@@ -865,7 +910,7 @@ export default function AdminPanel() {
           <ModalBody pb={6}>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>પેઢીનામું (Price)</FormLabel>
+                <FormLabel>પેઢીનામું</FormLabel>
                 <Input
                   type="number"
                   value={pricing.pedhinamu}
@@ -874,7 +919,7 @@ export default function AdminPanel() {
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>રોજમેળ (Price)</FormLabel>
+                <FormLabel>રોજમેળ</FormLabel>
                 <Input
                   type="number"
                   value={pricing.rojmel}
@@ -883,7 +928,7 @@ export default function AdminPanel() {
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>જમીન મહેસુલ (Price)</FormLabel>
+                <FormLabel>જમીન મહેસુલ</FormLabel>
                 <Input
                   type="number"
                   value={pricing.jaminMehsul}

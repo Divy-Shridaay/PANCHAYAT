@@ -165,19 +165,72 @@ export default function Dashboard() {
       const isPending = userStatus.user.isPendingVerification;
       const username = localStorage.getItem("username");
 
-      if (isPaid) {
+      if (isPending) {
+        setShowVerificationNotice(true);
+      } else if (isPaid) {
         if (username) localStorage.removeItem(`paymentPendingVerification_${username}`);
         setShowVerificationNotice(false);
-      } else if (isPending) {
-        setShowVerificationNotice(true);
       } else {
         setShowVerificationNotice(false);
       }
     }
   }, [userStatus]);
 
+  /* =======================
+     MANAGE EXPIRY BANNER
+  ======================= */
+  const [showExpiryBanner, setShowExpiryBanner] = useState(false);
+  useEffect(() => {
+    if (userStatus?.user) {
+      const days = userStatus.daysUntilExpiry;
+      const dismissed = sessionStorage.getItem("expiryBannerDismissed");
+      // Show banner if between 0 and 30 days remaining and not dismissed in this session
+      if (days !== null && days > 0 && days <= 30 && !dismissed) {
+        setShowExpiryBanner(true);
+      } else {
+        setShowExpiryBanner(false);
+      }
+    }
+  }, [userStatus]);
+
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
+      {/* EXPIRY BANNER */}
+      {showExpiryBanner && (
+        <Box
+          bg="orange.50"
+          p={3}
+          rounded="xl"
+          border="1px solid"
+          borderColor="orange.200"
+          mb={4}
+          shadow="sm"
+          position="relative"
+          cursor="pointer"
+          onClick={() => navigate("/payment")}
+          _hover={{ bg: "orange.100" }}
+        >
+          <Flex align="center" justify="center">
+            <Text fontWeight="600" color="orange.800" fontSize="md" textAlign="center">
+              સબ્સ્ક્રિપ્શન સમાપ્ત થવામાં {userStatus.daysUntilExpiry} દિવસ બાકી છે.
+            </Text>
+            <CloseButton
+              position="absolute"
+              right={2}
+              top="50%"
+              transform="translateY(-50%)"
+              size="sm"
+              color="orange.600"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowExpiryBanner(false);
+                sessionStorage.setItem("expiryBannerDismissed", "true");
+              }}
+            />
+          </Flex>
+        </Box>
+      )}
+
       {/* VERIFICATION NOTICE */}
       {showVerificationNotice && (
         <Box
@@ -314,7 +367,7 @@ export default function Dashboard() {
               const { response, data } = await apiFetch("/api/register/user/status");
               if (response.ok) {
                 const status = data.user;
-                const moduleAccess = status.modulesAccess?.magnu ?? false;
+                const moduleAccess = status.modulesAccess?.jaminMehsul ?? false;
                 if (!moduleAccess) {
                   setPopupType("module");
                   setShowPaymentPopup(true);
@@ -372,6 +425,7 @@ export default function Dashboard() {
         isOpen={showPaymentPopup}
         onClose={() => setShowPaymentPopup(false)}
         type={popupType}
+        isSubscriptionExpired={userStatus?.isSubscriptionExpired}
       />
 
       <TrialWelcomePopup

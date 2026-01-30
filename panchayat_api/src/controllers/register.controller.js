@@ -1,44 +1,15 @@
 import User from "../models/User.js";
+import Invoice from "../models/Invoice.js";
+import GlobalSettings from "../models/GlobalSettings.js";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import { transliterateGujaratiToEnglish } from "../utils/toEnglish.js";
+import { sendPaymentApprovalEmail, sendPaymentRejectionEmail, sendMail } from "../utils/emailService.js";
 
 dotenv.config();
 
-// ----------  transporter ----------
-const transporter = nodemailer.createTransport({
-  host: "smtp.office365.com",   // FIXED
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  requireTLS: true,
-});
 
-
-
-
-
-// ---------- sendMail function ----------
-export const sendMail = async (to, subject, html) => {
-  try {
-    const info = await transporter.sendMail({
-      from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`, // ✅ FIXED
-      to,
-      subject,
-      html,
-    });
-
-    console.log("Email sent:", info.messageId);
-    return true;
-  } catch (err) {
-    console.error("Email error:", err);
-    return false;
-  }
-};
 
 
 // ---------- Helper Functions ----------
@@ -481,7 +452,7 @@ export const deactivateUser = async (req, res) => {
 export const updateUserModules = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { modules, pedhinamuPrintAllowed } = req.body;
+    const { modules, pedhinamuPrintAllowed, isApproved, isRejected, reason } = req.body;
 
     const updateData = {};
     if (modules && typeof modules === "object") {
@@ -494,13 +465,131 @@ export const updateUserModules = async (req, res) => {
       updateData.pedhinamuPrintAllowed = !!pedhinamuPrintAllowed;
     }
 
-    // Always clear pending verification when admin updates modules manually
-    updateData.isPendingVerification = false;
+    // If this is an approval from the Verification flow
+    if (isApproved) {
+      updateData.isPaid = true;
+      updateData.isPendingVerification = false;
+
+      // Set subscription dates: Start = now, End = 1 year from now
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setFullYear(startDate.getFullYear() + 1);
+
+      updateData.paymentStartDate = startDate;
+      updateData.paymentEndDate = endDate;
+    } else if (isRejected) {
+      updateData.isPaid = false;
+      // User requested to keep the banner: "it can stay"
+      // So we do NOT set isPendingVerification = false here.
+    }
+    // Note: If neither approved nor rejected (general update), 
+    // we leave isPendingVerification as is.
 
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password -otp -otpExpiry");
 
     if (!user) {
       return res.status(404).json({ message: "ઉપયોગકર્તા મળ્યો નથી " });
+    }
+
+    // If approved, send notification email & Generate Invoice
+    if (isApproved) {
+      console.log(`Attempting to send approval email to: ${user.email}`);
+
+      // Generate Invoice
+      try {
+        const pricingSettings = await GlobalSettings.findOne({ key: "module_pricing" });
+        const pricing = pricingSettings ? pricingSettings.value : { pedhinamu: 1, rojmel: 1, jaminMehsul: 1 };
+
+        const items = [];
+        let subtotal = 0;
+        let count = 1;
+
+        if (modules?.pedhinamu) {
+          items.push({
+            srNo: `0${count++}`,
+            moduleName: "પેઢીનામું",
+            price: pricing.pedhinamu,
+            total: pricing.pedhinamu
+          });
+          subtotal += Number(pricing.pedhinamu);
+        }
+        if (modules?.rojmel) {
+          items.push({
+            srNo: `0${count++}`,
+            moduleName: "રોજમેળ",
+            price: pricing.rojmel,
+            total: pricing.rojmel
+          });
+          subtotal += Number(pricing.rojmel);
+        }
+        if (modules?.jaminMehsul) {
+          items.push({
+            srNo: `0${count++}`,
+            moduleName: "જમીન મહેસુલ",
+            price: pricing.jaminMehsul,
+            total: pricing.jaminMehsul
+          });
+          subtotal += Number(pricing.jaminMehsul);
+        }
+
+        if (items.length > 0) {
+          const currentYear = new Date().getFullYear();
+          const invoiceCount = await Invoice.countDocuments({
+            invoiceNumber: { $regex: `^SH-${currentYear}-` }
+          });
+          const nextNumber = String(invoiceCount + 1).padStart(3, '0');
+          const invoiceNumber = `SH-${currentYear}-${nextNumber}`;
+
+          const newInvoice = new Invoice({
+            invoiceNumber,
+            user: user._id,
+            billingDetails: {
+              village: user.gam,
+              district: user.jillo,
+              state: "Gujarat",
+              phone: user.phone
+            },
+            items,
+            subtotal,
+            totalAmount: subtotal
+          });
+
+          await newInvoice.save();
+          console.log(`Invoice generated: ${invoiceNumber}`);
+        }
+      } catch (invoiceErr) {
+        console.error("Failed to generate invoice:", invoiceErr);
+      }
+
+      try {
+        const mailResult = await sendPaymentApprovalEmail(user.email, user.firstName || user.username);
+        console.log("Approval email result:", mailResult);
+        return res.json({
+          message: "User modules updated and account approved",
+          user,
+          emailSent: mailResult.success,
+          emailError: mailResult.error
+        });
+      } catch (err) {
+        console.error("Failed to send approval email:", err);
+      }
+    }
+
+    // If rejected, send rejection email
+    if (isRejected) {
+      console.log(`Attempting to send rejection email to: ${user.email}`);
+      try {
+        const mailResult = await sendPaymentRejectionEmail(user.email, user.firstName || user.username, reason || "માહિતી ઉપલબ્ધ નથી");
+        console.log("Rejection email result:", mailResult);
+        return res.json({
+          message: "User modules updated and account rejected",
+          user,
+          emailSent: mailResult.success,
+          emailError: mailResult.error
+        });
+      } catch (err) {
+        console.error("Failed to send rejection email:", err);
+      }
     }
 
     return res.json({ message: "User modules updated", user });
@@ -526,29 +615,52 @@ export const getUserStatus = async (req, res) => {
 
     // Calculate days since trial start
     let daysSinceTrial = 0;
+    const now = new Date();
     if (user.trialStartDate) {
-      const now = new Date();
       const trialStart = new Date(user.trialStartDate);
       daysSinceTrial = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
     }
 
-    const baseAccess = user.isPaid || daysSinceTrial < 8;
+    // Calculate subscription expiry
+    let daysUntilExpiry = null;
+    let isSubscriptionExpired = false;
+    if (user.isPaid && user.paymentEndDate) {
+      const expiryDate = new Date(user.paymentEndDate);
+      const timeDiff = expiryDate - now;
+      daysUntilExpiry = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-    // Per-module access: allow if user has base access (paid/trial) OR admin has enabled the specific module
+      if (daysUntilExpiry <= 0) {
+        isSubscriptionExpired = true;
+      }
+    }
+
+    // Calculate access
+    const isUnderTrial = daysSinceTrial < 8;
+    const hasActiveSubscription = user.isPaid && !isSubscriptionExpired;
+
+    // Per-module access:
+    // Priority 1: If subscription expired, access is false unless admin override is true? 
+    // Actually, user said "after completion of 12 months, user should not be able to use modules".
+    // So if isSubscriptionExpired is true, access is false unless it's a trial account (which shouldn't happen if isPaid is true).
+
     const modulesAccess = {
-      pedhinamu: baseAccess || !!user.modules?.pedhinamu,
-      rojmel: baseAccess || !!user.modules?.rojmel,
-      magnu: baseAccess || !!user.modules?.magnu,
+      pedhinamu: (user.modules?.pedhinamu ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      rojmel: (user.modules?.rojmel ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      jaminMehsul: (user.modules?.jaminMehsul ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
     };
 
-    // Printing: allow if paid OR under free limit OR admin explicitly allowed pedhinamuPrintAllowed
-    const canPrint = user.isPaid || user.printCount < 5 || !!user.pedhinamuPrintAllowed;
+    // Printing: Explicit admin toggle OR trial status. 
+    // If subscription expired, we also block printing unless it's explicitly allowed? 
+    // Usually expiry blocks everything.
+    const canPrint = (user.pedhinamuPrintAllowed ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin');
 
     return res.json({
       message: "ઉપયોગકર્તાની સ્થિતિ (User status)",
       user: {
         ...user.toObject(),
         daysSinceTrial,
+        daysUntilExpiry,
+        isSubscriptionExpired,
         modulesAccess,
         canPrint
       }
@@ -692,6 +804,13 @@ export const updateCurrentUserProfile = async (req, res) => {
     delete updateData.resetTokenExpiry;
     delete updateData.createdAt;
     delete updateData.updatedAt;
+    delete updateData.paymentStartDate;
+    delete updateData.paymentEndDate;
+    delete updateData.trialStartDate;
+    delete updateData.isPaid;
+    delete updateData.isPendingVerification;
+    delete updateData.modules;
+    delete updateData.pedhinamuPrintAllowed;
 
     const user = await User.findByIdAndUpdate(
       userId,
@@ -737,5 +856,24 @@ export const setPendingVerification = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).json({ message: "વિનંતી સબમિટ કરવામાં નિષ્ફળ", error: err.message });
+  }
+};
+// ---------- Get User Invoices ----------
+export const getUserInvoices = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const invoices = await Invoice.find({ user: userId }).sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      invoices
+    });
+  } catch (err) {
+    console.error("Error fetching invoices:", err);
+    return res.status(500).json({
+      success: false,
+      message: "ઇનવોઇસ લોડ કરવામાં નિષ્ફળ",
+      error: err.message
+    });
   }
 };
