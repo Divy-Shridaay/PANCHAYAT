@@ -89,7 +89,7 @@ export default function Invoices() {
                 </tr>
                 <tr>
                     <td colspan="4" style="border-bottom: none;"></td>
-                    <td class="total-row-label">GST</td>
+                    <td class="total-row-label">GST (18%)</td>
                     <td class="total-row-amount">₹${invoice.gst || 0}</td>
                 </tr>
                 <tr class="grand-total-row">
@@ -109,7 +109,8 @@ export default function Invoices() {
                 itemsHtml: itemsHtml + emptyRows + totalsHtml,
                 subtotal: invoice.subtotal,
                 gst: invoice.gst || 0,
-                totalAmount: invoice.totalAmount
+                totalAmount: invoice.totalAmount,
+                gstNumber: invoice.billingDetails?.gstNumber ? `GST: ${invoice.billingDetails.gstNumber}` : ""
             };
 
             Object.entries(replacements).forEach(([key, value]) => {

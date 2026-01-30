@@ -124,6 +124,11 @@ export default function InvoiceDetails() {
                         <Text fontWeight="700" fontSize="18px" color="gray.800" mb={1}>Billing to</Text>
                         <Text fontSize="16px" fontWeight="600">સરપંચ શ્રી,</Text>
                         <Text fontSize="16px">{invoice.billingDetails?.village || ""} ગ્રામ પંચાયત</Text>
+                        {invoice.billingDetails?.gstNumber && (
+                            <Text fontSize="14px" fontWeight="600" color="gray.600" mt={1}>
+                                GST: {invoice.billingDetails.gstNumber}
+                            </Text>
+                        )}
                     </VStack>
 
                     <VStack align="end" spacing={1}>
@@ -186,7 +191,7 @@ export default function InvoiceDetails() {
                             </Tr>
                             <Tr>
                                 <Td colSpan={4} borderRight="1px solid #2c7a7b" borderBottom="1px solid #2c7a7b"></Td>
-                                <Td borderRight="1px solid #2c7a7b" borderBottom="1px solid #2c7a7b" textAlign="center" fontSize="14px" fontWeight="500">GST</Td>
+                                <Td borderRight="1px solid #2c7a7b" borderBottom="1px solid #2c7a7b" textAlign="center" fontSize="14px" fontWeight="500">GST (18%)</Td>
                                 <Td borderBottom="1px solid #2c7a7b" textAlign="center" fontSize="14px" fontWeight="600">₹{invoice.gst || 0}</Td>
                             </Tr>
                             <Tr bg="#f7f7f7">

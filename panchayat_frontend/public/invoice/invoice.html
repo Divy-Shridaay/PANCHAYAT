@@ -138,6 +138,13 @@
         }
 
         /* Items Table */
+        #gst-container {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #4A5568;
+            font-weight: 500;
+        }
+
         .table-wrapper {
             border: 1px solid #2c7a7b;
             margin-bottom: 0;
@@ -284,6 +291,7 @@
                 <span class="label">Billing to</span>
                 <span class="value panchayat">સરપંચ શ્રી,</span>
                 <span class="value">{{village}} ગ્રામ પંચાયત</span>
+                <div id="gst-container">{{gstNumber}}</div>
             </div>
             <div class="company-section">
                 <div class="date-line">Date:- {{paymentDate}}</div>

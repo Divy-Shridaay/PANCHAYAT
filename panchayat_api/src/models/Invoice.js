@@ -7,7 +7,8 @@ const InvoiceSchema = new mongoose.Schema({
         village: { type: String, required: true },
         district: { type: String },
         state: { type: String },
-        phone: { type: String }
+        phone: { type: String },
+        gstNumber: { type: String }
     },
     items: [{
         srNo: { type: String, required: true },
