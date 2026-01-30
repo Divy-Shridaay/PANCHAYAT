@@ -64,6 +64,7 @@
 
         .text-right {
             text-align: right;
+            white-space: nowrap;
         }
 
         .text-center {
@@ -100,7 +101,6 @@
             .table-wrapper {
                 overflow: visible !important;
                 width: 100%;
-                /* Removed scale to avoid unnecessary shrinking */
             }
 
             table {
@@ -111,15 +111,26 @@
 
             th,
             td {
-                font-size: 13px !important;
-                /* Increased for better readability */
+                font-size: 11px !important;
                 padding: 1px 2px !important;
                 line-height: 1.1;
                 word-break: break-word;
                 overflow-wrap: break-word;
                 white-space: normal;
                 min-width: 8px;
-                /* Reduced min-width for better fitting */
+            }
+            
+            /* 🔥 FIX: Prevent wrapping in amount columns */
+            td.text-right,
+            th.text-right {
+                white-space: nowrap !important;
+                min-width: 45px !important;
+            }
+            
+            /* Give specific widths to critical columns */
+            td:first-child,
+            th:first-child {
+                min-width: 35px !important; /* Receipt number */
             }
 
             h3 {
@@ -134,14 +145,16 @@
 
             .footer-section {
                 margin-top: 10px;
-                /* Removed scale */
             }
 
             .footer-table th,
             .footer-table td {
-                font-size: 14px;
-                /* Increased for better readability */
+                font-size: 12px;
                 padding: 2px;
+            }
+            
+            .footer-table td.text-right {
+                white-space: nowrap !important;
             }
 
             @page {
@@ -180,12 +193,12 @@
                 <tr>
                     <th rowspan="3">પાવતી નં.</th>
                     <th colspan="{{totalIncomeCols}}">રકમ આવી તેની વિગત</th>
-                    <th rowspan="3">કુલ રકમ</th>
+                    <th rowspan="3" class="text-right">કુલ રકમ</th>
                     <th rowspan="3">ચેક નં.</th>
                     <th rowspan="3">વાઉચર નં.</th>
                     <th colspan="2">નાણાં આપ્યાની વિગત</th>
                     <th rowspan="3">ખાતાનું મઠાડું</th>
-                    <th rowspan="3">કુલ રકમ</th>
+                    <th rowspan="3" class="text-right">કુલ રકમ</th>
                 </tr>
 
                 <!-- ROW 2 -->
@@ -218,10 +231,10 @@
                 <tr>
                     <th>અ. નં.</th>
                     <th>ખાતા નું નામ</th>
-                    <th>ઉઘડતી સિલક</th>
-                    <th>આવક</th>
-                    <th>જાવક</th>
-                    <th>બંધ સિલક</th>
+                    <th class="text-right">ઉઘડતી સિલક</th>
+                    <th class="text-right">આવક</th>
+                    <th class="text-right">જાવક</th>
+                    <th class="text-right">બંધ સિલક</th>
                 </tr>
             </thead>
             <tbody>
