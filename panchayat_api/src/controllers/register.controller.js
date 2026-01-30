@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Invoice from "../models/Invoice.js";
+import Payment from "../models/Payment.js";
 import GlobalSettings from "../models/GlobalSettings.js";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
@@ -540,6 +541,19 @@ export const updateUserModules = async (req, res) => {
           const nextNumber = String(invoiceCount + 1).padStart(3, '0');
           const invoiceNumber = `SH-${currentYear}-${nextNumber}`;
 
+          // Fetch latest payment for GST details
+          let gstAmount = 0;
+          let gstNumber = null;
+          try {
+            const latestPayment = await Payment.findOne({ userId: user._id, status: 'pending' }).sort({ createdAt: -1 });
+            if (latestPayment) {
+              gstAmount = Number(latestPayment.gstAmount) || 0;
+              gstNumber = latestPayment.gstNumber;
+            }
+          } catch (payErr) {
+            console.error("Error fetching payment for invoice:", payErr);
+          }
+
           const newInvoice = new Invoice({
             invoiceNumber,
             user: user._id,
@@ -547,15 +561,17 @@ export const updateUserModules = async (req, res) => {
               village: user.gam,
               district: user.jillo,
               state: "Gujarat",
-              phone: user.phone
+              phone: user.phone,
+              gstNumber: gstNumber
             },
             items,
             subtotal,
-            totalAmount: subtotal
+            gst: gstAmount,
+            totalAmount: Number((subtotal + gstAmount).toFixed(2))
           });
 
           await newInvoice.save();
-          console.log(`Invoice generated: ${invoiceNumber}`);
+          console.log(`Invoice generated: ${invoiceNumber} with GST: ${gstAmount}`);
         }
       } catch (invoiceErr) {
         console.error("Failed to generate invoice:", invoiceErr);

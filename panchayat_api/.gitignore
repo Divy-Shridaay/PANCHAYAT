@@ -4,7 +4,7 @@
 # dependencies
 node_modules/
 
-# uploads (multer files)
+ uploads (multer files)
 # uploads/
 
 # build folders
