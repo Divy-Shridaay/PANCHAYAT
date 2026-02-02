@@ -203,7 +203,7 @@ export const uploadExcel = async (req, res, next) => {
 
       if (missingFields.length > 0) {
         validationErrors.push({
-          row: rowNum,
+          // row: rowNum,
           reason: `જરૂરી ફીલ્ડ ખૂટે છે: ${missingFields.join(", ")}`,
         });
         continue;

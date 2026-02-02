@@ -389,20 +389,16 @@ const uploadExcelToServer = async () => {
 
     // ❌ Error Response
     if (!res.ok || !data.success) {
-      if (data.errors && data.errors.length > 0) {
-        // બધી errors એક સાથે show કરો
-        const errorList = data.errors
-          .map(err => `પંક્તિ ${err.row}: ${err.reason}`)
-          .join('\n\n');
+   if (data.errors && data.errors.length > 0) {
+  const errorMessage = `Excel માં ભૂલો મળી આવી.
+જરૂરી ફીલ્ડ ખૂટે છે`;
 
-        toast({
-          title: "Excel માં ભૂલો મળી આવી",
-          description: errorList,
-          status: "error",
-          duration: 8000,
-          isClosable: true,
-        });
-      } else {
+  alert(errorMessage); // ya toast / modal
+  return;
+}
+
+      
+      else {
         toast({
           title: "અપલોડમાં ભૂલ",
           description: data.message || "કૃપા કરીને ફરી પ્રયાસ કરો",
