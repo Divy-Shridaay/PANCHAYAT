@@ -77,12 +77,12 @@ export const sendOTP = async (req, res) => {
     }
 
     // 3. Email domain
-    const emailDomain = email.split('@')[1];
-    if (!allowedDomains.includes(emailDomain)) {
-      return res.status(400).json({
-        message: "આ ઇમેઇલ ડોમેન સપોર્ટેડ નથી "
-      });
-    }
+    // const emailDomain = email.split('@')[1];
+    // if (!allowedDomains.includes(emailDomain)) {
+    //   return res.status(400).json({
+    //     message: "આ ઇમેઇલ ડોમેન સપોર્ટેડ નથી "
+    //   });
+    // }
 
 
     // Check if email already exists
