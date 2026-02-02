@@ -134,94 +134,96 @@
                 size: A4 portrait;
                 margin: 10mm 12mm 10mm 12mm;
                 counter-increment: page;
-                /* @bottom-right {
-            content: "પાના " counter(page);
-        } } */
-
-                body {
-                    counter-reset: page 1;
-                    /* Start from 1 by default */
-                }
-
-                svg {
-                    width: 190mm !important;
-                    /* A4 printable width */
-                    height: auto !important;
-                    max-width: 190mm !important;
-                    transform: none !important;
-                    /* remove shrink */
-                    overflow: visible !important;
-                    display: block;
-                    margin: 0 auto;
-                }
-
-                .tree-break {
-                    page-break-before: auto !important;
-                }
-
-
-                .tree-block {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    display: block;
-                }
-
-
-
-                svg text {
-                    paint-order: stroke;
-                    stroke: white;
-                    stroke-width: 1px;
-                }
-
-                body,
-                .tree-container {
-                    overflow: visible !important;
-                    page-break-inside: avoid !important;
-                }
-
-
-
-                .u-line {
-                    display: inline-block;
-                    padding: 0 4px;
-                    border-bottom: 1.5px solid #000;
-                    line-height: 1.4;
-                }
-
-                .page-break {
-                    page-break-before: always;
-                }
-
-                .panch-table {
-                    font-size: 15px;
-                }
-
-                .panch-table th,
-                .panch-table td {
-                    padding: 6px 8px;
-                }
-
-                .tree-title {
-                    text-align: center;
-                    margin-top: 0 !important;
-                }
-
-
-
-                .panch-photo-table {
-                    width: 100% !important;
-                    border-collapse: collapse;
-                }
-
-                svg.rotated-tree {
-                    width: auto !important;
-                    margin-left: auto !important;
-                    margin-right: 0 !important;
-                    display: block !important;
-                }
-
             }
+
+            /* @bottom-right {
+		content: "પાના " counter(page);
+	} */
+
+            body {
+                counter-reset: page 1;
+                /* Start from 1 by default */
+            }
+
+            svg {
+                width: 190mm !important;
+                /* A4 printable width */
+                height: auto !important;
+                max-width: 190mm !important;
+                transform: none !important;
+                /* remove shrink */
+                overflow: visible !important;
+                display: block;
+                margin: 0 auto;
+            }
+
+            .tree-break {
+                page-break-before: auto !important;
+            }
+
+
+            .tree-block {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                display: block;
+            }
+
+
+
+            svg text {
+                paint-order: stroke;
+                stroke: white;
+                stroke-width: 1px;
+            }
+
+            body,
+            .tree-container {
+                overflow: visible !important;
+                page-break-inside: avoid !important;
+            }
+
+
+
+            .u-line {
+                display: inline-block;
+                padding: 0 4px;
+                border-bottom: 1.5px solid #000;
+                line-height: 1.4;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+
+            .panch-table {
+                font-size: 15px;
+            }
+
+            .panch-table th,
+            .panch-table td {
+                padding: 6px 8px;
+            }
+
+            .tree-title {
+                text-align: center;
+                margin-top: 0 !important;
+            }
+
+
+
+            .panch-photo-table {
+                width: 100% !important;
+                border-collapse: collapse;
+            }
+
+            svg.rotated-tree {
+                width: auto !important;
+                margin-left: auto !important;
+                margin-right: 0 !important;
+                display: block !important;
+            }
+
+        }
     </style>
 </head>
 
@@ -737,5 +739,6 @@
 
 
 </body>
+
 
 </html>

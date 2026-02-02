@@ -119,10 +119,21 @@ export default function Dashboard() {
   ======================= */
   const handleModuleClick = async (route, moduleName) => {
     try {
+      if (userStatus?.user?.isPendingVerification) {
+        toast({
+          title: "ચકાસણી પેન્ડિંગ",
+          description: "તમારી ચુકવણી હાલમાં ચકાસણી હેઠળ છે. કૃપા કરીને એડમિન દ્વારા પુષ્ટિ થાય ત્યાં સુધી રાહ જુઓ.",
+          status: "info",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        });
+        return;
+      }
+
       const { response, data } = await apiFetch("/api/register/user/status");
       if (response.ok) {
         const status = data.user;
-        // Check per-module access instead of global canAccessModules
         const moduleAccess = status.modulesAccess?.[moduleName] ?? false;
         if (!moduleAccess) {
           setPopupType("module");
@@ -316,8 +327,10 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor="pointer"
-          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          cursor={userStatus?.user?.isPendingVerification ? "not-allowed" : "pointer"}
+          opacity={userStatus?.user?.isPendingVerification ? 0.6 : 1}
+          filter={userStatus?.user?.isPendingVerification ? "grayscale(40%)" : "none"}
+          _hover={userStatus?.user?.isPendingVerification ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
           onClick={() => handleModuleClick("/pedhinamu", "pedhinamu")}
         >
           <FiUserCheck size={40} color="#2A7F62" />
@@ -339,8 +352,10 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor="pointer"
-          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          cursor={userStatus?.user?.isPendingVerification ? "not-allowed" : "pointer"}
+          opacity={userStatus?.user?.isPendingVerification ? 0.6 : 1}
+          filter={userStatus?.user?.isPendingVerification ? "grayscale(40%)" : "none"}
+          _hover={userStatus?.user?.isPendingVerification ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
           onClick={() => handleModuleClick("/cashmelform", "rojmel")}
         >
           <FiTrendingUp size={40} color="#2A7F62" />
@@ -360,9 +375,22 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor="pointer"
-          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          cursor={userStatus?.user?.isPendingVerification ? "not-allowed" : "pointer"}
+          opacity={userStatus?.user?.isPendingVerification ? 0.6 : 1}
+          filter={userStatus?.user?.isPendingVerification ? "grayscale(40%)" : "none"}
+          _hover={userStatus?.user?.isPendingVerification ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
           onClick={async () => {
+            if (userStatus?.user?.isPendingVerification) {
+              toast({
+                title: "ચકાસણી પેન્ડિંગ",
+                description: "તમારી ચુકવણી હાલમાં ચકાસણી હેઠળ છે. કૃપા કરીને એડમિન દ્વારા પુષ્ટિ થાય ત્યાં સુધી રાહ જુઓ.",
+                status: "info",
+                duration: 5000,
+                isClosable: true,
+                position: "top",
+              });
+              return;
+            }
             try {
               const { response, data } = await apiFetch("/api/register/user/status");
               if (response.ok) {

@@ -653,22 +653,20 @@ export const getUserStatus = async (req, res) => {
     // Calculate access
     const isUnderTrial = daysSinceTrial < 8;
     const hasActiveSubscription = user.isPaid && !isSubscriptionExpired;
+    const isPending = user.isPendingVerification;
 
     // Per-module access:
-    // Priority 1: If subscription expired, access is false unless admin override is true? 
-    // Actually, user said "after completion of 12 months, user should not be able to use modules".
-    // So if isSubscriptionExpired is true, access is false unless it's a trial account (which shouldn't happen if isPaid is true).
+    // Priority 1: If verification is pending, access is false.
+    // Priority 2: If subscription expired, access is false unless admin.
 
     const modulesAccess = {
-      pedhinamu: (user.modules?.pedhinamu ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
-      rojmel: (user.modules?.rojmel ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
-      jaminMehsul: (user.modules?.jaminMehsul ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      pedhinamu: !isPending && (user.modules?.pedhinamu ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      rojmel: !isPending && (user.modules?.rojmel ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      jaminMehsul: !isPending && (user.modules?.jaminMehsul ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
     };
 
-    // Printing: Explicit admin toggle OR trial status. 
-    // If subscription expired, we also block printing unless it's explicitly allowed? 
-    // Usually expiry blocks everything.
-    const canPrint = (user.pedhinamuPrintAllowed ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin');
+    // Printing: Block if pending verification.
+    const canPrint = !isPending && (user.pedhinamuPrintAllowed ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin');
 
     return res.json({
       message: "ઉપયોગકર્તાની સ્થિતિ (User status)",
