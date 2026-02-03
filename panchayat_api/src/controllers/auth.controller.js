@@ -77,10 +77,10 @@ export const forgotPassword = async (req, res) => {
     user.resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    // ✅ Create transporter for email
+    // ✅ FIX HERE
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT),
+  host: "smtp.office365.com",   // FIXED
+  port: 587,
   secure: false,
   auth: {
     user: process.env.SMTP_USER,
@@ -89,10 +89,11 @@ const transporter = nodemailer.createTransport({
   requireTLS: true,
 });
 
+
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
   await transporter.sendMail({
-  from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
+  from: `"Panchayat System" <${process.env.EMAIL_USER}>`,
   to: email,
   subject: "Password Reset Request",
   html: `

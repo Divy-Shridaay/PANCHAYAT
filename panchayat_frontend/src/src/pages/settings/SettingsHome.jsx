@@ -85,9 +85,8 @@ export default function SettingsHome() {
     );
   }
 
-  // Same logic as Profile: hide if not paid OR if all modules are disabled
-  const showInvoice = user?.isPaid &&
-    (user.modules?.pedhinamu === true || user.modules?.rojmel === true || user.modules?.jaminMehsul === true);
+  // Same logic as Profile: show if paid
+  const showInvoice = user?.isPaid;
 
   return (
     <Box bg="white" minH="100vh" p={10}>

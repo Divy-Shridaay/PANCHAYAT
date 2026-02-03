@@ -71,7 +71,7 @@ export const sendPaymentConfirmationEmail = async (email, userName, paymentDetai
             <p>આદર સહ,<br>
             <strong>એડમિન ટીમ</strong><br>
             Shridaay Technolabs<br>
-            it@shridaay.com / +91 7574003003</p>
+            it@shridaay.com</p>
           </div>
         </div>
       </body>
@@ -252,7 +252,7 @@ export const sendPaymentApprovalEmail = async (email, userName) => {
             <p>આદર સહ,<br>
             <strong>એડમિન ટીમ</strong><br>
             Shridaay Technolabs<br>
-            it@shridaay.com / +91 7574003003</p>
+            it@shridaay.com</p>
           </div>
         </div>
       </body>

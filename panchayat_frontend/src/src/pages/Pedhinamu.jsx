@@ -832,8 +832,8 @@ export default function Pedhinamu() {
                 dod: h.dod || "",
                 dodDisplay: h.dodDisplay || "",
                 showSubFamily: true,
-                 // ✅ THIS IS THE FIX (FOR "કુલ સંતાન")
-  childCount: (h.subFamily?.children || []).length,
+                // ✅ THIS IS THE FIX (FOR "કુલ સંતાન")
+                childCount: (h.subFamily?.children || []).length,
 
 
                 subFamily: {
@@ -859,12 +859,12 @@ export default function Pedhinamu() {
                         dod: c.dod || "",
                         dodDisplay: c.dodDisplay || "",
                         showSpouse: !!c.spouse?.name,
-                        
-                          // ✅ FIX: initialize total children count for edit mode
-  childCount: (c.children || []).length,
 
-    // ✅ THIS IS THE FIX
-  grandCount: (c.children || []).length,
+                        // ✅ FIX: initialize total children count for edit mode
+                        childCount: (c.children || []).length,
+
+                        // ✅ THIS IS THE FIX
+                        grandCount: (c.children || []).length,
                         spouse: c.spouse
                             ? {
                                 name: c.spouse?.name || "",
@@ -1139,7 +1139,7 @@ export default function Pedhinamu() {
                                                     dod: "",
                                                     dodDisplay: "",
                                                     showSubFamily: true,
-                                           childCount: 0,
+                                                    childCount: 0,
 
                                                     subFamily: {
                                                         spouse: {
@@ -1423,63 +1423,64 @@ export default function Pedhinamu() {
                                         <option value="alive">{t("alive")}</option>
                                         <option value="dead">{t("deceased")}</option>
                                     </Select>
-                                    {h.isDeceased && (
-                                        <FormControl>
-                                            <FormLabel>{t("deathDate")}</FormLabel>
-
-                                            <HStack spacing={3} align="center">
-                                                <Input
-                                                    type="text"
-                                                    placeholder="DD/MM/YYYY"
-                                                    size="lg"
-                                                    bg="gray.100"
-                                                    borderColor={fieldErrors[`heir_${i}_dod`] ? "red.500" : "gray.200"}
-                                                    value={h.dodDisplay || ""}
-                                                    onChange={(e) => {
-                                                        const display = formatDisplayDate(e.target.value);
-
-                                                        // clear red when user edits
-                                                        setFieldErrors((p) => ({ ...p, [`heir_${i}_dod`]: false }));
-
-                                                        if (display.length === 10 && !validateDob(display)) {
-                                                            showError(t("invalidDate"));
-                                                            return;
-                                                        }
-
-                                                        const iso = convertToISO(display);
-
-                                                        const updated = structuredClone(form.heirs);
-                                                        updated[i].dodDisplay = display;
-                                                        updated[i].dod = iso;
-                                                        updated[i].age =
-                                                            updated[i].dob && iso
-                                                                ? calculateAgeAtDeath(updated[i].dob, iso)
-                                                                : "";
-
-                                                        setForm({ ...form, heirs: updated });
-                                                    }}
-                                                />
-
-                                                <Text fontWeight="bold" color="green.700">
-                                                    {t("orText")}
-                                                </Text>
-
-                                                <Input
-                                                    size="lg"
-                                                    width="120px"
-                                                    bg="gray.100"
-                                                    value={h.age || ""}
-                                                    placeholder={t("age")}
-                                                    onChange={(e) => {
-                                                        const v = e.target.value;
-                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
-                                                        updateHeir(i, "age", v);
-                                                    }}
-                                                />
-                                            </HStack>
-                                        </FormControl>
-                                    )}
                                 </FormControl>
+
+                                {h.isDeceased && (
+                                    <FormControl>
+                                        <FormLabel>{t("deathDate")}</FormLabel>
+
+                                        <HStack spacing={3} align="center">
+                                            <Input
+                                                type="text"
+                                                placeholder="DD/MM/YYYY"
+                                                size="lg"
+                                                bg="gray.100"
+                                                borderColor={fieldErrors[`heir_${i}_dod`] ? "red.500" : "gray.200"}
+                                                value={h.dodDisplay || ""}
+                                                onChange={(e) => {
+                                                    const display = formatDisplayDate(e.target.value);
+
+                                                    // clear red when user edits
+                                                    setFieldErrors((p) => ({ ...p, [`heir_${i}_dod`]: false }));
+
+                                                    if (display.length === 10 && !validateDob(display)) {
+                                                        showError(t("invalidDate"));
+                                                        return;
+                                                    }
+
+                                                    const iso = convertToISO(display);
+
+                                                    const updated = structuredClone(form.heirs);
+                                                    updated[i].dodDisplay = display;
+                                                    updated[i].dod = iso;
+                                                    updated[i].age =
+                                                        updated[i].dob && iso
+                                                            ? calculateAgeAtDeath(updated[i].dob, iso)
+                                                            : "";
+
+                                                    setForm({ ...form, heirs: updated });
+                                                }}
+                                            />
+
+                                            <Text fontWeight="bold" color="green.700">
+                                                {t("orText")}
+                                            </Text>
+
+                                            <Input
+                                                size="lg"
+                                                width="120px"
+                                                bg="gray.100"
+                                                value={h.age || ""}
+                                                placeholder={t("age")}
+                                                onChange={(e) => {
+                                                    const v = e.target.value;
+                                                    if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                    updateHeir(i, "age", v);
+                                                }}
+                                            />
+                                        </HStack>
+                                    </FormControl>
+                                )}
 
 
 
@@ -1668,65 +1669,66 @@ export default function Pedhinamu() {
                                                         <option value="alive">{t("alive")}</option>
                                                         <option value="dead">{t("deceased")}</option>
                                                     </Select>
-                                                    {h.subFamily.spouse.isDeceased && (
-                                                        <FormControl>
-                                                            <FormLabel>{t("deathDate")}</FormLabel>
-
-                                                            <HStack spacing={3} align="center">
-                                                                <Input
-                                                                    type="text"
-                                                                    placeholder="DD/MM/YYYY"
-                                                                    size="lg"
-                                                                    bg="gray.100"
-                                                                    borderColor={fieldErrors[`spouse_${i}_dod`] ? "red.500" : "gray.200"}
-                                                                    value={h.subFamily.spouse.dodDisplay || ""}
-                                                                    onChange={(e) => {
-                                                                        const display = formatDisplayDate(e.target.value);
-
-                                                                        // clear red when editing
-                                                                        setFieldErrors((p) => ({ ...p, [`spouse_${i}_dod`]: false }));
-
-                                                                        if (display.length === 10 && !validateDob(display)) {
-                                                                            showError(t("invalidDate"));
-                                                                            return;
-                                                                        }
-
-                                                                        const iso = convertToISO(display);
-
-                                                                        const u = structuredClone(form.heirs);
-                                                                        u[i].subFamily.spouse.dodDisplay = display;
-                                                                        u[i].subFamily.spouse.dod = iso;
-                                                                        u[i].subFamily.spouse.age =
-                                                                            u[i].subFamily.spouse.dob && iso
-                                                                                ? calculateAgeAtDeath(u[i].subFamily.spouse.dob, iso)
-                                                                                : "";
-
-                                                                        setForm({ ...form, heirs: u });
-                                                                    }}
-                                                                />
-
-                                                                <Text fontWeight="bold" color="green.700">
-                                                                    {t("orText")}
-                                                                </Text>
-
-                                                                <Input
-                                                                    size="lg"
-                                                                    width="120px"
-                                                                    bg="gray.100"
-                                                                    value={h.subFamily.spouse.age || ""}
-                                                                    placeholder={t("age")}
-                                                                    onChange={(e) => {
-                                                                        const v = e.target.value;
-                                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
-                                                                        const u = [...form.heirs];
-                                                                        u[i].subFamily.spouse.age = v;
-                                                                        setForm({ ...form, heirs: u });
-                                                                    }}
-                                                                />
-                                                            </HStack>
-                                                        </FormControl>
-                                                    )}
                                                 </FormControl>
+
+                                                {h.subFamily.spouse.isDeceased && (
+                                                    <FormControl>
+                                                        <FormLabel>{t("deathDate")}</FormLabel>
+
+                                                        <HStack spacing={3} align="center">
+                                                            <Input
+                                                                type="text"
+                                                                placeholder="DD/MM/YYYY"
+                                                                size="lg"
+                                                                bg="gray.100"
+                                                                borderColor={fieldErrors[`spouse_${i}_dod`] ? "red.500" : "gray.200"}
+                                                                value={h.subFamily.spouse.dodDisplay || ""}
+                                                                onChange={(e) => {
+                                                                    const display = formatDisplayDate(e.target.value);
+
+                                                                    // clear red when editing
+                                                                    setFieldErrors((p) => ({ ...p, [`spouse_${i}_dod`]: false }));
+
+                                                                    if (display.length === 10 && !validateDob(display)) {
+                                                                        showError(t("invalidDate"));
+                                                                        return;
+                                                                    }
+
+                                                                    const iso = convertToISO(display);
+
+                                                                    const u = structuredClone(form.heirs);
+                                                                    u[i].subFamily.spouse.dodDisplay = display;
+                                                                    u[i].subFamily.spouse.dod = iso;
+                                                                    u[i].subFamily.spouse.age =
+                                                                        u[i].subFamily.spouse.dob && iso
+                                                                            ? calculateAgeAtDeath(u[i].subFamily.spouse.dob, iso)
+                                                                            : "";
+
+                                                                    setForm({ ...form, heirs: u });
+                                                                }}
+                                                            />
+
+                                                            <Text fontWeight="bold" color="green.700">
+                                                                {t("orText")}
+                                                            </Text>
+
+                                                            <Input
+                                                                size="lg"
+                                                                width="120px"
+                                                                bg="gray.100"
+                                                                value={h.subFamily.spouse.age || ""}
+                                                                placeholder={t("age")}
+                                                                onChange={(e) => {
+                                                                    const v = e.target.value;
+                                                                    if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                    const u = [...form.heirs];
+                                                                    u[i].subFamily.spouse.age = v;
+                                                                    setForm({ ...form, heirs: u });
+                                                                }}
+                                                            />
+                                                        </HStack>
+                                                    </FormControl>
+                                                )}
                                             </VStack>
                                         </Box>
 
@@ -1971,208 +1973,313 @@ export default function Pedhinamu() {
                                                                             <option value="alive">{t("alive")}</option>
                                                                             <option value="dead">{t("deceased")}</option>
                                                                         </Select>
-                                                                        {child.spouse?.isDeceased && (
-                                                                            <FormControl mt={3}>
-                                                                                <FormLabel>{t("deathDate")}</FormLabel>
+                                                                    </FormControl>
 
-                                                                                <HStack spacing={3} align="center">
-                                                                                    <Input
-                                                                                        type="text"
-                                                                                        placeholder="DD/MM/YYYY"
-                                                                                        size="lg"
-                                                                                        bg="gray.100"
-                                                                                        value={child.spouse?.dodDisplay || ""}
-                                                                                        onChange={(e) => {
-                                                                                            const display = formatDisplayDate(e.target.value);
+                                                                    {child.spouse?.isDeceased && (
+                                                                        <FormControl>
+                                                                            <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                                                            // validate only when complete
-                                                                                            if (display.length === 10 && !validateDob(display)) {
-                                                                                                showError(t("invalidDate"));
-                                                                                                return;
-                                                                                            }
-
-                                                                                            const iso = convertToISO(display);
-
-                                                                                            const u = structuredClone(form.heirs);
-                                                                                            u[i].subFamily.children[ci].spouse.dodDisplay = display;
-                                                                                            u[i].subFamily.children[ci].spouse.dod = iso;
-                                                                                            u[i].subFamily.children[ci].spouse.age =
-                                                                                                u[i].subFamily.children[ci].spouse.dob && iso
-                                                                                                    ? calculateAgeAtDeath(
-                                                                                                        u[i].subFamily.children[ci].spouse.dob,
-                                                                                                        iso
-                                                                                                    )
-                                                                                                    : "";
-
-                                                                                            setForm({ ...form, heirs: u });
-                                                                                        }}
-                                                                                    />
-
-                                                                                    <Text fontWeight="bold" color="green.700">
-                                                                                        {t("orText")}
-                                                                                    </Text>
-
-                                                                                    <Input
-                                                                                        size="lg"
-                                                                                        width="120px"
-                                                                                        bg="gray.100"
-                                                                                        value={child.spouse?.age || ""}
-                                                                                        placeholder={t("age")}
-                                                                                        onChange={(e) => {
-                                                                                            const v = e.target.value;
-                                                                                            if (v && !/^[0-9]{1,3}$/.test(v)) return;
-                                                                                            const u = structuredClone(form.heirs);
-                                                                                            u[i].subFamily.children[ci].spouse.age = v;
-                                                                                            setForm({ ...form, heirs: u });
-                                                                                        }}
-                                                                                    />
-                                                                                </HStack>
-                                                                            </FormControl>
-                                                                        )}
-
-                                                                        {/* GRANDCHILDREN SECTION */}
-                                                                        <Box
-                                                                            bg="yellow.50"
-                                                                            p={4}
-                                                                            rounded="xl"
-                                                                            borderWidth="1px"
-                                                                            borderColor="yellow.300"
-                                                                            mt={4}
-                                                                        >
-                                                                            <Text fontWeight="600" mb={3} color="yellow.700">
-                                                                                {t("grandchildren")} {/* if needed add a key */}
-                                                                            </Text>
-
-                                                                            {/* TOTAL GRANDCHILDREN */}
-                                                                            <FormControl mb={3}>
-                                                                                <FormLabel>{t("totalChildren")}</FormLabel>
+                                                                            <HStack spacing={3} align="center">
                                                                                 <Input
-                                                                                    type="number"
+                                                                                    type="text"
+                                                                                    placeholder="DD/MM/YYYY"
                                                                                     size="lg"
                                                                                     bg="gray.100"
-                                                                                    value={child.grandCount || 0}
+                                                                                    value={child.spouse?.dodDisplay || ""}
                                                                                     onChange={(e) => {
-                                                                                        const count = Number(e.target.value);
+                                                                                        const display = formatDisplayDate(e.target.value);
+
+                                                                                        // validate only when complete
+                                                                                        if (display.length === 10 && !validateDob(display)) {
+                                                                                            showError(t("invalidDate"));
+                                                                                            return;
+                                                                                        }
+
+                                                                                        const iso = convertToISO(display);
+
                                                                                         const u = structuredClone(form.heirs);
-
-                                                                                        u[i].subFamily.children[ci].grandCount = count;
-
-                                                                                        u[i].subFamily.children[ci].children = Array.from(
-                                                                                            { length: count },
-                                                                                            () => ({
-                                                                                                name: "",
-                                                                                                relation: "",
-                                                                                                age: "",
-                                                                                                dob: "",
-                                                                                                dobDisplay: "",
-                                                                                                isDeceased: false,
-                                                                                                spouse: {
-                                                                                                    name: "",
-                                                                                                    age: "",
-                                                                                                    relation: "",
-                                                                                                    isDeceased: false
-                                                                                                },
-                                                                                                children: []
-                                                                                            })
-                                                                                        );
+                                                                                        u[i].subFamily.children[ci].spouse.dodDisplay = display;
+                                                                                        u[i].subFamily.children[ci].spouse.dod = iso;
+                                                                                        u[i].subFamily.children[ci].spouse.age =
+                                                                                            u[i].subFamily.children[ci].spouse.dob && iso
+                                                                                                ? calculateAgeAtDeath(
+                                                                                                    u[i].subFamily.children[ci].spouse.dob,
+                                                                                                    iso
+                                                                                                )
+                                                                                                : "";
 
                                                                                         setForm({ ...form, heirs: u });
                                                                                     }}
-                                                                                    onWheel={(e) => e.target.blur()}
-
                                                                                 />
-                                                                            </FormControl>
 
-                                                                            {/* RENDER EACH GRANDCHILD */}
-                                                                            {child.children?.map((gc, gi) => (
-                                                                                <Box
-                                                                                    key={gi}
-                                                                                    mt={3}
-                                                                                    p={4}
-                                                                                    rounded="lg"
-                                                                                    borderWidth="1px"
-                                                                                    borderColor="gray.300"
-                                                                                    bg="white"
-                                                                                >
-                                                                                    <Text fontWeight="600" mb={2}>
-                                                                                        {t("childNameWithNumber", { number: gi + 1 })}
-                                                                                    </Text>
+                                                                                <Text fontWeight="bold" color="green.700">
+                                                                                    {t("orText")}
+                                                                                </Text>
 
-                                                                                    <VStack spacing={3} align="stretch">
+                                                                                <Input
+                                                                                    size="lg"
+                                                                                    width="120px"
+                                                                                    bg="gray.100"
+                                                                                    value={child.spouse?.age || ""}
+                                                                                    placeholder={t("age")}
+                                                                                    onChange={(e) => {
+                                                                                        const v = e.target.value;
+                                                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                                        const u = structuredClone(form.heirs);
+                                                                                        u[i].subFamily.children[ci].spouse.age = v;
+                                                                                        setForm({ ...form, heirs: u });
+                                                                                    }}
+                                                                                />
+                                                                            </HStack>
+                                                                        </FormControl>
+                                                                    )}
 
-                                                                                        {/* NAME */}
-                                                                                        <FormControl>
-                                                                                            <FormLabel>{t("name")}</FormLabel>
-                                                                                            <Input
+                                                                    {/* GRANDCHILDREN SECTION */}
+                                                                    <Box
+                                                                        bg="yellow.50"
+                                                                        p={4}
+                                                                        rounded="xl"
+                                                                        borderWidth="1px"
+                                                                        borderColor="yellow.300"
+                                                                        mt={4}
+                                                                    >
+                                                                        <Text fontWeight="600" mb={3} color="yellow.700">
+                                                                            {t("grandchildren")} {/* if needed add a key */}
+                                                                        </Text>
+
+                                                                        {/* TOTAL GRANDCHILDREN */}
+                                                                        <FormControl mb={3}>
+                                                                            <FormLabel>{t("totalChildren")}</FormLabel>
+                                                                            <Input
+                                                                                type="number"
+                                                                                size="lg"
+                                                                                bg="gray.100"
+                                                                                value={child.grandCount || 0}
+                                                                                onChange={(e) => {
+                                                                                    const count = Number(e.target.value);
+                                                                                    const u = structuredClone(form.heirs);
+
+                                                                                    u[i].subFamily.children[ci].grandCount = count;
+
+                                                                                    u[i].subFamily.children[ci].children = Array.from(
+                                                                                        { length: count },
+                                                                                        () => ({
+                                                                                            name: "",
+                                                                                            relation: "",
+                                                                                            age: "",
+                                                                                            dob: "",
+                                                                                            dobDisplay: "",
+                                                                                            isDeceased: false,
+                                                                                            spouse: {
+                                                                                                name: "",
+                                                                                                age: "",
+                                                                                                relation: "",
+                                                                                                isDeceased: false
+                                                                                            },
+                                                                                            children: []
+                                                                                        })
+                                                                                    );
+
+                                                                                    setForm({ ...form, heirs: u });
+                                                                                }}
+                                                                                onWheel={(e) => e.target.blur()}
+
+                                                                            />
+                                                                        </FormControl>
+
+                                                                        {/* RENDER EACH GRANDCHILD */}
+                                                                        {child.children?.map((gc, gi) => (
+                                                                            <Box
+                                                                                key={gi}
+                                                                                mt={3}
+                                                                                p={4}
+                                                                                rounded="lg"
+                                                                                borderWidth="1px"
+                                                                                borderColor="gray.300"
+                                                                                bg="white"
+                                                                            >
+                                                                                <Text fontWeight="600" mb={2}>
+                                                                                    {t("childNameWithNumber", { number: gi + 1 })}
+                                                                                </Text>
+
+                                                                                <VStack spacing={3} align="stretch">
+
+                                                                                    {/* NAME */}
+                                                                                    <FormControl>
+                                                                                        <FormLabel>{t("name")}</FormLabel>
+                                                                                        <Input
+                                                                                            size="lg"
+                                                                                            bg="gray.100"
+                                                                                            value={gc.name}
+                                                                                            onChange={(e) => {
+                                                                                                const u = structuredClone(form.heirs);
+                                                                                                u[i].subFamily.children[ci].children[gi].name =
+                                                                                                    e.target.value;
+                                                                                                setForm({ ...form, heirs: u });
+                                                                                            }}
+                                                                                        />
+                                                                                    </FormControl>
+
+                                                                                    {/* RELATION DROPDOWN */}
+                                                                                    {/* RELATION DROPDOWN */}
+                                                                                    <FormControl>
+                                                                                        <FormLabel>{t("relation")}</FormLabel>
+                                                                                        <Menu>
+                                                                                            <MenuButton
+                                                                                                as={Button}
                                                                                                 size="lg"
                                                                                                 bg="gray.100"
-                                                                                                value={gc.name}
+                                                                                                width="100%"
+                                                                                                rightIcon={<ChevronDownIcon />}
+                                                                                                textAlign="left"
+                                                                                            >
+                                                                                                {gc.relation ? t(gc.relation) : t("select")}
+                                                                                            </MenuButton>
+
+                                                                                            <MenuList maxH="250px" overflowY="auto">
+                                                                                                {relationList.map((r) => (
+                                                                                                    <MenuItem
+                                                                                                        key={r}
+                                                                                                        onClick={() => {
+                                                                                                            const u = structuredClone(form.heirs);
+                                                                                                            u[i].subFamily.children[ci].children[gi].relation = r;
+                                                                                                            setForm({ ...form, heirs: u });
+                                                                                                        }}
+                                                                                                    >
+                                                                                                        {t(r)}
+                                                                                                    </MenuItem>
+                                                                                                ))}
+                                                                                            </MenuList>
+                                                                                        </Menu>
+                                                                                    </FormControl>
+
+
+                                                                                    {/* DOB + AGE */}
+                                                                                    <FormControl>
+                                                                                        <FormLabel>{t("birthDateAge")}</FormLabel>
+
+                                                                                        <HStack spacing={3} align="center">
+
+                                                                                            {/* GRANDCHILD DOB */}
+                                                                                            <Input
+                                                                                                type="text"
+                                                                                                placeholder="DD/MM/YYYY"
+                                                                                                size="lg"
+                                                                                                bg="gray.100"
+                                                                                                borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dob`] ? "red.500" : "gray.200"}
+                                                                                                value={gc.dobDisplay || ""}
                                                                                                 onChange={(e) => {
+                                                                                                    const display = formatDisplayDate(e.target.value);
+
+                                                                                                    // Validate only when full length
+                                                                                                    // clear red when editing
+                                                                                                    setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dob`]: false }));
+
+                                                                                                    if (display.length === 10 && !validateDob(display)) {
+                                                                                                        console.log("invalid dob");
+                                                                                                        showError(t("invalidDate"));
+                                                                                                        return;
+                                                                                                    }
+
+                                                                                                    const iso = convertToISO(display);
+
                                                                                                     const u = structuredClone(form.heirs);
-                                                                                                    u[i].subFamily.children[ci].children[gi].name =
-                                                                                                        e.target.value;
+                                                                                                    u[i].subFamily.children[ci].children[gi].dobDisplay = display;
+                                                                                                    u[i].subFamily.children[ci].children[gi].dob = iso;
+                                                                                                    u[i].subFamily.children[ci].children[gi].age =
+                                                                                                        u[i].subFamily.children[ci].children[gi].isDeceased
+                                                                                                            ? u[i].subFamily.children[ci].children[gi].dob &&
+                                                                                                                u[i].subFamily.children[ci].children[gi].dod
+                                                                                                                ? calculateAgeAtDeath(
+                                                                                                                    iso,
+                                                                                                                    u[i].subFamily.children[ci].children[gi].dod
+                                                                                                                )
+                                                                                                                : ""
+                                                                                                            : iso
+                                                                                                                ? calculateAge(iso)
+                                                                                                                : "";
+
+
                                                                                                     setForm({ ...form, heirs: u });
                                                                                                 }}
                                                                                             />
-                                                                                        </FormControl>
 
-                                                                                        {/* RELATION DROPDOWN */}
-                                                                                        {/* RELATION DROPDOWN */}
+                                                                                            {/* OR TEXT */}
+                                                                                            <Text fontWeight="bold" color="green.700">
+                                                                                                {t("orText")}
+                                                                                            </Text>
+
+                                                                                            {/* MANUAL AGE INPUT - Unified */}
+                                                                                            <Input
+                                                                                                size="lg"
+                                                                                                width="120px"
+                                                                                                bg="gray.100"
+                                                                                                placeholder={t("age")}
+                                                                                                value={gc.isDeceased ? "" : gc.age}
+                                                                                                isReadOnly={gc.isDeceased}
+                                                                                                onChange={(e) => {
+                                                                                                    if (gc.isDeceased) return;
+                                                                                                    const value = e.target.value;
+                                                                                                    if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                                                    const u = structuredClone(form.heirs);
+                                                                                                    u[i].subFamily.children[ci].children[gi].age = value;
+                                                                                                    setForm({ ...form, heirs: u });
+                                                                                                }}
+                                                                                            />
+
+                                                                                        </HStack>
+                                                                                    </FormControl>
+
+                                                                                    {/* ALIVE / DEAD */}
+                                                                                    <FormControl>
+                                                                                        <FormLabel>{t("aliveDead")}</FormLabel>
+                                                                                        <Select
+                                                                                            size="lg"
+                                                                                            bg="gray.100"
+                                                                                            value={gc.isDeceased ? "dead" : "alive"}
+                                                                                            onChange={(e) => {
+                                                                                                const u = structuredClone(form.heirs);
+                                                                                                const isDead = e.target.value === "dead";
+                                                                                                u[i].subFamily.children[ci].children[gi].isDeceased = isDead;
+                                                                                                u[i].subFamily.children[ci].children[gi].age = isDead
+                                                                                                    ? u[i].subFamily.children[ci].children[gi].dob &&
+                                                                                                        u[i].subFamily.children[ci].children[gi].dod
+                                                                                                        ? calculateAgeAtDeath(
+                                                                                                            u[i].subFamily.children[ci].children[gi].dob,
+                                                                                                            u[i].subFamily.children[ci].children[gi].dod
+                                                                                                        )
+                                                                                                        : ""
+                                                                                                    : u[i].subFamily.children[ci].children[gi].dob
+                                                                                                        ? calculateAge(u[i].subFamily.children[ci].children[gi].dob)
+                                                                                                        : "";
+
+                                                                                                setForm({ ...form, heirs: u });
+                                                                                            }}
+                                                                                        >
+                                                                                            <option value="alive">{t("alive")}</option>
+                                                                                            <option value="dead">{t("deceased")}</option>
+                                                                                        </Select>
+                                                                                    </FormControl>
+
+                                                                                    {gc.isDeceased && (
                                                                                         <FormControl>
-                                                                                            <FormLabel>{t("relation")}</FormLabel>
-                                                                                            <Menu>
-                                                                                                <MenuButton
-                                                                                                    as={Button}
-                                                                                                    size="lg"
-                                                                                                    bg="gray.100"
-                                                                                                    width="100%"
-                                                                                                    rightIcon={<ChevronDownIcon />}
-                                                                                                    textAlign="left"
-                                                                                                >
-                                                                                                    {gc.relation ? t(gc.relation) : t("select")}
-                                                                                                </MenuButton>
+                                                                                            <FormLabel>{t("deathDate")}</FormLabel>
 
-                                                                                                <MenuList maxH="250px" overflowY="auto">
-                                                                                                    {relationList.map((r) => (
-                                                                                                        <MenuItem
-                                                                                                            key={r}
-                                                                                                            onClick={() => {
-                                                                                                                const u = structuredClone(form.heirs);
-                                                                                                                u[i].subFamily.children[ci].children[gi].relation = r;
-                                                                                                                setForm({ ...form, heirs: u });
-                                                                                                            }}
-                                                                                                        >
-                                                                                                            {t(r)}
-                                                                                                        </MenuItem>
-                                                                                                    ))}
-                                                                                                </MenuList>
-                                                                                            </Menu>
-                                                                                        </FormControl>
-
-
-                                                                                        {/* DOB + AGE */}
-                                                                                        <FormControl>
-                                                                                            <FormLabel>{t("birthDateAge")}</FormLabel>
-
-                                                                                            <HStack spacing={3} align="center">
-
-                                                                                                {/* GRANDCHILD DOB */}
+                                                                                            <HStack>
                                                                                                 <Input
                                                                                                     type="text"
                                                                                                     placeholder="DD/MM/YYYY"
                                                                                                     size="lg"
                                                                                                     bg="gray.100"
-                                                                                                    borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dob`] ? "red.500" : "gray.200"}
-                                                                                                    value={gc.dobDisplay || ""}
+                                                                                                    borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dod`] ? "red.500" : "gray.200"}
+                                                                                                    value={gc.dodDisplay || ""}
                                                                                                     onChange={(e) => {
                                                                                                         const display = formatDisplayDate(e.target.value);
 
-                                                                                                        // Validate only when full length
                                                                                                         // clear red when editing
-                                                                                                        setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dob`]: false }));
+                                                                                                        setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dod`]: false }));
 
                                                                                                         if (display.length === 10 && !validateDob(display)) {
-                                                                                                            console.log("invalid dob");
                                                                                                             showError(t("invalidDate"));
                                                                                                             return;
                                                                                                         }
@@ -2180,149 +2287,48 @@ export default function Pedhinamu() {
                                                                                                         const iso = convertToISO(display);
 
                                                                                                         const u = structuredClone(form.heirs);
-                                                                                                        u[i].subFamily.children[ci].children[gi].dobDisplay = display;
-                                                                                                        u[i].subFamily.children[ci].children[gi].dob = iso;
+                                                                                                        u[i].subFamily.children[ci].children[gi].dodDisplay = display;
+                                                                                                        u[i].subFamily.children[ci].children[gi].dod = iso;
                                                                                                         u[i].subFamily.children[ci].children[gi].age =
-                                                                                                            u[i].subFamily.children[ci].children[gi].isDeceased
-                                                                                                                ? u[i].subFamily.children[ci].children[gi].dob &&
-                                                                                                                    u[i].subFamily.children[ci].children[gi].dod
-                                                                                                                    ? calculateAgeAtDeath(
-                                                                                                                        iso,
-                                                                                                                        u[i].subFamily.children[ci].children[gi].dod
-                                                                                                                    )
-                                                                                                                    : ""
-                                                                                                                : iso
-                                                                                                                    ? calculateAge(iso)
-                                                                                                                    : "";
-
+                                                                                                            u[i].subFamily.children[ci].children[gi].dob && iso
+                                                                                                                ? calculateAgeAtDeath(
+                                                                                                                    u[i].subFamily.children[ci].children[gi].dob,
+                                                                                                                    iso
+                                                                                                                )
+                                                                                                                : "";
 
                                                                                                         setForm({ ...form, heirs: u });
                                                                                                     }}
                                                                                                 />
 
-                                                                                                {/* OR TEXT */}
                                                                                                 <Text fontWeight="bold" color="green.700">
                                                                                                     {t("orText")}
                                                                                                 </Text>
 
-                                                                                                {/* MANUAL AGE INPUT - Unified */}
                                                                                                 <Input
                                                                                                     size="lg"
                                                                                                     width="120px"
                                                                                                     bg="gray.100"
+
+                                                                                                    value={gc.age || ""}
                                                                                                     placeholder={t("age")}
-                                                                                                    value={gc.isDeceased ? "" : gc.age}
-                                                                                                    isReadOnly={gc.isDeceased}
                                                                                                     onChange={(e) => {
-                                                                                                        if (gc.isDeceased) return;
-                                                                                                        const value = e.target.value;
-                                                                                                        if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                                                        const v = e.target.value;
+                                                                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
                                                                                                         const u = structuredClone(form.heirs);
-                                                                                                        u[i].subFamily.children[ci].children[gi].age = value;
+                                                                                                        u[i].subFamily.children[ci].children[gi].age = v;
                                                                                                         setForm({ ...form, heirs: u });
                                                                                                     }}
                                                                                                 />
-
                                                                                             </HStack>
                                                                                         </FormControl>
+                                                                                    )}
 
-                                                                                        {/* ALIVE / DEAD */}
-                                                                                        <FormControl>
-                                                                                            <FormLabel>{t("aliveDead")}</FormLabel>
-                                                                                            <Select
-                                                                                                size="lg"
-                                                                                                bg="gray.100"
-                                                                                                value={gc.isDeceased ? "dead" : "alive"}
-                                                                                                onChange={(e) => {
-                                                                                                    const u = structuredClone(form.heirs);
-                                                                                                    const isDead = e.target.value === "dead";
-                                                                                                    u[i].subFamily.children[ci].children[gi].isDeceased = isDead;
-                                                                                                    u[i].subFamily.children[ci].children[gi].age = isDead
-                                                                                                        ? u[i].subFamily.children[ci].children[gi].dob &&
-                                                                                                            u[i].subFamily.children[ci].children[gi].dod
-                                                                                                            ? calculateAgeAtDeath(
-                                                                                                                u[i].subFamily.children[ci].children[gi].dob,
-                                                                                                                u[i].subFamily.children[ci].children[gi].dod
-                                                                                                            )
-                                                                                                            : ""
-                                                                                                        : u[i].subFamily.children[ci].children[gi].dob
-                                                                                                            ? calculateAge(u[i].subFamily.children[ci].children[gi].dob)
-                                                                                                            : "";
+                                                                                </VStack>
+                                                                            </Box>
+                                                                        ))}
+                                                                    </Box>
 
-                                                                                                    setForm({ ...form, heirs: u });
-                                                                                                }}
-                                                                                            >
-                                                                                                <option value="alive">{t("alive")}</option>
-                                                                                                <option value="dead">{t("deceased")}</option>
-                                                                                            </Select>
-                                                                                            {gc.isDeceased && (
-                                                                                                <FormControl mt={3}>
-                                                                                                    <FormLabel>{t("deathDate")}</FormLabel>
-
-                                                                                                    <HStack>
-                                                                                                        <Input
-                                                                                                            type="text"
-                                                                                                            placeholder="DD/MM/YYYY"
-                                                                                                            size="lg"
-                                                                                                            bg="gray.100"
-                                                                                                            borderColor={fieldErrors[`grand_${i}_${ci}_${gi}_dod`] ? "red.500" : "gray.200"}
-                                                                                                            value={gc.dodDisplay || ""}
-                                                                                                            onChange={(e) => {
-                                                                                                                const display = formatDisplayDate(e.target.value);
-
-                                                                                                                // clear red when editing
-                                                                                                                setFieldErrors((p) => ({ ...p, [`grand_${i}_${ci}_${gi}_dod`]: false }));
-
-                                                                                                                if (display.length === 10 && !validateDob(display)) {
-                                                                                                                    showError(t("invalidDate"));
-                                                                                                                    return;
-                                                                                                                }
-
-                                                                                                                const iso = convertToISO(display);
-
-                                                                                                                const u = structuredClone(form.heirs);
-                                                                                                                u[i].subFamily.children[ci].children[gi].dodDisplay = display;
-                                                                                                                u[i].subFamily.children[ci].children[gi].dod = iso;
-                                                                                                                u[i].subFamily.children[ci].children[gi].age =
-                                                                                                                    u[i].subFamily.children[ci].children[gi].dob && iso
-                                                                                                                        ? calculateAgeAtDeath(
-                                                                                                                            u[i].subFamily.children[ci].children[gi].dob,
-                                                                                                                            iso
-                                                                                                                        )
-                                                                                                                        : "";
-
-                                                                                                                setForm({ ...form, heirs: u });
-                                                                                                            }}
-                                                                                                        />
-
-                                                                                                        <Text fontWeight="bold" color="green.700">
-                                                                                                            {t("orText")}
-                                                                                                        </Text>
-
-                                                                                                        <Input
-                                                                                                            size="lg"
-                                                                                                            width="120px"
-                                                                                                            bg="gray.100"
-
-                                                                                                            value={gc.age || ""}
-                                                                                                            placeholder={t("age")}
-                                                                                                            onChange={(e) => {
-                                                                                                                const v = e.target.value;
-                                                                                                                if (v && !/^[0-9]{1,3}$/.test(v)) return;
-                                                                                                                const u = structuredClone(form.heirs);
-                                                                                                                u[i].subFamily.children[ci].children[gi].age = v;
-                                                                                                                setForm({ ...form, heirs: u });
-                                                                                                            }}
-                                                                                                        />
-                                                                                                    </HStack>
-                                                                                                </FormControl>
-                                                                                            )}
-                                                                                        </FormControl>
-                                                                                    </VStack>
-                                                                                </Box>
-                                                                            ))}
-                                                                        </Box>
-                                                                    </FormControl>
                                                                 </VStack>
                                                             </Box>
                                                         )}
@@ -2490,63 +2496,64 @@ export default function Pedhinamu() {
                                                                 <option value="alive">{t("alive")}</option>
                                                                 <option value="dead">{t("deceased")}</option>
                                                             </Select>
-                                                            {child.isDeceased && (
-                                                                <FormControl mt={3}>
-                                                                    <FormLabel>{t("deathDate")}</FormLabel>
-                                                                    <HStack>
-                                                                        <Input
-                                                                            type="text"
-                                                                            placeholder="DD/MM/YYYY"
-                                                                            size="lg"
-                                                                            bg="gray.100"
-                                                                            borderColor={fieldErrors[`child_${i}_${ci}_dod`] ? "red.500" : "gray.200"}
-                                                                            value={child.dodDisplay || ""}
-                                                                            onChange={(e) => {
-                                                                                const display = formatDisplayDate(e.target.value);
-
-                                                                                // clear red when editing
-                                                                                setFieldErrors((p) => ({ ...p, [`child_${i}_${ci}_dod`]: false }));
-
-                                                                                if (display.length === 10 && !validateDob(display)) {
-                                                                                    showError(t("invalidDate"));
-                                                                                    return;
-                                                                                }
-
-                                                                                const iso = convertToISO(display);
-
-                                                                                const u = structuredClone(form.heirs);
-                                                                                u[i].subFamily.children[ci].dodDisplay = display;
-                                                                                u[i].subFamily.children[ci].dod = iso;
-                                                                                u[i].subFamily.children[ci].age =
-                                                                                    u[i].subFamily.children[ci].dob && iso
-                                                                                        ? calculateAgeAtDeath(
-                                                                                            u[i].subFamily.children[ci].dob,
-                                                                                            iso
-                                                                                        )
-                                                                                        : "";
-
-                                                                                setForm({ ...form, heirs: u });
-                                                                            }}
-                                                                        />
-                                                                        <Input
-                                                                            size="lg"
-                                                                            width="120px"
-                                                                            bg="gray.100"
-                                                                            value={child.age || ""}
-                                                                            placeholder={t("age")}
-                                                                            onChange={(e) => {
-                                                                                const v = e.target.value;
-                                                                                if (v && !/^[0-9]{1,3}$/.test(v)) return;
-                                                                                const u = structuredClone(form.heirs);
-                                                                                u[i].subFamily.children[ci].age = v;
-                                                                                setForm({ ...form, heirs: u });
-                                                                            }}
-                                                                        />
-                                                                    </HStack>
-
-                                                                </FormControl>
-                                                            )}
                                                         </FormControl>
+
+                                                        {child.isDeceased && (
+                                                            <FormControl>
+                                                                <FormLabel>{t("deathDate")}</FormLabel>
+                                                                <HStack>
+                                                                    <Input
+                                                                        type="text"
+                                                                        placeholder="DD/MM/YYYY"
+                                                                        size="lg"
+                                                                        bg="gray.100"
+                                                                        borderColor={fieldErrors[`child_${i}_${ci}_dod`] ? "red.500" : "gray.200"}
+                                                                        value={child.dodDisplay || ""}
+                                                                        onChange={(e) => {
+                                                                            const display = formatDisplayDate(e.target.value);
+
+                                                                            // clear red when editing
+                                                                            setFieldErrors((p) => ({ ...p, [`child_${i}_${ci}_dod`]: false }));
+
+                                                                            if (display.length === 10 && !validateDob(display)) {
+                                                                                showError(t("invalidDate"));
+                                                                                return;
+                                                                            }
+
+                                                                            const iso = convertToISO(display);
+
+                                                                            const u = structuredClone(form.heirs);
+                                                                            u[i].subFamily.children[ci].dodDisplay = display;
+                                                                            u[i].subFamily.children[ci].dod = iso;
+                                                                            u[i].subFamily.children[ci].age =
+                                                                                u[i].subFamily.children[ci].dob && iso
+                                                                                    ? calculateAgeAtDeath(
+                                                                                        u[i].subFamily.children[ci].dob,
+                                                                                        iso
+                                                                                    )
+                                                                                    : "";
+
+                                                                            setForm({ ...form, heirs: u });
+                                                                        }}
+                                                                    />
+                                                                    <Input
+                                                                        size="lg"
+                                                                        width="120px"
+                                                                        bg="gray.100"
+                                                                        value={child.age || ""}
+                                                                        placeholder={t("age")}
+                                                                        onChange={(e) => {
+                                                                            const v = e.target.value;
+                                                                            if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                            const u = structuredClone(form.heirs);
+                                                                            u[i].subFamily.children[ci].age = v;
+                                                                            setForm({ ...form, heirs: u });
+                                                                        }}
+                                                                    />
+                                                                </HStack>
+
+                                                            </FormControl>
+                                                        )}
                                                     </VStack>
                                                 </Box>
                                             ))}

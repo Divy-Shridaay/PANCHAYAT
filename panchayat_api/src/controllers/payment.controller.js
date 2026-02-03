@@ -110,10 +110,13 @@ export const submitPayment = async (req, res) => {
       updateData.isEmailSent = true;
     }
 
-    // Always ensure user is set to pending verification
+    // Always ensure user is set to pending verification and store selected modules
     await Promise.all([
       Payment.findByIdAndUpdate(savedPayment._id, updateData),
-      User.findByIdAndUpdate(userId, { isPendingVerification: true })
+      User.findByIdAndUpdate(userId, {
+        isPendingVerification: true,
+        pendingModules: modules // Sync modules being paid for to user profile
+      })
     ]);
 
     return res.status(200).json({

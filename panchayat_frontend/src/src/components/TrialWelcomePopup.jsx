@@ -12,6 +12,7 @@ import {
     VStack,
     Box,
     Icon,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import { FiGift } from "react-icons/fi";
 
@@ -20,6 +21,7 @@ export default function TrialWelcomePopup({ isOpen, onClose }) {
         <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
             <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
             <ModalContent borderRadius="2xl" shadow="2xl">
+                <ModalCloseButton />
                 <ModalHeader textAlign="center" pt={8} pb={0}>
                     <VStack spacing={3}>
                         <Box
@@ -36,7 +38,7 @@ export default function TrialWelcomePopup({ isOpen, onClose }) {
                         <Text fontSize="lg" color="gray.700" fontWeight="600" lineHeight="tall">
                             7 દિવસનો ટ્રાયલ પિરિયડ શરૂ થયો છે!<br />
                             ટ્રાયલ દરમિયાન તમે વધુમાં વધુ 5 પેઢીનામું ઉમેરી શકો છો.<br />
-                            ટ્રાયલ પૂર્ણ થયા પછી સબ્સ્ક્રિપ્શન જરૂરી રહેશે.
+                            ટ્રાયલ પૂર્ણ થયા પછી સબસક્રિપ્સન જરૂરી રહેશે.
                         </Text>
                     </VStack>
                 </ModalBody>
