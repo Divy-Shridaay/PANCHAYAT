@@ -5,6 +5,7 @@ const CameraCapture = ({ src, onCapture, onClear, showRetake = true }) => {
   const [cameraOpen, setCameraOpen] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  
   const streamRef = useRef(null);
 
   // Stop camera on unmount
