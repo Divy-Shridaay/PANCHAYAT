@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
  */
 const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
   ? "http://localhost:5000"
-  : (import.meta.env.VITE_API_BASE_URL || "http://panchayat.shridaay.com:5000");   // 👈 YOUR LIVE BACKEND URL
+ : (import.meta.env.VITE_API_BASE_URL || "");
+ // 👈 YOUR LIVE BACKEND URL
 
 
 /**
