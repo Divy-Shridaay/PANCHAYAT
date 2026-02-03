@@ -194,6 +194,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (userStatus?.user) {
       const days = userStatus.daysUntilExpiry;
+      
       const dismissed = sessionStorage.getItem("expiryBannerDismissed");
       // Show banner if between 0 and 30 days remaining and not dismissed in this session
       if (days !== null && days > 0 && days <= 30 && !dismissed) {
