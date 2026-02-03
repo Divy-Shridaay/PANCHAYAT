@@ -539,9 +539,10 @@ const handleReportChange = (key, value) => {
                     dateMap[d].aavak.push(group);
                 });
                 
-                // Add javak entries (unchanged)
+                // Add javak entries (exclude bank jama entries)
+                // 🔥 FIX: Don't show bank jama javak entries in daily table - they appear only in khata ferφار and tapsil
                 selectedDateRecords.forEach(r => {
-                    if (r.vyavharType === "javak") {
+                    if (r.vyavharType === "javak" && r.category !== "બેંક જમા") {
                         const d = r.date.slice(0, 10);
                         if (!dateMap[d]) dateMap[d] = { aavak: [], javak: [] };
                         dateMap[d].javak.push(r);
@@ -781,6 +782,33 @@ const handleReportChange = (key, value) => {
 
                 const fyGujarati = getGujaratiFinancialYear(fromDate);
 
+                // ================= KHATA ફેરફાર ROWS (account transfers)
+                // Build rows from selectedDateRecords where a bank deposit occurred (aavak with paymentMethod 'bank' and category 'બેંક જમા' OR any aavak with paymentMethod 'bank')
+                const khataRowsSet = new Set();
+                let khataFerfarRows = "";
+
+                selectedDateRecords.forEach(r => {
+                    if (r.vyavharType === 'aavak' && r.paymentMethod === 'bank') {
+                        const key = `${r.date}-${r.amount}-${r.bank}-${r.remarks}`;
+                        if (khataRowsSet.has(key)) return;
+                        khataRowsSet.add(key);
+
+                        const giver = 'રોકડ';
+                        const receiver = r.bank || '';
+                        const detail = r.remarks || r.category || '';
+                        const amt = guj(r.amount || 0);
+
+                        khataFerfarRows += `
+<tr>
+  <td></td>
+  <td class="text-left">${giver}</td>
+  <td class="text-left">${receiver}</td>
+  <td class="text-left">${detail}</td>
+  <td class="text-right">${amt}</td>
+</tr>`;
+                    }
+                });
+
                 htmlTemplate = htmlTemplate
                     .replace("{{taluko}}", talukoName)
                     .replace("{{yearRange}}", fyGujarati)
@@ -793,6 +821,9 @@ const handleReportChange = (key, value) => {
                     .replace("{{totalIncomeCols}}", totalIncomeCols)
                     .replace("{{incomeColspan}}", incomeColspan)
                     .replace("{{accountTransferRows}}", accountTransferRows);
+
+                // Replace the '{}' placeholder in template with khata ferfar rows
+                htmlTemplate = htmlTemplate.replace("{}", khataFerfarRows);
 
                 const win = window.open("", "_blank", "width=1200,height=800");
                 setLoading(false);
@@ -1022,7 +1053,11 @@ if (!hasValidRecords) {
         // ================================
         // AAVAK / JAVAK MONTHLY REPORT------------------------------------------------------------
         // ================================
-        const records = allRecords.filter(r => r.vyavharType === report.type);
+        // 🔥 FIX: Exclude "બેંક જમા" entries from javak summary (they should only appear in rojmel khata ferफार)
+        const records = allRecords.filter(r => 
+            r.vyavharType === report.type && 
+            !(report.type === "javak" && r.category === "બેંક જમા")
+        );
         const monthGroups = {};
         const allCategories = new Set();
 

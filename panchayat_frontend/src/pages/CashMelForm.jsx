@@ -15,8 +15,15 @@ import {
     
     HStack,
     
-    
-} from "@chakra-ui/react";
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    ModalBody,
+    ModalFooter,
+    useDisclosure,
+  } from "@chakra-ui/react";
 import CashMelReport from "./CashMelReport.jsx";
 import * as XLSX from "xlsx";
 import { FiArrowLeft } from "react-icons/fi";
@@ -124,6 +131,17 @@ const fileInputRef = useRef(null);
  
     const [showAddBank, setShowAddBank] = useState(false);
     const [newBankName, setNewBankName] = useState("");
+
+    // Quick deposit modal state
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [modalForm, setModalForm] = useState({
+      date: "",
+      dateDisplay: "",
+      bank: "",
+      remarks: "",
+      amount: "",
+    });
+    const [modalSubmitting, setModalSubmitting] = useState(false);
 
     // const [showBulkUpload, setShowBulkUpload] = useState(false);
     // const [showReports, setShowReports] = useState(false);
@@ -527,6 +545,97 @@ const uploadExcelToServer = async () => {
     }
   };
 
+    const applyModalToForm = () => {
+      if (!modalForm.amount) {
+        toast({ title: "રકમ દાખલ કરો", status: "error", duration: 2000 });
+        return;
+      }
+
+      handleChange("date", modalForm.date);
+      handleChange("dateDisplay", modalForm.dateDisplay);
+      handleChange("paymentMethod", "bank");
+      handleChange("bank", modalForm.bank);
+      handleChange("amount", modalForm.amount);
+      handleChange("remarks", modalForm.remarks);
+
+      onClose();
+    };
+
+    const submitModalToServer = async () => {
+      if (!modalForm.amount) {
+        toast({ title: "રકમ દાખલ કરો", status: "error", duration: 2000 });
+        return;
+      }
+
+      setModalSubmitting(true);
+      try {
+        // Prepare common values
+        const dateIso = modalForm.date || convertToISO(modalForm.dateDisplay || "");
+        const amount = modalForm.amount;
+        const remarks = modalForm.remarks || "બેંક જમા";
+        const bankName = modalForm.bank || "";
+
+        const token = localStorage.getItem("token");
+
+        // 1) Create a JAVAK entry to reduce cash (rokad) -> expense from cash
+        const javakPayload = new FormData();
+        javakPayload.append("date", dateIso || "");
+        javakPayload.append("name", remarks.slice(0, 100));
+        javakPayload.append("receiptPaymentNo", "");
+        javakPayload.append("vyavharType", "javak");
+        javakPayload.append("category", "બેંક જમા");
+        javakPayload.append("amount", amount);
+        javakPayload.append("paymentMethod", "rokad");
+        javakPayload.append("bank", "");
+        javakPayload.append("ddCheckNum", "");
+        javakPayload.append("remarks", remarks);
+
+        const res1 = await fetch(`${API_BASE}/cashmel`, {
+          method: "POST",
+          body: javakPayload,
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        });
+
+        if (!res1.ok) {
+          const txt = await res1.text();
+          throw new Error(txt || "Failed to save cash (javak) entry");
+        }
+
+        // 2) Create an AAVAK entry to add to bank -> income to bank
+        const aavakPayload = new FormData();
+        aavakPayload.append("date", dateIso || "");
+        aavakPayload.append("name", remarks.slice(0, 100));
+        aavakPayload.append("receiptPaymentNo", "");
+        aavakPayload.append("vyavharType", "aavak");
+        aavakPayload.append("category", "બેંક જમા");
+        aavakPayload.append("amount", amount);
+        aavakPayload.append("paymentMethod", "bank");
+        aavakPayload.append("bank", bankName);
+        aavakPayload.append("ddCheckNum", "");
+        aavakPayload.append("remarks", remarks);
+
+        const res2 = await fetch(`${API_BASE}/cashmel`, {
+          method: "POST",
+          body: aavakPayload,
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        });
+
+        if (!res2.ok) {
+          const txt = await res2.text();
+          throw new Error(txt || "Failed to save bank (aavak) entry");
+        }
+
+        toast({ title: "બેંક જમા સફળતાપૂર્વક નોંધાઈ ગઈ", status: "success", duration: 2500 });
+        setModalForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+        onClose();
+      } catch (err) {
+        console.error(err);
+        toast({ title: "સંગ્રહમાં ભૂલ", description: err.message || "કૃપા કરીને ફરી પ્રયાસ કરો", status: "error", duration: 4000 });
+      } finally {
+        setModalSubmitting(false);
+      }
+    };
+
     /* ==================== UI ==================== */
     return (
         <Box p={8} maxW="900px" mx="auto" bg="#F8FAF9" minH="100vh">
@@ -568,9 +677,70 @@ const uploadExcelToServer = async () => {
 
 
             <Box p={6} bg="white" rounded="2xl" shadow="md" borderWidth="1px">
-                <Heading size="md" mb={4} color="green.700" borderLeft="4px solid #2A7F62" pl={3}>
+
+                <Flex mb={4} align="center" justify="space-between">
+                  <Heading size="md" color="green.700" borderLeft="4px solid #2A7F62" pl={3}>
                     {t("entryDetails")}
-                </Heading>
+                  </Heading>
+                  <Button size="sm" colorScheme="blue" onClick={onOpen}>
+                    બેંક જમા
+                  </Button>
+                </Flex>
+
+                {/* Quick deposit modal */}
+                <Modal isOpen={isOpen} onClose={onClose}>
+                  <ModalOverlay />
+                  <ModalContent>
+                    <ModalHeader>બેંક જમા વિગત</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                      <VStack spacing={4} align="stretch">
+                        <DateInput
+                          label={t("date")}
+                          formValue={modalForm}
+                          setFormValue={setModalForm}
+                          formatDisplayDate={formatDisplayDate}
+                          convertToISO={convertToISO}
+                          t={t}
+                        />
+
+                        <FormControl>
+                          <FormLabel fontWeight="600">બેંક</FormLabel>
+                          <Select size="lg" bg="gray.100" value={modalForm.bank} onChange={(e) => setModalForm(p => ({ ...p, bank: e.target.value }))}>
+                            <option value="">{t("select")}</option>
+                            {banks.map(b => (
+                              <option key={b._id} value={b.name}>{b.name}</option>
+                            ))}
+                          </Select>
+                        </FormControl>
+
+                        <FormControl>
+                          <FormLabel fontWeight="600">વ્યવહારની વિગત</FormLabel>
+                          <Input size="lg" bg="gray.100" value={modalForm.remarks} onChange={(e) => setModalForm(p => ({ ...p, remarks: e.target.value }))} />
+                        </FormControl>
+
+                        <FormControl>
+                          <FormLabel fontWeight="600">{t("amount")}</FormLabel>
+                          <Input size="lg" bg="gray.100" value={toGujaratiDigits(modalForm.amount)} onChange={(e) => {
+                            const englishValue = gujaratiToEnglishDigits(e.target.value)
+                              .replace(/[^0-9.]/g, "")
+                              .replace(/(\..*)\./g, "$1");
+                            setModalForm(p => ({ ...p, amount: englishValue }));
+                          }} />
+                        </FormControl>
+                      </VStack>
+                    </ModalBody>
+
+                    <ModalFooter>
+                      <Button mr={3} onClick={() => { onClose(); }}>
+                        રદ કરો
+                      </Button>
+                      <Button colorScheme="green" onClick={submitModalToServer} isLoading={modalSubmitting}>
+                        સેવ
+                      </Button>
+                    </ModalFooter>
+                  </ModalContent>
+                </Modal>
 
                 <VStack spacing={4}>
 
