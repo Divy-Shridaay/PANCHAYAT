@@ -24,6 +24,7 @@ import {
     useDisclosure,
     useToast,
     Spinner,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -54,8 +55,8 @@ export default function Payment() {
         return gstRegex.test(gst);
     };
 
-    const isGstValid = gstNumber.trim() !== "" ? validateGst(gstNumber) : true;
-    const showGstError = gstNumber.trim() !== "" && gstNumber.length === 15 && !isGstValid;
+    const isGstValid = gstNumber.trim() !== "" ? validateGst(gstNumber.trim()) : true;
+    const showGstError = gstNumber.trim() !== "" && !isGstValid;
 
     const [modules, setModules] = useState([
         {
@@ -78,23 +79,44 @@ export default function Payment() {
         },
     ]);
 
-    const fetchPricing = async () => {
+    const fetchUserStatusAndPricing = async () => {
         try {
-            const { response, data } = await apiFetch("/api/settings/pricing", {}, navigate, toast);
-            if (response.ok) {
-                const pricing = data.pricing;
+            // Fetch Pricing
+            const { response: priceRes, data: priceData } = await apiFetch("/api/settings/pricing", {}, navigate, toast);
+            if (priceRes.ok) {
+                const pricing = priceData.pricing;
                 setModules(prev => prev.map(mod => ({
                     ...mod,
                     price: pricing[mod.id] || mod.price
                 })));
             }
+
+            // Fetch User Status to filter and default checkboxes
+            const { response: statusRes, data: statusData } = await apiFetch("/api/register/user/status", {}, navigate, toast);
+            if (statusRes.ok) {
+                const user = statusData;
+
+                // Filter modules: Show only if NOT active AND NOT pending
+                setModules(prev => prev.filter(mod => {
+                    const hasAccess = user.modulesAccess?.[mod.id];
+                    const isPending = user.pendingModules?.[mod.id];
+                    return !hasAccess && !isPending;
+                }));
+
+                // Only default to TRUE if they DON'T have access AND they AREN'T pending verification for it
+                setSelectedModules({
+                    pedhinamu: !user.modulesAccess?.pedhinamu && !user.pendingModules?.pedhinamu,
+                    rojmel: !user.modulesAccess?.rojmel && !user.pendingModules?.rojmel,
+                    jaminMehsul: !user.modulesAccess?.jaminMehsul && !user.pendingModules?.jaminMehsul,
+                });
+            }
         } catch (err) {
-            console.error("Error fetching pricing:", err);
+            console.error("Error fetching user status/pricing:", err);
         }
     };
 
     useEffect(() => {
-        fetchPricing();
+        fetchUserStatusAndPricing();
     }, []);
 
     const handleToggle = (id) => {
@@ -129,8 +151,12 @@ export default function Payment() {
     };
 
     const handleSubmit = async () => {
-        setIsSubmitting(true);
         setSubmitError("");
+        if (gstNumber.trim() !== "" && !isGstValid) {
+            setSubmitError("કૃપા કરીને માન્ય GST નંબર દાખલ કરો અથવા તેને કાઢી નાખો.");
+            return;
+        }
+        setIsSubmitting(true);
 
         try {
             // Logic for submission (Legacy console log)
@@ -258,85 +284,101 @@ export default function Payment() {
                     {step === 1 ? (
                         <>
                             {/* Module Selection Section */}
-                            <VStack spacing={4} align="stretch">
-                                {modules.map((mod) => (
-                                    <Box
-                                        key={mod.id}
-                                        bg="white"
-                                        p={6}
-                                        rounded="2xl"
-                                        shadow="md"
-                                        border="2px solid"
-                                        borderColor={selectedModules[mod.id] ? "green.400" : "#E3EDE8"}
-                                        position="relative"
-                                        cursor="pointer"
-                                        onClick={() => handleToggle(mod.id)}
-                                        _hover={{ shadow: "lg", borderColor: "green.200" }}
-                                        transition="0.2s"
-                                    >
-                                        {/* Checkbox in top left */}
-                                        <Box position="absolute" top={4} left={4}>
-                                            <Checkbox
-                                                colorScheme="green"
-                                                size="lg"
-                                                isChecked={selectedModules[mod.id]}
-                                                onChange={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggle(mod.id);
-                                                }}
-                                            />
-                                        </Box>
+                            {modules.length === 0 ? (
+                                <Box bg="white" p={10} rounded="2xl" shadow="md" textAlign="center" border="1px solid #E3EDE8">
+                                    <Text fontSize="xl" fontWeight="bold" color="green.700" mb={4}>
+                                        બધા મોડ્યુલ્સ હાલમાં સક્રિય છે અથવા ચકાસણી હેઠળ છે.
+                                    </Text>
+                                    <Text color="gray.600" mb={8}>
+                                        તમે પહેલેથી જ બધા ઉપલબ્ધ મોડ્યુલ્સ ખરીદ્યા છે અથવા તમારી તાજેતરની ચુકવણી ચકાસણી હેઠળ છે.
+                                    </Text>
+                                    <Button colorScheme="green" size="lg" rounded="xl" onClick={() => navigate("/dashboard")}>
+                                        ડેશબોર્ડ પર પાછા જાઓ
+                                    </Button>
+                                </Box>
+                            ) : (
+                                <>
+                                    <VStack spacing={4} align="stretch" w="full">
+                                        {modules.map((mod) => (
+                                            <Box
+                                                key={mod.id}
+                                                p={6}
+                                                bg={selectedModules[mod.id] ? "green.50" : "white"}
+                                                border="2px solid"
+                                                borderColor={selectedModules[mod.id] ? "#2A7F62" : "#E3EDE8"}
+                                                rounded="2xl"
+                                                cursor="pointer"
+                                                onClick={() => handleToggle(mod.id)}
+                                                position="relative"
+                                                shadow={selectedModules[mod.id] ? "md" : "sm"}
+                                                _hover={{ borderColor: "#2A7F62", transform: "translateY(-2px)" }}
+                                                transition="0.2s"
+                                            >
+                                                {/* Checkbox in top left */}
+                                                <Box position="absolute" top={4} left={4}>
+                                                    <Checkbox
+                                                        colorScheme="green"
+                                                        size="lg"
+                                                        isChecked={selectedModules[mod.id]}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            handleToggle(mod.id);
+                                                        }}
+                                                    />
+                                                </Box>
 
-                                        <Flex justify="space-between" align="center" pl={10}>
-                                            <VStack align="start" spacing={1}>
-                                                <Text fontSize="xl" fontWeight="700" color="#1E4D2B">
-                                                    {mod.title}
-                                                </Text>
-                                                <Text fontSize="sm" color="gray.600">
-                                                    {mod.description}
-                                                </Text>
-                                            </VStack>
-                                            <Text fontSize="lg" fontWeight="bold" color="green.600">
-                                                ₹{mod.price}
-                                            </Text>
+                                                <Flex justify="space-between" align="center" pl={10}>
+                                                    <VStack align="start" spacing={1}>
+                                                        <Text fontSize="xl" fontWeight="700" color="#1E4D2B">
+                                                            {mod.title}
+                                                        </Text>
+                                                        <Text fontSize="sm" color="gray.600">
+                                                            {mod.description}
+                                                        </Text>
+                                                    </VStack>
+                                                    <Text fontSize="lg" fontWeight="bold" color="green.600">
+                                                        ₹{mod.price}
+                                                    </Text>
+                                                </Flex>
+                                            </Box>
+                                        ))}
+                                    </VStack>
+
+                                    {/* Total Section */}
+                                    <Box bg="white" p={6} rounded="2xl" shadow="md" border="1px solid #E3EDE8">
+                                        <Flex justify="space-between" align="center">
+                                            <Text fontSize="lg" fontWeight="bold" color="gray.700">કુલ રકમ:</Text>
+                                            <Text fontSize="2xl" fontWeight="800" color="green.600">₹{totalAmount}</Text>
                                         </Flex>
                                     </Box>
-                                ))}
-                            </VStack>
 
-                            {/* Total Section */}
-                            <Box bg="white" p={6} rounded="2xl" shadow="md" border="1px solid #E3EDE8">
-                                <Flex justify="space-between" align="center">
-                                    <Text fontSize="lg" fontWeight="bold" color="gray.700">કુલ રકમ:</Text>
-                                    <Text fontSize="2xl" fontWeight="800" color="green.600">₹{totalAmount}</Text>
-                                </Flex>
-                            </Box>
+                                    {/* Note Section */}
+                                    <Box bg="white" p={6} rounded="2xl" shadow="md" border="1px solid #E3EDE8">
+                                        <Box color="gray.600" fontSize="md">
+                                            <Text fontWeight="bold" mb={2} color="red.500" fontSize="lg">નોંધ:</Text>
+                                            <Text fontWeight="600" fontSize="md">
+                                                આ ચુકવણી 12 મહિનાની માન્યતા ધરાવે છે.
+                                            </Text>
+                                        </Box>
+                                    </Box>
 
-                            {/* Note Section */}
-                            <Box bg="white" p={6} rounded="2xl" shadow="md" border="1px solid #E3EDE8">
-                                <Box color="gray.600" fontSize="md">
-                                    <Text fontWeight="bold" mb={2} color="red.500" fontSize="lg">નોંધ:</Text>
-                                    <Text fontWeight="600" fontSize="md">
-                                        આ ચુકવણી 12 મહિનાની માન્યતા ધરાવે છે.
-                                    </Text>
-                                </Box>
-                            </Box>
-
-                            {/* Next Button */}
-                            <Button
-                                colorScheme="green"
-                                size="lg"
-                                py={8}
-                                fontSize="xl"
-                                fontWeight="bold"
-                                rounded="2xl"
-                                shadow="xl"
-                                isDisabled={totalAmount === 0}
-                                onClick={() => setStep(2)}
-                                _hover={{ transform: "translateY(-2px)", shadow: "2xl" }}
-                            >
-                                આગળ વધો
-                            </Button>
+                                    {/* Next Button */}
+                                    <Button
+                                        colorScheme="green"
+                                        size="lg"
+                                        py={8}
+                                        fontSize="xl"
+                                        fontWeight="bold"
+                                        rounded="2xl"
+                                        shadow="xl"
+                                        isDisabled={totalAmount === 0}
+                                        onClick={() => setStep(2)}
+                                        _hover={{ transform: "translateY(-2px)", shadow: "2xl" }}
+                                    >
+                                        આગળ વધો
+                                    </Button>
+                                </>
+                            )}
                         </>
                     ) : (
                         <>
@@ -419,7 +461,7 @@ export default function Payment() {
                                         <Input
                                             placeholder="દા.ત. 24AAAAA0000A1Z5"
                                             value={gstNumber}
-                                            onChange={(e) => setGstNumber(e.target.value.toUpperCase().slice(0, 15))}
+                                            onChange={(e) => setGstNumber(e.target.value.toUpperCase().trim().slice(0, 15))}
                                             bg="white"
                                             borderColor={showGstError ? "red.500" : "gray.300"}
                                             _focus={{ borderColor: showGstError ? "red.500" : "#2A7F62", boxShadow: showGstError ? "0 0 0 1px red.500" : "0 0 0 1px #2A7F62" }}
@@ -521,7 +563,7 @@ export default function Payment() {
                                 fontWeight="bold"
                                 rounded="2xl"
                                 shadow="xl"
-                                isDisabled={!selectedFile || isSubmitting}
+                                isDisabled={!selectedFile || isSubmitting || !isGstValid}
                                 onClick={handleSubmit}
                                 _hover={{ transform: "translateY(-2px)", shadow: "2xl" }}
                             >
@@ -543,6 +585,7 @@ export default function Payment() {
             <Modal isOpen={isOpen} onClose={handleModalClose} isCentered size="md">
                 <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
                 <ModalContent rounded="2xl" p={4} border="1px solid" borderColor="green.100">
+                    <ModalCloseButton />
                     <ModalHeader textAlign="center" color="#1E4D2B">
                         <VStack spacing={3}>
                             <FiCheckCircle size={50} color="#2A7F62" />
@@ -554,7 +597,7 @@ export default function Payment() {
                                 ચુકવણી સફળ થઈ ગઈ છે
                             </Text>
                             <Text fontSize="md" color="gray.600" lineHeight="tall">
-                                તમારી સબ્સ્ક્રિપ્શન વિનંતી ચકાસણી માટે મોકલવામાં આવી છે.<br />
+                                તમારી સબસક્રિપ્સન વિનંતી ચકાસણી માટે મોકલવામાં આવી છે.<br />
                                 મંજૂરી પ્રક્રિયામાં 24 થી 48 કલાક લાગી શકે છે.
                             </Text>
                         </VStack>

@@ -31,6 +31,7 @@ import { apiFetch } from "../utils/api.js";
 
 import { useTranslation } from "react-i18next";
 import EditConfirmationModal from "../components/EditConfirmationModal";
+import PaymentPopup from "../components/PaymentPopup";
 
 
 export default function PedhinamuList() {
@@ -56,6 +57,14 @@ export default function PedhinamuList() {
     onClose: onEditModalClose
   } = useDisclosure();
 
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [userStatus, setUserStatus] = useState(null);
+  const {
+    isOpen: isPaymentOpen,
+    onOpen: onPaymentOpen,
+    onClose: onPaymentClose
+  } = useDisclosure();
+
 
 
   /* -------------------------------------------------
@@ -68,6 +77,7 @@ export default function PedhinamuList() {
 
       setList(data.data || []);
       setTotalPages(data.totalPages || 1);
+      setTotalRecords(data.total || 0);
       setLoading(false);
 
       return data.data || [];  // ✅ FIX: json -> data
@@ -82,6 +92,18 @@ export default function PedhinamuList() {
   useEffect(() => {
     fetchList(currentPage, itemsPerPage);  // ✅ PASS itemsPerPage
   }, [currentPage, itemsPerPage, refresh]);  // ✅ ADD itemsPerPage to dependencies
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const { data } = await apiFetch("/api/register/user/status", {}, navigate, toast);
+        setUserStatus(data.user);
+      } catch (err) {
+        console.error("Error fetching user status:", err);
+      }
+    };
+    fetchStatus();
+  }, []);
 
 
 
@@ -174,7 +196,17 @@ export default function PedhinamuList() {
             size="md"
             leftIcon={<span style={{ fontSize: "20px" }}>+</span>}
             rounded="lg"
-            onClick={() => navigate("/pedhinamu/create")}
+            onClick={() => {
+              // Simple and robust check: If user is "Unpaid" (Trial) and not Admin -> Enforce limit
+              const isAdmin = userStatus?.role === "admin";
+              const isTrial = userStatus && !userStatus.isPaid;
+
+              if (!isAdmin && isTrial && totalRecords >= 5) {
+                onPaymentOpen();
+              } else {
+                navigate("/pedhinamu/create");
+              }
+            }}
           >
             {t("pedhinamu")}
           </Button>
@@ -385,6 +417,11 @@ export default function PedhinamuList() {
         onConfirm={confirmEdit}
       />
 
+      <PaymentPopup
+        isOpen={isPaymentOpen}
+        onClose={onPaymentClose}
+        type="entryLimit"
+      />
     </Box>
   );
 }

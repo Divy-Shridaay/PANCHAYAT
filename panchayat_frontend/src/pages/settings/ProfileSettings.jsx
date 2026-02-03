@@ -16,6 +16,13 @@ import {
   Spinner,
   Divider,
   SimpleGrid,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Badge,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiSave, FiEdit } from "react-icons/fi";
@@ -368,34 +375,64 @@ export default function Settings() {
 
             </SimpleGrid>
 
-            {user?.isPaid &&
-              (user.modules?.pedhinamu === true || user.modules?.rojmel === true || user.modules?.jaminMehsul === true) &&
-              (user.paymentStartDate || user.paymentEndDate) && (
-                <>
-                  <Divider />
-                  <Heading size="md" color="green.700" mb={4}>
-                    સબ્સ્ક્રિપ્શન વિગતો
-                  </Heading>
-                  <SimpleGrid columns={[1, 2]} spacing={4}>
-                    <FormControl>
-                      <FormLabel>શરૂઆતની તારીખ</FormLabel>
-                      <Input
-                        value={user.paymentStartDate ? new Date(user.paymentStartDate).toLocaleDateString("en-GB") : "-"}
-                        isReadOnly={true}
-                        bg="gray.50"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel>સમાપ્તિ તારીખ</FormLabel>
-                      <Input
-                        value={user.paymentEndDate ? new Date(user.paymentEndDate).toLocaleDateString("en-GB") : "-"}
-                        isReadOnly={true}
-                        bg="gray.50"
-                      />
-                    </FormControl>
-                  </SimpleGrid>
-                </>
-              )}
+
+
+            {user?.isPaid && (
+              <>
+                <Divider />
+                <Heading size="md" color="green.700" mb={4}>
+                  સબસક્રિપ્સન વિગતો
+                </Heading>
+                <Box overflowX="auto" border="1px solid #E3EDE8" rounded="lg">
+                  <Table variant="simple" size="sm">
+                    <Thead bg="gray.50">
+                      <Tr>
+                        <Th>મોડ્યુલ</Th>
+                        <Th>શરૂઆતની તારીખ</Th>
+                        <Th>સમાપ્તિ તારીખ</Th>
+                        <Th>સ્થિતિ</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {[
+                        { id: "pedhinamu", label: "પેઢીનામું" },
+                        { id: "rojmel", label: "રોજમેળ" },
+                        { id: "jaminMehsul", label: "જમીન મહેસુલ" },
+                      ].map((mod) => {
+                        const startKey = `${mod.id}StartDate`;
+                        const endKey = `${mod.id}EndDate`;
+
+                        // Try flattened fields first, fallback to legacy global if specific ones missing && module is active
+                        let start = user[startKey];
+                        let end = user[endKey];
+
+                        if (!start && !end && user.modules?.[mod.id]) {
+                          start = user.paymentStartDate;
+                          end = user.paymentEndDate;
+                        }
+
+                        if (!start && !end) return null;
+
+                        const isExpired = end && new Date(end) < new Date();
+
+                        return (
+                          <Tr key={mod.id}>
+                            <Td fontWeight="600">{mod.label}</Td>
+                            <Td>{start ? new Date(start).toLocaleDateString("en-GB") : "-"}</Td>
+                            <Td>{end ? new Date(end).toLocaleDateString("en-GB") : "-"}</Td>
+                            <Td>
+                              <Badge colorScheme={isExpired ? "red" : "green"}>
+                                {isExpired ? "નિષ્ક્રિય" : "સક્રિય"}
+                              </Badge>
+                            </Td>
+                          </Tr>
+                        );
+                      })}
+                    </Tbody>
+                  </Table>
+                </Box>
+              </>
+            )}
 
             <Divider />
 

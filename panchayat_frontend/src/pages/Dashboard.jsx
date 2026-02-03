@@ -119,10 +119,15 @@ export default function Dashboard() {
   ======================= */
   const handleModuleClick = async (route, moduleName) => {
     try {
-      if (userStatus?.user?.isPendingVerification) {
+      // 1. Check if this specific module is already active
+      const moduleAccess = userStatus?.user?.modulesAccess?.[moduleName] ?? false;
+      const isPending = userStatus?.user?.pendingModules?.[moduleName] ?? false;
+
+      // 2. If it's pending AND not active, block with verification toast
+      if (isPending && !moduleAccess) {
         toast({
           title: "ચકાસણી પેન્ડિંગ",
-          description: "તમારી ચુકવણી હાલમાં ચકાસણી હેઠળ છે. કૃપા કરીને એડમિન દ્વારા પુષ્ટિ થાય ત્યાં સુધી રાહ જુઓ.",
+          description: "તમારી આ મોડ્યુલની ચુકવણી હાલમાં ચકાસણી હેઠળ છે. કૃપા કરીને એડમિન દ્વારા પુષ્ટિ થાય ત્યાં સુધી રાહ જુઓ.",
           status: "info",
           duration: 5000,
           isClosable: true,
@@ -131,20 +136,15 @@ export default function Dashboard() {
         return;
       }
 
-      const { response, data } = await apiFetch("/api/register/user/status");
-      if (response.ok) {
-        const status = data.user;
-        const moduleAccess = status.modulesAccess?.[moduleName] ?? false;
-        if (!moduleAccess) {
-          setPopupType("module");
-          setShowPaymentPopup(true);
-          return;
-        }
-        navigate(route);
-      } else {
+      // 3. If it's NOT active (and not pending), show payment popup
+      if (!moduleAccess) {
         setPopupType("module");
         setShowPaymentPopup(true);
+        return;
       }
+
+      // 4. If active, navigate
+      navigate(route);
     } catch (err) {
       console.error(err);
       setPopupType("module");
@@ -196,7 +196,7 @@ export default function Dashboard() {
       const days = userStatus.daysUntilExpiry;
       const dismissed = sessionStorage.getItem("expiryBannerDismissed");
       // Show banner if between 0 and 30 days remaining and not dismissed in this session
-      if (days !== null && days > 0 && days <= 30 && !dismissed) {
+      if (days !== null && days > 0 && days <= 40 && !dismissed) {
         setShowExpiryBanner(true);
       } else {
         setShowExpiryBanner(false);
@@ -209,21 +209,21 @@ export default function Dashboard() {
       {/* EXPIRY BANNER */}
       {showExpiryBanner && (
         <Box
-          bg="orange.50"
+          bg="blue.50"
           p={3}
           rounded="xl"
           border="1px solid"
-          borderColor="orange.200"
+          borderColor="blue.200"
           mb={4}
           shadow="sm"
           position="relative"
           cursor="pointer"
           onClick={() => navigate("/payment")}
-          _hover={{ bg: "orange.100" }}
+          _hover={{ bg: "blue.100" }}
         >
           <Flex align="center" justify="center">
-            <Text fontWeight="600" color="orange.800" fontSize="md" textAlign="center">
-              સબ્સ્ક્રિપ્શન સમાપ્ત થવામાં {userStatus.daysUntilExpiry} દિવસ બાકી છે.
+            <Text fontWeight="600" color="blue.800" fontSize="md" textAlign="center">
+              સબસક્રિપ્સન સમાપ્ત થવામાં {userStatus.daysUntilExpiry} દિવસ બાકી છે.
             </Text>
             <CloseButton
               position="absolute"
@@ -231,7 +231,7 @@ export default function Dashboard() {
               top="50%"
               transform="translateY(-50%)"
               size="sm"
-              color="orange.600"
+              color="blue.600"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowExpiryBanner(false);
@@ -260,7 +260,7 @@ export default function Dashboard() {
                 તમારી ચુકવણી પ્રાપ્ત થઈ ગઈ છે અને હાલમાં ચકાસણી હેઠળ છે.
               </Text>
               <Text color="blue.700" fontSize="md" mt={2}>
-                એડમિન દ્વારા ચુકવણીની પુષ્ટિ થયા બાદ, તમે પસંદ કરેલા મોડ્યુલ્સ માટેની ઍક્સેસ સક્રિય કરવામાં આવશે.
+                એડમિન દ્વારા ચુકવણીની પુષ્ટિ થયા બાદ, તમે પસંદ કરેલા મોડ્યુલ્સ માટેનો ઍક્સેસ સક્રિય કરવામાં આવશે.
               </Text>
             </Box>
             <CloseButton
@@ -327,10 +327,10 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor={userStatus?.user?.isPendingVerification ? "not-allowed" : "pointer"}
-          opacity={userStatus?.user?.isPendingVerification ? 0.6 : 1}
-          filter={userStatus?.user?.isPendingVerification ? "grayscale(40%)" : "none"}
-          _hover={userStatus?.user?.isPendingVerification ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
+          cursor={(userStatus?.user?.pendingModules?.pedhinamu && !userStatus?.user?.modulesAccess?.pedhinamu) ? "not-allowed" : "pointer"}
+          opacity={(userStatus?.user?.pendingModules?.pedhinamu && !userStatus?.user?.modulesAccess?.pedhinamu) ? 0.6 : 1}
+          filter={(userStatus?.user?.pendingModules?.pedhinamu && !userStatus?.user?.modulesAccess?.pedhinamu) ? "grayscale(40%)" : "none"}
+          _hover={(userStatus?.user?.pendingModules?.pedhinamu && !userStatus?.user?.modulesAccess?.pedhinamu) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
           onClick={() => handleModuleClick("/pedhinamu", "pedhinamu")}
         >
           <FiUserCheck size={40} color="#2A7F62" />
@@ -352,10 +352,10 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor={userStatus?.user?.isPendingVerification ? "not-allowed" : "pointer"}
-          opacity={userStatus?.user?.isPendingVerification ? 0.6 : 1}
-          filter={userStatus?.user?.isPendingVerification ? "grayscale(40%)" : "none"}
-          _hover={userStatus?.user?.isPendingVerification ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
+          cursor={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? "not-allowed" : "pointer"}
+          opacity={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? 0.6 : 1}
+          filter={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? "grayscale(40%)" : "none"}
+          _hover={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
           onClick={() => handleModuleClick("/cashmelform", "rojmel")}
         >
           <FiTrendingUp size={40} color="#2A7F62" />
@@ -375,43 +375,11 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor={userStatus?.user?.isPendingVerification ? "not-allowed" : "pointer"}
-          opacity={userStatus?.user?.isPendingVerification ? 0.6 : 1}
-          filter={userStatus?.user?.isPendingVerification ? "grayscale(40%)" : "none"}
-          _hover={userStatus?.user?.isPendingVerification ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
-          onClick={async () => {
-            if (userStatus?.user?.isPendingVerification) {
-              toast({
-                title: "ચકાસણી પેન્ડિંગ",
-                description: "તમારી ચુકવણી હાલમાં ચકાસણી હેઠળ છે. કૃપા કરીને એડમિન દ્વારા પુષ્ટિ થાય ત્યાં સુધી રાહ જુઓ.",
-                status: "info",
-                duration: 5000,
-                isClosable: true,
-                position: "top",
-              });
-              return;
-            }
-            try {
-              const { response, data } = await apiFetch("/api/register/user/status");
-              if (response.ok) {
-                const status = data.user;
-                const moduleAccess = status.modulesAccess?.jaminMehsul ?? false;
-                if (!moduleAccess) {
-                  setPopupType("module");
-                  setShowPaymentPopup(true);
-                  return;
-                }
-                window.open("http://localhost:5174", "_blank");
-              } else {
-                setPopupType("module");
-                setShowPaymentPopup(true);
-              }
-            } catch (err) {
-              console.error(err);
-              setPopupType("module");
-              setShowPaymentPopup(true);
-            }
-          }}
+          cursor={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "not-allowed" : "pointer"}
+          opacity={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? 0.6 : 1}
+          filter={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "grayscale(40%)" : "none"}
+          _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
+          onClick={() => handleModuleClick(null, "jaminMehsul")}
         >
           <HiOutlineDocumentCurrencyRupee size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">

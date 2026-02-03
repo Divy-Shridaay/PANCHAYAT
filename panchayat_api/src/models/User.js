@@ -60,10 +60,26 @@ const UserSchema = new mongoose.Schema({
     rojmel: { type: Boolean },
     jaminMehsul: { type: Boolean }
   },
+  pendingModules: {
+    pedhinamu: { type: Boolean, default: false },
+    rojmel: { type: Boolean, default: false },
+    jaminMehsul: { type: Boolean, default: false }
+  },
+  pedhinamuPrintAllowed: { type: Boolean },
   // Pedhinamu print override (admin can allow/deny printing irrespective of trial/payment)
   // Payment and subscription dates
   paymentStartDate: { type: Date },
   paymentEndDate: { type: Date },
+
+  // Granular module-wise dates
+  pedhinamuStartDate: { type: Date },
+  pedhinamuEndDate: { type: Date },
+
+  rojmelStartDate: { type: Date },
+  rojmelEndDate: { type: Date },
+
+  jaminMehsulStartDate: { type: Date },
+  jaminMehsulEndDate: { type: Date }
 
 }, { timestamps: true });
 

@@ -1,30 +1,44 @@
-"use client";
-
-import { Box, Heading, SimpleGrid, Text } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
+import { Box, Heading, SimpleGrid, Text, Button, Flex, useDisclosure, useToast } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { FiPlusCircle, FiList } from "react-icons/fi";
+import { FiPlusCircle, FiList, FiArrowLeft } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import { FiArrowLeft } from "react-icons/fi";
-import {
-  FiUserCheck,
-  FiFileText,
-  FiLogOut,
-  FiSettings,
-  FiTrendingUp,
-} from "react-icons/fi";
 import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
 
-import {
-
-
-  Button,
-  Flex
-} from "@chakra-ui/react";
-
+import { apiFetch } from "../utils/api.js";
+import PaymentPopup from "../components/PaymentPopup";
 
 export default function PedhinamuHome() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const toast = useToast();
+
+  const [userStatus, setUserStatus] = useState(null);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const {
+    isOpen: isPaymentOpen,
+    onOpen: onPaymentOpen,
+    onClose: onPaymentClose
+  } = useDisclosure();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch User Status
+        const statusRes = await apiFetch("/api/register/user/status", {}, navigate, toast);
+        setUserStatus(statusRes.data.user);
+
+        // Fetch Total Count (using limit=1 just to get total)
+        const countRes = await apiFetch("/api/pedhinamu?page=1&limit=1", {}, navigate, toast);
+        setTotalRecords(countRes.data.total || 0);
+
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
@@ -75,7 +89,17 @@ export default function PedhinamuHome() {
           border="1px solid #E3EDE8"
           textAlign="center"
           _hover={{ transform: "scale(1.05)", transition: ".2s" }}
-          onClick={() => navigate("/pedhinamu/create")}
+          onClick={() => {
+            // Simple and robust check: If user is "Unpaid" (Trial) and not Admin -> Enforce limit
+            const isAdmin = userStatus?.role === "admin";
+            const isTrial = userStatus && !userStatus.isPaid;
+
+            if (!isAdmin && isTrial && totalRecords >= 5) {
+              onPaymentOpen();
+            } else {
+              navigate("/pedhinamu/create");
+            }
+          }}
         >
           <FiPlusCircle size={40} color="#2A7F62" />
           <Heading size="md" mt={4}>{t("createPedhinamu")}</Heading>
@@ -121,6 +145,12 @@ export default function PedhinamuHome() {
         </Box>
 
       </SimpleGrid>
+
+      <PaymentPopup
+        isOpen={isPaymentOpen}
+        onClose={onPaymentClose}
+        type="entryLimit"
+      />
     </Box>
   );
 }

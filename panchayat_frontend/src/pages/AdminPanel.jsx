@@ -52,8 +52,8 @@ export default function AdminPanel() {
   const [filterRole, setFilterRole] = useState("all");
 
   // Payment Verification State
-  const [isPaymentVerified, setIsPaymentVerified] = useState(null); // null, true, false
-  const [paymentReason, setPaymentReason] = useState("");
+  const [moduleResults, setModuleResults] = useState({ pedhinamu: null, rojmel: null, jaminMehsul: null });
+  const [moduleReasons, setModuleReasons] = useState({ pedhinamu: "", rojmel: "", jaminMehsul: "" });
   const [pricing, setPricing] = useState({ pedhinamu: 1, rojmel: 1, jaminMehsul: 1 });
   const { isOpen: isPricingOpen, onOpen: onPricingOpen, onClose: onPricingClose } = useDisclosure();
 
@@ -161,8 +161,8 @@ export default function AdminPanel() {
     setSelectedUserPedhinamuPrint(user.pedhinamuPrintAllowed ?? isUnderTrial);
 
     // Reset payment verification state when viewing a new user
-    setIsPaymentVerified(null);
-    setPaymentReason("");
+    setModuleResults({ pedhinamu: null, rojmel: null, jaminMehsul: null });
+    setModuleReasons({ pedhinamu: "", rojmel: "", jaminMehsul: "" });
 
     onOpen();
   };
@@ -235,13 +235,47 @@ export default function AdminPanel() {
   const handleSaveVerification = async () => {
     if (!selectedUser) return;
 
+    // Calculate if it's overall an approval or rejection
+    // If ANY module is approved, we treat it as an approval session (invoice, dates, etc.)
+    // If ALL chosen modules are rejected, we treat it as a rejection session.
+    const pendingMods = Object.keys(selectedUser.pendingModules || {}).filter(m => selectedUser.pendingModules[m]);
+
+    // Check if any pending module has "No" but no reason
+    for (const mod of pendingMods) {
+      if (moduleResults[mod] === false && !moduleReasons[mod].trim()) {
+        toast({
+          title: "ભૂલ",
+          description: `કૃપા કરીને ${mod === 'pedhinamu' ? 'પેઢીનામું' : mod === 'rojmel' ? 'રોજમેળ' : 'જમીન મહેસુલ'} માટે અસ્વીકારનું કારણ લખો`,
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+          position: "top"
+        });
+        return;
+      }
+    }
+
+    const approvedCount = Object.values(moduleResults).filter(v => v === true).length;
+    const isApproved = approvedCount > 0;
+
+    // If they were pending verification, but admin clicked "No" for ALL pending modules
+    const isRejected = !isApproved && pendingMods.length > 0 && pendingMods.every(m => moduleResults[m] === false);
+
+    // Use a single reason for all rejections in this group
+    const consolidatedReason = pendingMods
+      .filter(m => moduleResults[m] === false)
+      .map(m => moduleReasons[m])
+      .find(r => r?.trim()) || "";
+
     try {
       setLoading(true);
       const body = {
         modules: selectedUserModules,
+        approvedModules: moduleResults,
         pedhinamuPrintAllowed: selectedUserPedhinamuPrint,
-        // Only send isApproved if they were actually pending verification
-        isApproved: shouldShowVerification(selectedUser)
+        isApproved,
+        isRejected,
+        reason: consolidatedReason
       };
 
       const { response, data } = await apiFetch(`/api/register/admin/users/${selectedUser._id}/modules`, {
@@ -791,6 +825,44 @@ export default function AdminPanel() {
                   </Text>
                 </HStack>
 
+                <HStack justify="space-between" width="100%">
+                  <Text fontWeight="600" color="#475569" fontSize="sm">
+                    પેમેન્ટ સ્થિતિ:
+                  </Text>
+                  {selectedUser.isPaid ? (
+                    <Button
+                      size="xs"
+                      colorScheme="green"
+                      variant="solid"
+                      px={4}
+                      rounded="full"
+                      fontWeight="bold"
+                      textTransform="uppercase"
+                      onClick={() => {
+                        if (window.confirm("શું તમે આ વપરાશકર્તાને અનપેઇડ (ટ્રાયલ) માં સેટ કરવા માંગો છો? આનાથી તેમની પેમેન્ટ માહિતી દૂર થશે અને 7 દિવસનો ટ્રાયલ ફરીથી શરૂ થશે.")) {
+                          handleDeactivateUser(selectedUser._id);
+                        }
+                      }}
+                    >
+                      Paid
+                    </Button>
+                  ) : (
+                    <Button
+                      size="xs"
+                      colorScheme="red"
+                      variant="solid"
+                      px={4}
+                      rounded="full"
+                      fontWeight="bold"
+                      textTransform="uppercase"
+                      _hover={{ cursor: "default" }}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      Unpaid
+                    </Button>
+                  )}
+                </HStack>
+
                 {/* <HStack justify="space-between" width="100%">
             <Text fontWeight="600" color="#475569" fontSize="sm">
               ચકાસેલ:
@@ -811,90 +883,153 @@ export default function AdminPanel() {
 
                 <Divider />
 
-                {shouldShowVerification(selectedUser) && (
-                  <VStack spacing={3} align="start" width="100%">
-                    <HStack justify="space-between" width="100%">
-                      <Text fontWeight="600" color="#475569" fontSize="sm">પેમેન્ટ વેરીફાઈડ:</Text>
-                      <HStack spacing={2}>
-                        <Button
-                          size="sm"
-                          colorScheme={isPaymentVerified === true ? "green" : "gray"}
-                          variant={isPaymentVerified === true ? "solid" : "outline"}
-                          onClick={() => {
-                            setIsPaymentVerified(true);
-                            setPaymentReason("");
-                          }}
+                {/* Module toggles - Grouped for verification if multiple exist */}
+                {(() => {
+                  const allModules = [
+                    { id: 'pedhinamu', label: 'પેઢીનામું' },
+                    { id: 'rojmel', label: 'રોજમેળ' },
+                    { id: 'jaminMehsul', label: 'જમીન મહેસુલ' }
+                  ];
+
+                  const pendingMods = allModules.filter(m => !!selectedUser.pendingModules?.[m.id]);
+                  const otherMods = allModules.filter(m => !selectedUser.pendingModules?.[m.id]);
+
+                  return (
+                    <VStack width="100%" align="stretch" spacing={4}>
+                      {/* 1. Grouped Pending Modules (If any) */}
+                      {pendingMods.length > 0 && (
+                        <Box
+                          border="2px solid"
+                          borderColor="blue.200"
+                          rounded="xl"
+                          p={4}
+                          bg="blue.50"
+                          width="100%"
+                          shadow="sm"
                         >
-                          હા
-                        </Button>
-                        <Button
-                          size="sm"
-                          colorScheme={isPaymentVerified === false ? "red" : "gray"}
-                          variant={isPaymentVerified === false ? "solid" : "outline"}
-                          onClick={() => setIsPaymentVerified(false)}
-                        >
-                          ના
-                        </Button>
-                      </HStack>
-                    </HStack>
+                          <VStack align="stretch" spacing={3}>
+                            <HStack justify="space-between" mb={1}>
+                              <Text fontWeight="700" color="blue.700" fontSize="sm">
+                                પેમેન્ટ વેરિફિકેશન ({pendingMods.length})
+                              </Text>
 
-                    {/* Reason field if NO is clicked */}
-                    {isPaymentVerified === false && (
-                      <VStack align="stretch" width="100%" spacing={2}>
-                        <FormControl>
-                          <FormLabel fontSize="sm" color="#475569">કારણ:</FormLabel>
-                          <Input
-                            placeholder="કારણ લખો..."
-                            size="sm"
-                            value={paymentReason}
-                            onChange={(e) => setPaymentReason(e.target.value)}
-                          />
-                        </FormControl>
-                        <Button size="sm" colorScheme="blue" onClick={handleSubmitReason}>
-                          સબમિટ
-                        </Button>
-                      </VStack>
-                    )}
-                    <Divider my={2} />
-                  </VStack>
-                )}
+                              {/* Common Yes/No for group if > 1 or just show consistent buttons */}
+                              <HStack spacing={1}>
+                                <Button
+                                  size="xs"
+                                  colorScheme="green"
+                                  onClick={() => {
+                                    const results = { ...moduleResults };
+                                    const toggles = { ...selectedUserModules };
+                                    pendingMods.forEach(m => {
+                                      results[m.id] = true;
+                                      toggles[m.id] = true;
+                                    });
+                                    setModuleResults(results);
+                                    setSelectedUserModules(toggles);
+                                  }}
+                                >
+                                  હા
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  colorScheme="red"
+                                  onClick={() => {
+                                    const results = { ...moduleResults };
+                                    const toggles = { ...selectedUserModules };
+                                    pendingMods.forEach(m => {
+                                      results[m.id] = false;
+                                      toggles[m.id] = false;
+                                    });
+                                    setModuleResults(results);
+                                    setSelectedUserModules(toggles);
+                                  }}
+                                >
+                                  ના
+                                </Button>
+                              </HStack>
+                            </HStack>
 
-                {/* Module toggles - Shown by default for active users OR after verification for expired users */}
-                {(!shouldShowVerification(selectedUser) || isPaymentVerified === true) && (
-                  <VStack spacing={3} align="start" width="100%">
-                    <Text fontWeight="600" color="#475569" fontSize="sm">મોડ્યુલ અનુમતિ</Text>
+                            <Divider borderColor="blue.100" />
 
-                    <HStack justify="space-between" width="100%">
-                      <Text>પેઢીનામું</Text>
-                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.pedhinamu} onChange={(e) => handleToggleModule('pedhinamu', e.target.checked)} />
-                    </HStack>
+                            {pendingMods.map((mod, index) => (
+                              <Box key={mod.id}>
+                                <HStack justify="space-between" py={1}>
+                                  <Text fontWeight="500" color="gray.700">{mod.label}</Text>
+                                  <HStack spacing={3}>
+                                    {/* Independent toggle within group if approved */}
+                                    {moduleResults[mod.id] === true && (
+                                      <Switch
+                                        size="md"
+                                        colorScheme="teal"
+                                        isChecked={selectedUserModules[mod.id]}
+                                        onChange={(e) => handleToggleModule(mod.id, e.target.checked)}
+                                      />
+                                    )}
+                                  </HStack>
+                                </HStack>
+                                {index < pendingMods.length - 1 && <Divider borderColor="blue.100" />}
+                              </Box>
+                            ))}
 
-                    <HStack justify="space-between" width="100%">
-                      <Text>રોજમેળ</Text>
-                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.rojmel} onChange={(e) => handleToggleModule('rojmel', e.target.checked)} />
-                    </HStack>
+                            {/* Common Reason box for group rejections */}
+                            {pendingMods.some(m => moduleResults[m.id] === false) && (
+                              <Box mt={2}>
+                                <Text fontSize="xs" fontWeight="600" color="red.600" mb={1}>અસ્વીકારનું કારણ (બધા માટે):</Text>
+                                <Input
+                                  placeholder="અસ્વીકારનું કારણ લખો..."
+                                  size="sm"
+                                  bg="white"
+                                  focusBorderColor="red.300"
+                                  value={moduleReasons[pendingMods.find(m => moduleResults[m.id] === false).id] || ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setModuleReasons(prev => {
+                                      const next = { ...prev };
+                                      pendingMods.forEach(m => {
+                                        if (moduleResults[m.id] === false) next[m.id] = val;
+                                      });
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              </Box>
+                            )}
+                          </VStack>
+                        </Box>
+                      )}
 
-                    <HStack justify="space-between" width="100%">
-                      <Text>જમીન મહેસુલ</Text>
-                      <Switch size="md" colorScheme="teal" isChecked={selectedUserModules.jaminMehsul} onChange={(e) => handleToggleModule('jaminMehsul', e.target.checked)} />
-                    </HStack>
+                      {/* 2. Other Modules (Outside border) */}
+                      {otherMods.length > 0 && (
+                        <VStack align="stretch" spacing={3} width="100%" pt={2}>
+                          {otherMods.map(mod => (
+                            <HStack key={mod.id} justify="space-between" width="100%" py={1} borderBottom="1px solid" borderColor="gray.50">
+                              <Text fontWeight="500" color="gray.700">{mod.label}</Text>
+                              <Switch
+                                size="md"
+                                colorScheme="teal"
+                                isChecked={selectedUserModules[mod.id]}
+                                onChange={(e) => handleToggleModule(mod.id, e.target.checked)}
+                              />
+                            </HStack>
+                          ))}
+                        </VStack>
+                      )}
+                    </VStack>
+                  );
+                })()}
 
-                    <HStack justify="space-between" width="100%">
-                      <Text>પેઢીનામું પ્રિન્ટ </Text>
-                      <Switch size="md" colorScheme="teal" isChecked={selectedUserPedhinamuPrint} onChange={(e) => handleTogglePedhinamuPrint(e.target.checked)} />
-                    </HStack>
 
-                    <Button
-                      colorScheme="green"
-                      width="100%"
-                      mt={4}
-                      onClick={handleSaveVerification}
-                      isLoading={loading}
-                    >
-                      પૂર્ણ
-                    </Button>
-                  </VStack>
-                )}
+                <Button
+                  colorScheme="green"
+                  width="100%"
+                  mt={4}
+                  onClick={handleSaveVerification}
+                  isLoading={loading}
+                  size="lg"
+                >
+                  પૂર્ણ
+                </Button>
               </VStack>
             )}
           </ModalBody>
@@ -943,6 +1078,6 @@ export default function AdminPanel() {
           </ModalBody>
         </ModalContent>
       </Modal>
-    </Box>
+    </Box >
   );
 }

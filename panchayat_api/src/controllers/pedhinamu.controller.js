@@ -1,5 +1,6 @@
 import Pedhinamu from "../models/Pedhinamu.js";
 import PedhinamuFormDetails from "../models/PedhinamuFormDetails.js";
+import User from "../models/User.js";
 
 
 
@@ -27,6 +28,21 @@ export const createPedhinamu = async (req, res) => {
 
     if (!d.mukhya || !d.mukhya.name) {
       return res.status(400).json({ error: "Mukhya name is required" });
+    }
+
+    // ✅ ENFORCE 5 PEDHINAMU LIMIT FOR TRIAL / UNPAID USERS
+    if (req.user.role !== "admin") {
+      const currentUser = await User.findById(req.user._id);
+      // If user has NOT explicitly paid for pedhinamu module
+      if (!currentUser?.modules?.pedhinamu) {
+        const count = await Pedhinamu.countDocuments({ userId: req.user._id, isDeleted: false });
+        if (count >= 5) {
+          return res.status(403).json({
+            error: "PEDHINAMU_LIMIT_EXCEEDED",
+            message: "Trial limit exceeded. Please purchase subscription."
+          });
+        }
+      }
     }
 
     const data = {
@@ -107,6 +123,20 @@ export const createPedhinamu = async (req, res) => {
     };
 
     const saved = await Pedhinamu.create(data);
+
+    // ✅ AUTO-MANAGE PRINT TOGGLE FOR TRIAL USERS
+    try {
+      const user = await User.findById(req.user._id);
+      if (user && !user.isPaid && user.role !== "admin") {
+        const count = await Pedhinamu.countDocuments({ userId: user._id, isDeleted: false });
+        if (count >= 5) {
+          user.pedhinamuPrintAllowed = false;
+          await user.save();
+        }
+      }
+    } catch (err) {
+      console.error("Error auto-managing print toggle on create:", err);
+    }
 
     res.json({
       success: true,
@@ -430,6 +460,20 @@ export const softDeletePedhinamu = async (req, res) => {
       { pedhinamuId: id },
       { isDeleted: true }
     );
+
+    // ✅ AUTO-MANAGE PRINT TOGGLE FOR TRIAL USERS
+    try {
+      const user = await User.findById(req.user._id);
+      if (user && !user.isPaid && user.role !== "admin") {
+        const count = await Pedhinamu.countDocuments({ userId: user._id, isDeleted: false });
+        if (count < 5) {
+          user.pedhinamuPrintAllowed = true;
+          await user.save();
+        }
+      }
+    } catch (err) {
+      console.error("Error auto-managing print toggle on delete:", err);
+    }
 
     res.json({ success: true, message: "Deleted successfully" });
 

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import { apiFetch } from "../utils/api.js";
+import logo from "../assets/logo.png";
 
 import {
   Box,
@@ -257,6 +258,9 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
         <VStack spacing={8}>
           {/* Header */}
           <VStack spacing={2} textAlign="center">
+            <Box mb={2}>
+              <img src={logo} alt="Logo" style={{ width: "200px", height: "auto" }} />
+            </Box>
             <Heading size="lg" color="#1e293b">
               પંચાયત ડેશબોર્ડ - નોંધણી
             </Heading>
@@ -283,7 +287,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl>
@@ -300,7 +304,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl> */}
@@ -337,7 +341,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 >
                   <option value="male">પુરુષ</option>
@@ -359,7 +363,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
 
@@ -431,7 +435,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl>
@@ -448,7 +452,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl> */}
@@ -465,7 +469,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl>
@@ -485,7 +489,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl>
@@ -502,7 +506,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   onChange={handleInputChange}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
               </FormControl> */}
@@ -531,7 +535,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
                   }}
                   bg="#f8fafc"
                   border="1px solid #cbd5e1"
-                  _focus={{ borderColor: "#2563eb", bg: "white" }}
+                  _focus={{ borderColor: "#059669", bg: "white" }}
                   fontSize="sm"
                 />
 
@@ -544,9 +548,9 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
             {/* Submit Button */}
             <Button
               width="100%"
-              bg="#2563eb"
+              bg="#059669"
               color="white"
-              _hover={{ bg: "#1d4ed8" }}
+              _hover={{ bg: "#047857" }}
               fontSize="sm"
               fontWeight="600"
               py={6}
@@ -564,7 +568,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
 
               <Text
                 as="button"
-                color="#2563eb"
+                color="#059669"
                 fontWeight="600"
                 cursor="pointer"
                 onClick={() => navigate("/login")}
@@ -609,9 +613,9 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
 
               <Button
                 width="100%"
-                bg="#2563eb"
+                bg="#059669"
                 color="white"
-                _hover={{ bg: "#1d4ed8" }}
+                _hover={{ bg: "#047857" }}
                 onClick={handleVerifyOTP}
                 isLoading={loading}
               >
@@ -621,7 +625,7 @@ Username અને Password તમારા ઇમેઇલ પર મોકલ�
               <Button
                 width="100%"
                 variant="outline"
-                colorScheme="blue"
+                colorScheme="green"
                 onClick={handleSendOTP}
                 isLoading={loading}
                 fontSize="sm"

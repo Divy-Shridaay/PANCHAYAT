@@ -11,7 +11,8 @@ import {
   VStack,
   Box,
   HStack,
-  useToast
+  useToast,
+  ModalCloseButton
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +26,10 @@ export default function PaymentPopup({ isOpen, onClose, type, isSubscriptionExpi
   };
 
   const handleAtyareNai = () => {
+    if (type === "entryLimit") {
+      onClose();
+      return;
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("user");
@@ -33,21 +38,24 @@ export default function PaymentPopup({ isOpen, onClose, type, isSubscriptionExpi
   };
 
   const getTitle = () => {
-    if (isSubscriptionExpired) return "સબ્સ્ક્રિપ્શન સમાપ્ત";
+    if (isSubscriptionExpired) return "સબસક્રિપ્સન સમાપ્ત";
     if (type === "module") return "ટ્રાયલ પિરિયડ સમાપ્ત";
+    if (type === "entryLimit") return "ટ્રાયલ મર્યાદા સમાપ્ત";
     return "પ્રિન્ટ મર્યાદા સમાપ્ત";
   };
 
   const getMessage = () => {
-    if (isSubscriptionExpired) return "તમારું 12 મહિનાનું સબ્સ્ક્રિપ્શન પૂર્ણ થયું છે. એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને રિન્યૂ કરો.";
-    if (type === "module") return "તમારો 7 દિવસનો ટ્રાયલ પૂર્ણ થયો છે એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને સબ્સ્ક્રિપ્શન લો.";
+    if (isSubscriptionExpired) return "તમારું 12 મહિનાનું સબસક્રિપ્સન પૂર્ણ થયું છે. એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને રિન્યૂ કરો.";
+    if (type === "module") return "તમારો 7 દિવસનો ટ્રાયલ પૂર્ણ થયો છે એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને સબસક્રિપ્સન લો.";
+    if (type === "entryLimit") return "તમે ટ્રાયલ દરમ્યાન 5 પેઢીનામું બનાવી સકો છો. વધુ પેઢીનામું બનાવવાની મંજૂરી નથી.";
     return "તમારી મર્યાદા પૂર્ણ થઈ ગઈ છે.";
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={() => { }} size="md" isCentered closeOnOverlayClick={false}>
+    <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered closeOnOverlayClick={false}>
       <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(5px)" />
       <ModalContent borderRadius="2xl">
+        <ModalCloseButton />
         <ModalHeader color="red.600" textAlign="center" pt={8}>
           {getTitle()}
         </ModalHeader>
@@ -83,9 +91,11 @@ export default function PaymentPopup({ isOpen, onClose, type, isSubscriptionExpi
               </Button>
             </VStack>
 
-            <Text fontSize="xs" color="gray.400" textAlign="center">
-              * અત્યારે નહીં પર ક્લિક કરવાથી તમે લોગઆઉટ થઈ જશો.
-            </Text>
+            {type !== "entryLimit" && (
+              <Text fontSize="xs" color="gray.400" textAlign="center">
+                * અત્યારે નહીં પર ક્લિક કરવાથી તમે લોગઆઉટ થઈ જશો.
+              </Text>
+            )}
           </VStack>
         </ModalBody>
       </ModalContent>

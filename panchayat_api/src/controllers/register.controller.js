@@ -345,10 +345,19 @@ export const getAllUsers = async (req, res) => {
       .select("-password -otp -otpExpiry")
       .sort({ createdAt: -1 });
 
+    // Use persistent pendingModules from user profile
+    const usersWithPendingInfo = users.map(user => {
+      const userData = user.toObject();
+      if (!userData.pendingModules) {
+        userData.pendingModules = { pedhinamu: false, rojmel: false, jaminMehsul: false };
+      }
+      return userData;
+    });
+
     return res.json({
       message: "બધા યુઝર્સની યાદી ",
       totalUsers: users.length,
-      users
+      users: usersWithPendingInfo
     });
 
   } catch (err) {
@@ -374,9 +383,14 @@ export const getUserDetail = async (req, res) => {
       });
     }
 
+    const userData = user.toObject();
+    if (!userData.pendingModules) {
+      userData.pendingModules = { pedhinamu: false, rojmel: false, jaminMehsul: false };
+    }
+
     return res.json({
       message: "ઉપયોગકર્તાની વિગત ",
-      user
+      user: userData
     });
 
   } catch (err) {
@@ -425,7 +439,13 @@ export const deactivateUser = async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { isPaid: false, isPendingVerification: false },
+      {
+        isPaid: false,
+        isPendingVerification: false,
+        paymentStartDate: null,
+        paymentEndDate: null,
+        trialStartDate: new Date()
+      },
       { new: true }
     ).select("-password -otp -otpExpiry");
 
@@ -466,10 +486,33 @@ export const updateUserModules = async (req, res) => {
       updateData.pedhinamuPrintAllowed = !!pedhinamuPrintAllowed;
     }
 
+    // Fetch current user state to preserve isPaid if already paid
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: "ઉપયોગકર્તા મળ્યો નથી " });
+    }
+
+    // Logic for Granular Pending Status
+    const currentPending = currentUser.pendingModules ? currentUser.pendingModules.toObject() : {};
+    const approvedModules = req.body.approvedModules || {};
+    let anyPendingRemaining = false;
+
+    // We only remove a module from pending if it was explicitly marked as true in approvedModules
+    // Rejected modules (false in approvedModules) stay pending because verification isn't "complete" (approved)
+    Object.keys(currentPending).forEach(mod => {
+      if (approvedModules[mod] === true) {
+        currentPending[mod] = false;
+      } else if (currentPending[mod] === true) {
+        anyPendingRemaining = true;
+      }
+    });
+
+    updateData.pendingModules = currentPending;
+    updateData.isPendingVerification = anyPendingRemaining;
+
     // If this is an approval from the Verification flow
     if (isApproved) {
       updateData.isPaid = true;
-      updateData.isPendingVerification = false;
 
       // Set subscription dates: Start = now, End = 1 year from now
       const startDate = new Date();
@@ -478,13 +521,25 @@ export const updateUserModules = async (req, res) => {
 
       updateData.paymentStartDate = startDate;
       updateData.paymentEndDate = endDate;
+
+      // ✅ Granular module-wise dates
+      // ✅ Granular module-wise dates (Flattened)
+      if (approvedModules.pedhinamu === true) {
+        updateData.pedhinamuStartDate = startDate;
+        updateData.pedhinamuEndDate = endDate;
+      }
+      if (approvedModules.rojmel === true) {
+        updateData.rojmelStartDate = startDate;
+        updateData.rojmelEndDate = endDate;
+      }
+      if (approvedModules.jaminMehsul === true) {
+        updateData.jaminMehsulStartDate = startDate;
+        updateData.jaminMehsulEndDate = endDate;
+      }
     } else if (isRejected) {
-      updateData.isPaid = false;
-      // User requested to keep the banner: "it can stay"
-      // So we do NOT set isPendingVerification = false here.
+      // Rejection logic: We keep isPaid as it was. isPendingVerification stays true (already calculated above)
+      updateData.isPaid = currentUser.isPaid;
     }
-    // Note: If neither approved nor rejected (general update), 
-    // we leave isPendingVerification as is.
 
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password -otp -otpExpiry");
 
@@ -496,16 +551,39 @@ export const updateUserModules = async (req, res) => {
     if (isApproved) {
       console.log(`Attempting to send approval email to: ${user.email}`);
 
+      // Update ALL Pending Payments to Approved
+      try {
+        const result = await Payment.updateMany(
+          { userId: userId, status: 'pending' },
+          { $set: { status: 'approved', approvalDate: new Date() } }
+        );
+        console.log(`Payment records updated: ${result.modifiedCount} marked as approved`);
+      } catch (payErr) {
+        console.error("Error updating payment status on approval:", payErr);
+      }
+
       // Generate Invoice
       try {
         const pricingSettings = await GlobalSettings.findOne({ key: "module_pricing" });
         const pricing = pricingSettings ? pricingSettings.value : { pedhinamu: 1, rojmel: 1, jaminMehsul: 1 };
 
+        // Determine which modules to invoice
+        // If approvedModules is provided (new way), use it. 
+        // Otherwise, fallback to the modules that were paid for in the latestPayment.
+        let invoiceModules = {};
+        if (req.body.approvedModules) {
+          invoiceModules = req.body.approvedModules;
+        } else {
+          // Fallback: use modules from the latest payment to avoid re-invoicing everything
+          const latestPayment = await Payment.findOne({ userId: user._id, status: 'approved' }).sort({ approvalDate: -1 });
+          invoiceModules = latestPayment ? latestPayment.modules : modules;
+        }
+
         const items = [];
         let subtotal = 0;
         let count = 1;
 
-        if (modules?.pedhinamu) {
+        if (invoiceModules?.pedhinamu) {
           items.push({
             srNo: `0${count++}`,
             moduleName: "પેઢીનામું",
@@ -514,7 +592,7 @@ export const updateUserModules = async (req, res) => {
           });
           subtotal += Number(pricing.pedhinamu);
         }
-        if (modules?.rojmel) {
+        if (invoiceModules?.rojmel) {
           items.push({
             srNo: `0${count++}`,
             moduleName: "રોજમેળ",
@@ -523,7 +601,7 @@ export const updateUserModules = async (req, res) => {
           });
           subtotal += Number(pricing.rojmel);
         }
-        if (modules?.jaminMehsul) {
+        if (invoiceModules?.jaminMehsul) {
           items.push({
             srNo: `0${count++}`,
             moduleName: "જમીન મહેસુલ",
@@ -594,6 +672,19 @@ export const updateUserModules = async (req, res) => {
     // If rejected, send rejection email
     if (isRejected) {
       console.log(`Attempting to send rejection email to: ${user.email}`);
+
+      // Update Latest Pending Payment to Rejected
+      // Update ALL Pending Payments to Rejected
+      try {
+        const result = await Payment.updateMany(
+          { userId: userId, status: 'pending' },
+          { $set: { status: 'rejected', rejectionReason: reason || "માહિતી ઉપલબ્ધ નથી" } }
+        );
+        console.log(`Payment records updated: ${result.modifiedCount} marked as rejected`);
+      } catch (payErr) {
+        console.error("Error updating payment status on rejection:", payErr);
+      }
+
       try {
         const mailResult = await sendPaymentRejectionEmail(user.email, user.firstName || user.username, reason || "માહિતી ઉપલબ્ધ નથી");
         console.log("Rejection email result:", mailResult);
@@ -640,9 +731,35 @@ export const getUserStatus = async (req, res) => {
     // Calculate subscription expiry
     let daysUntilExpiry = null;
     let isSubscriptionExpired = false;
-    if (user.isPaid && user.paymentEndDate) {
-      const expiryDate = new Date(user.paymentEndDate);
-      const timeDiff = expiryDate - now;
+    let minExpiryDate = null;
+
+    // 1. Try to find earliest expiry from flattened module dates for ACTIVE modules
+    if (user.modules) {
+      const moduleKeys = ['pedhinamu', 'rojmel', 'jaminMehsul'];
+      moduleKeys.forEach(key => {
+        // Check if module is active (user has access)
+        // Construct field name dynamically: e.g., pedhinamuEndDate
+        const endField = `${key}EndDate`;
+
+        if (user.modules[key] === true && user[endField]) {
+          const modEnd = new Date(user[endField]);
+          if (!minExpiryDate || modEnd < minExpiryDate) {
+            minExpiryDate = modEnd;
+          }
+        }
+      });
+    }
+
+    // 2. Also check global paymentEndDate to ensure we catch manual overrides or legacy data
+    if (user.paymentEndDate) {
+      const globalEnd = new Date(user.paymentEndDate);
+      if (!minExpiryDate || globalEnd < minExpiryDate) {
+        minExpiryDate = globalEnd;
+      }
+    }
+
+    if (user.isPaid && minExpiryDate) {
+      const timeDiff = minExpiryDate - now;
       daysUntilExpiry = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
       if (daysUntilExpiry <= 0) {
@@ -655,28 +772,41 @@ export const getUserStatus = async (req, res) => {
     const hasActiveSubscription = user.isPaid && !isSubscriptionExpired;
     const isPending = user.isPendingVerification;
 
-    // Per-module access:
-    // Priority 1: If verification is pending, access is false.
-    // Priority 2: If subscription expired, access is false unless admin.
-
-    const modulesAccess = {
-      pedhinamu: !isPending && (user.modules?.pedhinamu ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
-      rojmel: !isPending && (user.modules?.rojmel ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
-      jaminMehsul: !isPending && (user.modules?.jaminMehsul ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+    // Use persistent pendingModules from user profile
+    const pendingModules = user.pendingModules || {
+      pedhinamu: false,
+      rojmel: false,
+      jaminMehsul: false
     };
 
-    // Printing: Block if pending verification.
-    const canPrint = !isPending && (user.pedhinamuPrintAllowed ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin');
+    // Per-module access:
+    // If a module is already paid/trial and NOT expired, it's accessible.
+    // If it's pending but ALREADY active (renewal), we keep it accessible.
+    const modulesAccess = {
+      pedhinamu: (user.modules?.pedhinamu ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      rojmel: (user.modules?.rojmel ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      jaminMehsul: (user.modules?.jaminMehsul ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+    };
+
+    // Printing: Block if pending verification AND not already allowed.
+    const canPrint = (user.pedhinamuPrintAllowed ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin');
+
+    const statusData = {
+      daysSinceTrial,
+      daysUntilExpiry,
+      isSubscriptionExpired,
+      modulesAccess,
+      pendingModules,
+      moduleDates: user.moduleDates, // New addition
+      canPrint
+    };
 
     return res.json({
       message: "ઉપયોગકર્તાની સ્થિતિ (User status)",
+      ...statusData,
       user: {
         ...user.toObject(),
-        daysSinceTrial,
-        daysUntilExpiry,
-        isSubscriptionExpired,
-        modulesAccess,
-        canPrint
+        ...statusData
       }
     });
 
@@ -728,9 +858,12 @@ export const incrementPrintCount = async (req, res) => {
     // Trial users: enforce free limit
     const FREE_PRINT_LIMIT = 5;
     if (user.printCount >= FREE_PRINT_LIMIT) {
+      // Temporarily allowing print even if limit is reached as per user request
+      user.printCount += 1;
+      await user.save();
       return res.json({
-        canPrint: false,
-        reason: "FREE_LIMIT_EXCEEDED",
+        canPrint: true, // Temporarily forced to true
+        reason: "FREE_LIMIT_OVERRIDE",
         printCount: user.printCount,
         user
       });
@@ -741,7 +874,6 @@ export const incrementPrintCount = async (req, res) => {
     await user.save();
     return res.json({
       canPrint: true,
-      reason: "FREE_TRIAL",
       printCount: user.printCount,
       user
     });
