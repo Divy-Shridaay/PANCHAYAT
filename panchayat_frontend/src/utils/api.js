@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 /**
  * 🌐 API BASE URL
- * - Localhost: Use direct backend URL
- * - Production: Use HTTPS domain with /api path
+ * - Localhost: Use direct backend URL (no /api because buildUrl will add it)
+ * - Production: Use base domain (no /api because all calls include /api prefix)
  */
 const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
   ? "http://localhost:5000"
-  : "https://panchayat.shridaay.com/api";   // ✅ HTTPS + /api included
+  : "https://panchayat.shridaay.com";   // ✅ No /api - it's in the apiFetch calls
 
 
 /**
@@ -17,7 +17,10 @@ const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname
 const buildUrl = (base, path) => {
   if (!path) return base;
   if (path.startsWith("http")) return path;
-  return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+  
+  // Don't add /api if path already starts with it
+  const cleanPath = path.replace(/^\//, "");
+  return `${base.replace(/\/$/, "")}/${cleanPath}`;
 };
 
 /**

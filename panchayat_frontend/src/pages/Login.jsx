@@ -46,7 +46,7 @@ export default function Login() {
     setLoading(true);
     try {
       const { response, data } = await apiFetch(
-        "/auth/login",
+        "/api/auth/login",
         {
           method: "POST",
           body: JSON.stringify({ username, password }),
