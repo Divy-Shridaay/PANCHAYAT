@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 /**
  * 🌐 API BASE URL
- * Works with or without .env
+ * - Localhost: Use direct backend URL
+ * - Production: Use relative path (Nginx will proxy to backend)
  */
 const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
   ? "http://localhost:5000"
- : (import.meta.env.VITE_API_BASE_URL || "https://panchayat.shridaay.com:5000");
- // 👈 YOUR LIVE BACKEND URL
+  : "/api";   // ✅ Nginx proxies /api to localhost:5000
 
 
 /**
