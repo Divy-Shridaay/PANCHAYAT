@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 /**
  * 🌐 API BASE URL
  * - Localhost: Use direct backend URL
- * - Production: Use relative path (Nginx will proxy to backend)
+ * - Production: Use HTTPS domain with /api path
  */
 const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
   ? "http://localhost:5000"
-  : "/api";   // ✅ Nginx proxies /api to localhost:5000
+  : "https://panchayat.shridaay.com/api";   // ✅ HTTPS + /api included
 
 
 /**
