@@ -29,6 +29,19 @@ export default function Login() {
     return () => clearInterval(interval);
   }, []);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const role = localStorage.getItem("role");
+      if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
 
@@ -78,6 +91,7 @@ export default function Login() {
       setTimeout(() => {
         localStorage.setItem("token", data.token);
         localStorage.setItem("username", data.user?.username || "");
+        localStorage.setItem("role", data.user?.role || "user");
 
         if (data.user?.role === "admin") {
           navigate("/admin");
@@ -267,3 +281,5 @@ export default function Login() {
     </div>
   );
 }
+
+

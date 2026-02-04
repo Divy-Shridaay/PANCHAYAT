@@ -48,6 +48,9 @@ import Payment from "./pages/Payment";
 
 // Components
 import PrivateRoute from "./components/PrivateRoute";
+import ModuleAccessGuard from "./components/ModuleAccessGuard";
+import AdminGuard from "./components/AdminGuard";
+import UserGuard from "./components/UserGuard";
 
 
 import PdfViewer from "./pages/settings/help/PdfViewer";
@@ -74,7 +77,7 @@ export default function App() {
         {/* ===================== CORE (PROTECTED) ===================== */}
         <Route
           path="/dashboard"
-          element={<PrivateRoute><Dashboard /></PrivateRoute>}
+          element={<PrivateRoute><UserGuard><Dashboard /></UserGuard></PrivateRoute>}
         />
 
         <Route
@@ -89,7 +92,7 @@ export default function App() {
 
         <Route
           path="/admin"
-          element={<PrivateRoute><AdminPanel /></PrivateRoute>}
+          element={<PrivateRoute><AdminGuard><AdminPanel /></AdminGuard></PrivateRoute>}
         />
 
         {/* ===================== SETTINGS ===================== */}
@@ -145,32 +148,32 @@ export default function App() {
         {/* ===================== PEDHINAMU ===================== */}
         <Route
           path="/pedhinamu"
-          element={<PrivateRoute><PedhinamuHome /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="pedhinamu"><PedhinamuHome /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/pedhinamu/create"
-          element={<PrivateRoute><Pedhinamu /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="pedhinamu"><Pedhinamu /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/pedhinamu/edit/:id"
-          element={<PrivateRoute><Pedhinamu /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="pedhinamu"><Pedhinamu /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/pedhinamu/list"
-          element={<PrivateRoute><PedhinamuList /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="pedhinamu"><PedhinamuList /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/pedhinamu/view/:id"
-          element={<PrivateRoute><PedhinamuView /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="pedhinamu"><PedhinamuView /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/pedhinamu/form/:id"
-          element={<PrivateRoute><FullForm /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="pedhinamu"><FullForm /></ModuleAccessGuard></PrivateRoute>}
         />
 
         {/* ===================== RECORDS ===================== */}
@@ -187,27 +190,27 @@ export default function App() {
         {/* ===================== CASHMEL ===================== */}
         <Route
           path="/cashmelform"
-          element={<PrivateRoute><CashMelForm /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><CashMelForm /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/cashmelform/:id"
-          element={<PrivateRoute><CashMelForm /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><CashMelForm /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/cashmel/details"
-          element={<PrivateRoute><CashMelDetails /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><CashMelDetails /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/cashmel/details/:id"
-          element={<PrivateRoute><CashMelDetails /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><CashMelDetails /></ModuleAccessGuard></PrivateRoute>}
         />
 
         <Route
           path="/cashmel/view/:id"
-          element={<PrivateRoute><CashMelView /></PrivateRoute>}
+          element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><CashMelView /></ModuleAccessGuard></PrivateRoute>}
         />
 
 
