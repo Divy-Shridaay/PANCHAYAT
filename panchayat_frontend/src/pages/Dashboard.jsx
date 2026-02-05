@@ -188,27 +188,47 @@ export default function Dashboard() {
   }, [userStatus]);
 
   /* =======================
-     MANAGE EXPIRY BANNER
+     MANAGE EXPIRY ALERTS
   ======================= */
-  const [showExpiryBanner, setShowExpiryBanner] = useState(false);
+  const [expiryAlerts, setExpiryAlerts] = useState([]);
+
   useEffect(() => {
-    if (userStatus?.user) {
-      const days = userStatus.daysUntilExpiry;
-      const dismissed = sessionStorage.getItem("expiryBannerDismissed");
-      // Show banner if between 0 and 30 days remaining and not dismissed in this session
-      if (days !== null && days > 0 && days <= 40 && !dismissed) {
-        setShowExpiryBanner(true);
-      } else {
-        setShowExpiryBanner(false);
-      }
+    if (userStatus?.user?.modulesAccess && userStatus?.expiryDays) {
+      const alerts = [];
+      const expiryDays = userStatus.expiryDays;
+      const moduleLabels = {
+        pedhinamu: t("pedhinamu"),
+        rojmel: t("rojmel"),
+        jaminMehsul: "જમીન મહેસુલ",
+      };
+
+      Object.entries(expiryDays).forEach(([key, days]) => {
+        if (days !== null && userStatus.user.modulesAccess[key] && days <= 40) {
+          const dismissed = sessionStorage.getItem(`expiryBannerDismissed_${key}`);
+          if (!dismissed) {
+            alerts.push({ key, label: moduleLabels[key], days });
+          }
+        }
+      });
+      setExpiryAlerts(alerts);
+    } else {
+      setExpiryAlerts([]);
     }
-  }, [userStatus]);
+  }, [userStatus, t]); // Add t dependency
+
+  // Helper to dismiss alert
+  const dismissAlert = (key) => {
+    sessionStorage.setItem(`expiryBannerDismissed_${key}`, "true");
+    setExpiryAlerts(prev => prev.filter(a => a.key !== key));
+  };
+
 
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
-      {/* EXPIRY BANNER */}
-      {showExpiryBanner && (
+      {/* EXPIRY BANNERS */}
+      {expiryAlerts.map((alert) => (
         <Box
+          key={alert.key}
           bg="blue.50"
           p={3}
           rounded="xl"
@@ -223,7 +243,7 @@ export default function Dashboard() {
         >
           <Flex align="center" justify="center">
             <Text fontWeight="600" color="blue.800" fontSize="md" textAlign="center">
-              સબસક્રિપ્સન સમાપ્ત થવામાં {userStatus.daysUntilExpiry} દિવસ બાકી છે.
+              {alert.label}નું સબસક્રિપ્સન સમાપ્ત થવામાં {alert.days} દિવસ બાકી છે.
             </Text>
             <CloseButton
               position="absolute"
@@ -234,13 +254,12 @@ export default function Dashboard() {
               color="blue.600"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowExpiryBanner(false);
-                sessionStorage.setItem("expiryBannerDismissed", "true");
+                dismissAlert(alert.key);
               }}
             />
           </Flex>
         </Box>
-      )}
+      ))}
 
       {/* VERIFICATION NOTICE */}
       {showVerificationNotice && (
@@ -274,6 +293,7 @@ export default function Dashboard() {
           </Flex>
         </Box>
       )}
+
       {/* HEADER */}
       <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700">
@@ -428,6 +448,6 @@ export default function Dashboard() {
         isOpen={showTrialWelcome}
         onClose={() => setShowTrialWelcome(false)}
       />
-    </Box>
+    </Box >
   );
 }

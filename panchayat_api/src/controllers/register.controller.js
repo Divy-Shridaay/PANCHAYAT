@@ -442,8 +442,6 @@ export const deactivateUser = async (req, res) => {
       {
         isPaid: false,
         isPendingVerification: false,
-        paymentStartDate: null,
-        paymentEndDate: null,
         trialStartDate: new Date()
       },
       { new: true }
@@ -518,9 +516,6 @@ export const updateUserModules = async (req, res) => {
       const startDate = new Date();
       const endDate = new Date(startDate);
       endDate.setFullYear(startDate.getFullYear() + 1);
-
-      updateData.paymentStartDate = startDate;
-      updateData.paymentEndDate = endDate;
 
       // ✅ Granular module-wise dates
       // ✅ Granular module-wise dates (Flattened)
@@ -728,48 +723,24 @@ export const getUserStatus = async (req, res) => {
       daysSinceTrial = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
     }
 
-    // Calculate subscription expiry
-    let daysUntilExpiry = null;
-    let isSubscriptionExpired = false;
-    let minExpiryDate = null;
+    // Calculate subscription expiry per module
+    const expiryDays = {};
+    const moduleKeys = ['pedhinamu', 'rojmel', 'jaminMehsul'];
 
-    // 1. Try to find earliest expiry from flattened module dates for ACTIVE modules
-    if (user.modules) {
-      const moduleKeys = ['pedhinamu', 'rojmel', 'jaminMehsul'];
-      moduleKeys.forEach(key => {
-        // Check if module is active (user has access)
-        // Construct field name dynamically: e.g., pedhinamuEndDate
-        const endField = `${key}EndDate`;
-
-        if (user.modules[key] === true && user[endField]) {
-          const modEnd = new Date(user[endField]);
-          if (!minExpiryDate || modEnd < minExpiryDate) {
-            minExpiryDate = modEnd;
-          }
-        }
-      });
-    }
-
-    // 2. Also check global paymentEndDate to ensure we catch manual overrides or legacy data
-    if (user.paymentEndDate) {
-      const globalEnd = new Date(user.paymentEndDate);
-      if (!minExpiryDate || globalEnd < minExpiryDate) {
-        minExpiryDate = globalEnd;
+    moduleKeys.forEach(key => {
+      const endField = `${key}EndDate`;
+      if (user.modules?.[key] === true && user[endField]) {
+        const modEnd = new Date(user[endField]);
+        const timeDiff = modEnd - now;
+        const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        expiryDays[key] = daysLeft;
+      } else {
+        expiryDays[key] = null;
       }
-    }
-
-    if (user.isPaid && minExpiryDate) {
-      const timeDiff = minExpiryDate - now;
-      daysUntilExpiry = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-      if (daysUntilExpiry <= 0) {
-        isSubscriptionExpired = true;
-      }
-    }
+    });
 
     // Calculate access
     const isUnderTrial = daysSinceTrial < 8;
-    const hasActiveSubscription = user.isPaid && !isSubscriptionExpired;
     const isPending = user.isPendingVerification;
 
     // Use persistent pendingModules from user profile
@@ -781,20 +752,18 @@ export const getUserStatus = async (req, res) => {
 
     // Per-module access:
     // If a module is already paid/trial and NOT expired, it's accessible.
-    // If it's pending but ALREADY active (renewal), we keep it accessible.
     const modulesAccess = {
-      pedhinamu: (user.modules?.pedhinamu ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
-      rojmel: (user.modules?.rojmel ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
-      jaminMehsul: (user.modules?.jaminMehsul ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin'),
+      pedhinamu: (user.modules?.pedhinamu ?? isUnderTrial) && (expiryDays.pedhinamu === null || expiryDays.pedhinamu > 0 || user.role === 'admin'),
+      rojmel: (user.modules?.rojmel ?? isUnderTrial) && (expiryDays.rojmel === null || expiryDays.rojmel > 0 || user.role === 'admin'),
+      jaminMehsul: (user.modules?.jaminMehsul ?? isUnderTrial) && (expiryDays.jaminMehsul === null || expiryDays.jaminMehsul > 0 || user.role === 'admin'),
     };
 
     // Printing: Block if pending verification AND not already allowed.
-    const canPrint = (user.pedhinamuPrintAllowed ?? isUnderTrial) && (!isSubscriptionExpired || user.role === 'admin');
+    const canPrint = (user.pedhinamuPrintAllowed ?? isUnderTrial) && (expiryDays.pedhinamu === null || expiryDays.pedhinamu > 0 || user.role === 'admin');
 
     const statusData = {
       daysSinceTrial,
-      daysUntilExpiry,
-      isSubscriptionExpired,
+      expiryDays, // { pedhinamu: 28, rojmel: 15, jaminMehsul: null }
       modulesAccess,
       pendingModules,
       moduleDates: user.moduleDates, // New addition
@@ -950,8 +919,6 @@ export const updateCurrentUserProfile = async (req, res) => {
     delete updateData.resetTokenExpiry;
     delete updateData.createdAt;
     delete updateData.updatedAt;
-    delete updateData.paymentStartDate;
-    delete updateData.paymentEndDate;
     delete updateData.trialStartDate;
     delete updateData.isPaid;
     delete updateData.isPendingVerification;

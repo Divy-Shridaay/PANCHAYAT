@@ -67,9 +67,7 @@ const UserSchema = new mongoose.Schema({
   },
   pedhinamuPrintAllowed: { type: Boolean },
   // Pedhinamu print override (admin can allow/deny printing irrespective of trial/payment)
-  // Payment and subscription dates
-  paymentStartDate: { type: Date },
-  paymentEndDate: { type: Date },
+
 
   // Granular module-wise dates
   pedhinamuStartDate: { type: Date },

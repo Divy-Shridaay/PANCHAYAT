@@ -22,8 +22,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import CameraCapture from "../components/CameraCapture";
-import { apiFetch } from "../utils/api.js";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.shridaay.com";
+import { apiFetch, API_BASE_URL } from "../utils/api.js";
 
 
 const gujaratiToEnglishDigits = (str) => {
@@ -362,17 +361,23 @@ export default function FullForm() {
     const applicantA = form.applicantAadhaar.replace(/\D/g, "");
     const panchAadhaars = form.panch.map((p) => p.aadhaar.replace(/\D/g, ""));
 
-    // if (panchAadhaars.includes(applicantA)) {
-    //   toast({
-    //     title: t("error"),
-    //     description: t("aadhaarDuplicateApplicant"),
-    //     status: "error",
-    //     duration: 3000,
-    //     position: "top",
-    //   });
-    //   return;
-    // }
+    // ------------------------------------
+    // DUPLICATE CHECKS
+    // ------------------------------------
 
+    // 1. Applicant Aadhaar vs Panch Aadhaars
+    if (panchAadhaars.includes(applicantA)) {
+      toast({
+        title: t("error"),
+        description: "અરજદાર અને પંચનો આધાર નંબર સમાન ન હોઈ શકે",
+        status: "error",
+        duration: 3000,
+        position: "top",
+      });
+      return;
+    }
+
+    // 2. Panch vs Panch Aadhaar
     const duplicatePanchAadhar = panchAadhaars.find(
       (a, i) => a && panchAadhaars.indexOf(a) !== i
     );
@@ -380,7 +385,39 @@ export default function FullForm() {
     if (duplicatePanchAadhar) {
       toast({
         title: t("error"),
-        description: t("aadhaarDuplicatePanch"),
+        description: "બે પંચના આધાર નંબર સમાન ન હોઈ શકે",
+        status: "error",
+        duration: 3000,
+        position: "top",
+      });
+      return;
+    }
+
+    // 3. Applicant Mobile vs Panch Mobiles
+    const applicantM = form.applicantMobile.replace(/\D/g, "").slice(-10);
+    const panchMobiles = form.panch.map((p) => (p.mobile || "").replace(/\D/g, "").slice(-10));
+
+    // Filter out empty mobile numbers just in case, though validation requires them
+    if (applicantM && panchMobiles.includes(applicantM)) {
+      toast({
+        title: t("error"),
+        description: "અરજદાર અને પંચનો મોબાઇલ નંબર સમાન ન હોઈ શકે",
+        status: "error",
+        duration: 3000,
+        position: "top",
+      });
+      return;
+    }
+
+    // 4. Panch vs Panch Mobile
+    const duplicatePanchMobile = panchMobiles.find(
+      (m, i) => m && panchMobiles.indexOf(m) !== i
+    );
+
+    if (duplicatePanchMobile) {
+      toast({
+        title: t("error"),
+        description: "બે પંચના મોબાઇલ નંબર સમાન ન હોઈ શકે",
         status: "error",
         duration: 3000,
         position: "top",
@@ -518,11 +555,11 @@ export default function FullForm() {
 
     const cleanForm = {
       ...form,
-      applicantMobile: form.applicantMobile.replace(/\D/g, ""),
+      applicantMobile: form.applicantMobile.replace(/\D/g, "").slice(-10),
       applicantAadhaar: form.applicantAadhaar.replace(/\D/g, ""),
       panch: form.panch.map((p) => ({
         ...p,
-        mobile: (p.mobile || "").replace(/\D/g, ""),
+        mobile: (p.mobile || "").replace(/\D/g, "").slice(-10),
         aadhaar: (p.aadhaar || "").replace(/\D/g, ""),
       })),
     };
@@ -808,12 +845,13 @@ export default function FullForm() {
                   type="number"
                   min={18}
                   max={120}
+                  maxLength={3}
                   borderColor={
                     invalidFields[`panch_${i}_age`] ? "red.500" : "#CBD5E0"
                   }
                   value={p.age}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                     updatePanch(i, "age", val);
                   }}
                 />
@@ -993,10 +1031,13 @@ export default function FullForm() {
                 <FormLabel fontWeight="600">{t("deceasedPersonAge")}</FormLabel>
                 <Input
                   {...inputStyle}
+                  {...inputStyle}
                   value={p.age}
+                  maxLength={3}
                   onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                     const updated = [...form.deceasedPersons];
-                    updated[i].age = e.target.value;
+                    updated[i].age = val;
                     handleChange("deceasedPersons", updated);
                   }}
                 />

@@ -1032,9 +1032,11 @@ export default function Pedhinamu() {
                                     bg="gray.100"
                                     placeholder={t("age")}
                                     value={form.mukhyaBirthAge}
+                                    isReadOnly={form.mukhyaIsDeceased}
+                                    maxLength={3}
                                     onChange={(e) => {
-                                        const v = e.target.value;
-                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                        if (form.mukhyaIsDeceased) return;
+                                        const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                         setForm({ ...form, mukhyaBirthAge: v });
                                     }}
                                 />
@@ -1082,9 +1084,9 @@ export default function Pedhinamu() {
                                         bg="gray.100"
                                         placeholder={t("age")}
                                         value={form.mukhyaDeathAge}
+                                        maxLength={3}
                                         onChange={(e) => {
-                                            const v = e.target.value;
-                                            if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                            const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                             setForm({ ...form, mukhyaDeathAge: v });
                                         }}
                                     />
@@ -1386,10 +1388,10 @@ export default function Pedhinamu() {
                                             placeholder={t("age")}
                                             value={h.isDeceased ? "" : h.age}
                                             isReadOnly={h.isDeceased}
+                                            maxLength={3}
                                             onChange={(e) => {
                                                 if (h.isDeceased) return;
-                                                const value = e.target.value;
-                                                if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                 updateHeir(i, "age", value);
                                             }}
                                         />
@@ -1472,9 +1474,9 @@ export default function Pedhinamu() {
                                                 bg="gray.100"
                                                 value={h.age || ""}
                                                 placeholder={t("age")}
+                                                maxLength={3}
                                                 onChange={(e) => {
-                                                    const v = e.target.value;
-                                                    if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                    const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                     updateHeir(i, "age", v);
                                                 }}
                                             />
@@ -1593,10 +1595,10 @@ export default function Pedhinamu() {
                                                                 placeholder={t("age")}
                                                                 value={h.subFamily.spouse.isDeceased ? "" : h.subFamily.spouse.age}
                                                                 isReadOnly={h.subFamily.spouse.isDeceased}
+                                                                maxLength={3}
                                                                 onChange={(e) => {
                                                                     if (h.subFamily.spouse.isDeceased) return;
-                                                                    const value = e.target.value;
-                                                                    if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                    const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                     const u = [...form.heirs];
                                                                     u[i].subFamily.spouse.age = value;
                                                                     setForm({ ...form, heirs: u });
@@ -1896,10 +1898,10 @@ export default function Pedhinamu() {
                                                                                     value={child.spouse?.isDeceased ? "" : (child.spouse?.age || "")}
                                                                                     isReadOnly={child.spouse?.isDeceased}
                                                                                     placeholder={t("age")}
+                                                                                    maxLength={3}
                                                                                     onChange={(e) => {
                                                                                         if (child.spouse?.isDeceased) return;
-                                                                                        const value = e.target.value;
-                                                                                        if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                                        const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                                         const u = structuredClone(form.heirs);
                                                                                         u[i].subFamily.children[ci].spouse.age = value;
                                                                                         setForm({ ...form, heirs: u });
@@ -2022,9 +2024,9 @@ export default function Pedhinamu() {
                                                                                     bg="gray.100"
                                                                                     value={child.spouse?.age || ""}
                                                                                     placeholder={t("age")}
+                                                                                    maxLength={3}
                                                                                     onChange={(e) => {
-                                                                                        const v = e.target.value;
-                                                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                                        const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                                         const u = structuredClone(form.heirs);
                                                                                         u[i].subFamily.children[ci].spouse.age = v;
                                                                                         setForm({ ...form, heirs: u });
@@ -2217,10 +2219,10 @@ export default function Pedhinamu() {
                                                                                                 placeholder={t("age")}
                                                                                                 value={gc.isDeceased ? "" : gc.age}
                                                                                                 isReadOnly={gc.isDeceased}
+                                                                                                maxLength={3}
                                                                                                 onChange={(e) => {
                                                                                                     if (gc.isDeceased) return;
-                                                                                                    const value = e.target.value;
-                                                                                                    if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                                                    const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                                                     const u = structuredClone(form.heirs);
                                                                                                     u[i].subFamily.children[ci].children[gi].age = value;
                                                                                                     setForm({ ...form, heirs: u });
@@ -2309,12 +2311,11 @@ export default function Pedhinamu() {
                                                                                                     size="lg"
                                                                                                     width="120px"
                                                                                                     bg="gray.100"
-
                                                                                                     value={gc.age || ""}
                                                                                                     placeholder={t("age")}
+                                                                                                    maxLength={3}
                                                                                                     onChange={(e) => {
-                                                                                                        const v = e.target.value;
-                                                                                                        if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                                                        const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                                                         const u = structuredClone(form.heirs);
                                                                                                         u[i].subFamily.children[ci].children[gi].age = v;
                                                                                                         setForm({ ...form, heirs: u });
@@ -2455,10 +2456,10 @@ export default function Pedhinamu() {
                                                                         placeholder={t("age")}
                                                                         value={child.isDeceased ? "" : child.age}
                                                                         isReadOnly={child.isDeceased}
+                                                                        maxLength={3}
                                                                         onChange={(e) => {
                                                                             if (child.isDeceased) return;
-                                                                            const value = e.target.value;
-                                                                            if (value && !/^[0-9]{1,3}$/.test(value)) return;
+                                                                            const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                             const u = structuredClone(form.heirs);
                                                                             u[i].subFamily.children[ci].age = value;
                                                                             setForm({ ...form, heirs: u });
@@ -2542,9 +2543,9 @@ export default function Pedhinamu() {
                                                                         bg="gray.100"
                                                                         value={child.age || ""}
                                                                         placeholder={t("age")}
+                                                                        maxLength={3}
                                                                         onChange={(e) => {
-                                                                            const v = e.target.value;
-                                                                            if (v && !/^[0-9]{1,3}$/.test(v)) return;
+                                                                            const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                                                             const u = structuredClone(form.heirs);
                                                                             u[i].subFamily.children[ci].age = v;
                                                                             setForm({ ...form, heirs: u });

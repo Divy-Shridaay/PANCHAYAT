@@ -250,7 +250,7 @@ export default function Settings() {
               <FormControl>
                 <FormLabel>પૂર્ણ નામ</FormLabel>
                 <Input
-                  value={formData.name || `${formData.firstName || ""} ${formData.middleName || ""} ${formData.lastName || ""}`.trim()}
+                  value={formData.name ?? `${formData.firstName || ""} ${formData.middleName || ""} ${formData.lastName || ""}`.trim()}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   isReadOnly={!editing}
                   bg={editing ? "white" : "gray.50"}
@@ -402,14 +402,9 @@ export default function Settings() {
                         const startKey = `${mod.id}StartDate`;
                         const endKey = `${mod.id}EndDate`;
 
-                        // Try flattened fields first, fallback to legacy global if specific ones missing && module is active
+                        // Try flattened fields first
                         let start = user[startKey];
                         let end = user[endKey];
-
-                        if (!start && !end && user.modules?.[mod.id]) {
-                          start = user.paymentStartDate;
-                          end = user.paymentEndDate;
-                        }
 
                         if (!start && !end) return null;
 

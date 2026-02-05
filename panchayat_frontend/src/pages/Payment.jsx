@@ -96,19 +96,55 @@ export default function Payment() {
             if (statusRes.ok) {
                 const user = statusData;
 
-                // Filter modules: Show only if NOT active AND NOT pending
+                // Filter modules: Show if (NOT active AND NOT pending) OR (active BUT expiring soon)
                 setModules(prev => prev.filter(mod => {
                     const hasAccess = user.modulesAccess?.[mod.id];
                     const isPending = user.pendingModules?.[mod.id];
-                    return !hasAccess && !isPending;
+                    const expiryDays = user.expiryDays?.[mod.id];
+
+                    // Allow renewal if expiring in 40 days or less
+                    const isExpiringSoon = expiryDays !== null && expiryDays !== undefined && expiryDays <= 40;
+
+                    // Allow purchase if user is in trial (not paid)
+                    const isTrial = !user.isPaid;
+
+                    if (isExpiringSoon) return true; // Renewal
+
+                    // If user has access (Active Trial) and is not paid, only show Pedhinamu (for limit removal).
+                    // Other modules work fine in trial so we hide them.
+                    if (hasAccess && isTrial && mod.id === 'pedhinamu') return true;
+
+                    // Standard: Hide active/pending modules. Show if expired or not active.
+                    // Note: If trial expired, hasAccess will be false, so this returns true (Show All).
+
+                    return !hasAccess && !isPending; // Standard new purchase
                 }));
 
-                // Only default to TRUE if they DON'T have access AND they AREN'T pending verification for it
-                setSelectedModules({
-                    pedhinamu: !user.modulesAccess?.pedhinamu && !user.pendingModules?.pedhinamu,
-                    rojmel: !user.modulesAccess?.rojmel && !user.pendingModules?.rojmel,
-                    jaminMehsul: !user.modulesAccess?.jaminMehsul && !user.pendingModules?.jaminMehsul,
+                // Default selection logic:
+                // 1. New purchase (standard logic)
+                // 2. Renewal (if expiring soon)
+                // 3. User can manually deselect
+                const newSelection = { ...selectedModules };
+
+                ['pedhinamu', 'rojmel', 'jaminMehsul'].forEach(key => {
+                    const hasAccess = user.modulesAccess?.[key];
+                    const isPending = user.pendingModules?.[key];
+                    const expiryDays = user.expiryDays?.[key];
+                    const isExpiringSoon = expiryDays !== null && expiryDays !== undefined && expiryDays <= 40;
+                    const isTrial = !user.isPaid;
+
+                    // Select if:
+                    // 1. Not active & Not pending (Standard)
+                    // 2. Expiring soon (Renewal)
+                    // 3. Active Trial & Pedhinamu (Limit Removal)
+                    if ((!hasAccess && !isPending) || isExpiringSoon || (hasAccess && isTrial && key === 'pedhinamu')) {
+                        newSelection[key] = true;
+                    } else {
+                        newSelection[key] = false;
+                    }
                 });
+
+                setSelectedModules(newSelection);
             }
         } catch (err) {
             console.error("Error fetching user status/pricing:", err);
