@@ -284,14 +284,14 @@ export default function RecordView() {
         }
 
         // Optimized Parameters for Horizontal Mode (60px Font)
-        const charWidth = (isRotated ? 8.5 : 32) * scale;
-        const minWidth = (isRotated ? 120 : 400) * scale;
-        const hGap = (isRotated ? 30 : 120) * scale;
-        const vGap = (isRotated ? 120 : (isSmall ? 300 : 660)) * scale;
-        const paddingH = (isRotated ? 20 : 80) * scale;
-        const topMargin = (isRotated ? 80 : 100) * scale;
-        const marginX = (isRotated ? 5 : 100) * scale;
-        const depthOffset = (isRotated ? 130 : (isSmall ? 280 : 440)) * scale;
+        const charWidth = (isRotated ? 8.5 : 28) * scale;
+        const minWidth = (isRotated ? 120 : 350) * scale;
+        const hGap = (isRotated ? 30 : 100) * scale;
+        const vGap = (isRotated ? 120 : 550) * scale;
+        const paddingH = (isRotated ? 20 : 60) * scale;
+        const topMargin = (isRotated ? 80 : 80) * scale;
+        const marginX = (isRotated ? 5 : 80) * scale;
+        const depthOffset = (isRotated ? 130 : 350) * scale;
 
         const strokeWidth = (isRotated ? 2 : 5) * scale;
         const strokeColor = "#000";
@@ -416,8 +416,19 @@ export default function RecordView() {
 
         render(root);
 
-        const totalWidth = totalTreeWidth + marginX * 2;
-        const totalHeight = maxReachedY + 10;
+        const calculatedWidth = totalTreeWidth + marginX * 2;
+        const calculatedHeight = maxReachedY + 300;
+
+        // Enforce minimum dimensions to prevent "zooming in" on small trees
+        const MIN_WIDTH = 2500;
+        const MIN_HEIGHT = 2000;
+
+        const finalWidth = Math.max(calculatedWidth, MIN_WIDTH);
+        const finalHeight = Math.max(calculatedHeight, MIN_HEIGHT);
+
+        // Center the tree in the new larger box if needed
+        const xOffset = (finalWidth - calculatedWidth) / 2;
+        const yOffset = (finalHeight - calculatedHeight) / 2;
 
         if (isRotated) {
             svgNodes += `<text x="${totalTreeWidth / 2 + marginX}" y="${topMargin - 55 * scale}" text-anchor="middle" font-size="${30 * scale}" font-weight="700" font-family="Noto Serif Gujarati" fill="#000">પેઢીનામું</text>`;
@@ -426,8 +437,8 @@ export default function RecordView() {
 
         if (isRotated) {
             return `
-            <svg class="rotated-tree" width="${totalHeight}" height="${totalWidth}" viewBox="0 0 ${totalHeight} ${totalWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 255mm; max-width: 100%; height: auto; display: block; margin-left: 0; margin-right: auto; page-break-inside: avoid;">
-                <g transform="translate(0, ${totalWidth}) rotate(-90)">
+            <svg class="rotated-tree" width="${calculatedHeight}" height="${calculatedWidth}" viewBox="0 0 ${calculatedHeight} ${calculatedWidth}" xmlns="http://www.w3.org/2000/svg" style="max-height: 255mm; max-width: 100%; height: auto; display: block; margin-left: 0; margin-right: auto; page-break-inside: avoid;">
+                <g transform="translate(0, ${calculatedWidth}) rotate(-90)">
                     ${svgLines}
                     ${svgNodes}
                 </g>
@@ -435,11 +446,20 @@ export default function RecordView() {
             `;
         }
 
+        // Re-construct the non-rotated return
+        // We need to apply the offset to the group or viewBox. 
+        // EASIER: Just use the larger viewBox. The content (x,y) starts at 0,0 relative to calculatedWidth.
+        // We need to shift content to center it.
+
         return `
-        <svg width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="max-width: ${isSmall ? '70%' : '100%'}; height: auto; display: block; margin: 20px auto; page-break-inside: avoid;">
-            ${svgLines}
-            ${svgNodes}
-        </svg>
+        <div class="std-tree-box">
+            <svg width="100%" height="100%" viewBox="0 0 ${finalWidth} ${finalHeight}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="display: block; margin: 0 auto;">
+                <g transform="translate(${xOffset}, ${yOffset})">
+                    ${svgLines}
+                    ${svgNodes}
+                </g>
+            </svg>
+        </div>
     `;
     }
 
