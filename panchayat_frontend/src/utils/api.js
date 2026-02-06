@@ -6,11 +6,9 @@ import { useNavigate } from "react-router-dom";
  * - Localhost: Use direct backend URL (no /api because buildUrl will add it)
  * - Production: Use base domain (no /api because all calls include /api prefix)
  */
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
-  ((typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
-    ? "http://localhost:5000"
-    : "https://panchayat.shridaay.com:5000"); // Default fallback with port 5000
-
+export const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
+  ? "http://localhost:5000"
+  : "https://panchayat.shridaay.com";   // ✅ No /api - it's in the apiFetch calls
 
 /**
  * 🔧 Safely join base URL + path
