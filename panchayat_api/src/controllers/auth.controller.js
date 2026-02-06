@@ -3,11 +3,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
- 
+
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
- 
+
     // 1) HARD-CODED ADMIN LOGIN
     if (username === "admin" && password === "admin") {
       const token = jwt.sign(
@@ -15,7 +15,7 @@ export const login = async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: "7d" }
       );
- 
+
       return res.json({
         message: "એડમિન લૉગિન સફળ રહ્યું",
         token,
@@ -27,80 +27,80 @@ export const login = async (req, res) => {
         }
       });
     }
- 
+
     // 2) NORMAL USER LOGIN
     const user = await User.findOne({ username, isDeleted: false });
     if (!user)
       return res.status(404).json({ message: "વપરાશકર્તા મળ્યો નથી" });
- 
+
     // Ensure user has a password set before comparing
     if (!user.password) {
       console.warn("User has no password set:", user._id);
       return res.status(400).json({ message: "પાસવર્ડ સેટ કરેલ નથી" });
     }
- 
+
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ message: "ખોટો પાસવર્ડ " });
- 
- 
- 
+
+
+
     const token = jwt.sign(
       { _id: user._id, role: user.role, gam: user.gam },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
- 
+
     const userData = user.toObject();
     delete userData.password;
- 
+
     return res.json({
-     message: "લૉગિન સફળ રહ્યું",
- 
+      message: "લૉગિન સફળ રહ્યું",
+
       token,
       user: userData,
     });
- 
+
   } catch (err) {
     console.error("LOGIN ERROR:", err?.message || err, { body: req.body });
     return res.status(500).json({ message: "લૉગિન નિષ્ફળ રહ્યું", error: err.message });
   }
 };
- 
+
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
- 
+
     const user = await User.findOne({ email, isDeleted: false });
     if (!user) {
       return res.status(404).json({ message: "કૃપા કરીને માન્ય ઇમેઇલ દાખલ કરો" });
     }
- 
+
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
- 
+
     user.resetToken = resetToken;
     user.resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
- 
+
     // ✅ Create transporter for email
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  requireTLS: true,
-});
- 
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      requireTLS: true,
+    });
+
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
- 
-  await transporter.sendMail({
-  from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
-  to: email,
-  subject: "Password Reset Request",
-  html: `
+
+    await transporter.sendMail({
+      from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
+      to: email,
+      subject: "Password Reset Request",
+      html: `
 <!-- Header -->
 <div style="text-align:center;">
   <h2 style="margin:10px 0 0;">
@@ -159,101 +159,101 @@ panchayat.shridaay.com
 </a>
 </p>
 `,
-});
- 
- 
+    });
+
+
     res.json({ message: "પાસવર્ડ રીસેટ ઇમેઇલ સફળતાપૂર્વક મોકલવામાં આવ્યો છે" });
- 
+
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err);
     res.status(500).json({
-     message: "પાસવર્ડ રીસેટ ઇમેઇલ મોકલવામાં નિષ્ફળતા",
- 
+      message: "પાસવર્ડ રીસેટ ઇમેઇલ મોકલવામાં નિષ્ફળતા",
+
       error: err.message,
     });
   }
 };
- 
- 
+
+
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
- 
+
     const user = await User.findOne({
       resetToken: token,
       resetTokenExpiry: { $gt: new Date() },
       isDeleted: false
     });
- 
+
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired reset token" });
     }
- 
+
     // Check if new password is the same as current password
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
-      return res.status(400).json({ message: "" });
+      return res.status(400).json({ message: "New password cannot be the same as the previous password" });
     }
- 
+
     // Hash new password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
- 
+
     user.password = hashedPassword;
     user.resetToken = undefined;
     user.resetTokenExpiry = undefined;
     await user.save();
- 
+
     res.json({ message: "પાસવર્ડ સફળતાપૂર્વક બદલાયો છે" });
- 
+
   } catch (err) {
     console.log(err);
     return res.status(500).json({ message: "પાસવર્ડ બદલી શકાયો નથી", error: err.message });
   }
 };
- 
- 
- 
+
+
+
 export const changePassword = async (req, res) => {
   try {
     const userId = req.user._id;
     const { oldPassword, newPassword } = req.body;
- 
+
     if (!oldPassword || !newPassword) {
       return res.status(400).json({
         message: "જૂનો અને નવો પાસવર્ડ આપવો ફરજિયાત છે"
       });
     }
- 
+
     const user = await User.findById(userId);
     if (!user || user.isDeleted) {
       return res.status(404).json({
         message: "વપરાશકર્તા મળ્યો નથી"
       });
     }
- 
+
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({
         message: "જૂનો પાસવર્ડ ખોટો છે"
       });
     }
- 
+
     const isSame = await bcrypt.compare(newPassword, user.password);
     if (isSame) {
       return res.status(400).json({
         message: "નવો પાસવર્ડ જૂના પાસવર્ડ જેવો ન હોવો જોઈએ"
       });
     }
- 
+
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
- 
+
     return res.json({
       message: "પાસવર્ડ સફળતાપૂર્વક બદલાયો છે"
     });
- 
+
   } catch (err) {
     console.error("CHANGE PASSWORD ERROR:", err);
     return res.status(500).json({
