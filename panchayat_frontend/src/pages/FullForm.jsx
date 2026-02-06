@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import CameraCapture from "../components/CameraCapture";
-import { apiFetch, API_BASE_URL } from "../utils/api.js";
+import { apiFetch } from "../utils/api.js";
 
 const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
   ? "http://localhost:5000"
