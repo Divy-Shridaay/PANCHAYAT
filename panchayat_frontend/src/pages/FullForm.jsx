@@ -606,6 +606,7 @@ export default function FullForm() {
       if (panch.photoFile) {
         console.log(`📸 Adding NEW panch photo ${index}:`, panch.photoFile.name);
         formData.append("panchPhotos", panch.photoFile);
+        formData.append("panchPhotoIndices", index);
       }
     });
 
@@ -856,6 +857,11 @@ export default function FullForm() {
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                     updatePanch(i, "age", val);
+                  }}
+                  onKeyDown={(e) => {
+                    if (["e", "E", "+", "-"].includes(e.key)) {
+                      e.preventDefault();
+                    }
                   }}
                 />
 

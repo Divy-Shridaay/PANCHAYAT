@@ -269,15 +269,20 @@ export const saveFullForm = async (req, res) => {
     if (req.files?.panchPhotos?.length > 0) {
       console.log(`📷 Panch photos received: ${req.files.panchPhotos.length}`);
 
-      req.files.panchPhotos.forEach((file, index) => {
-        if (panch[index]) {
-          panch[index].photo = `/uploads/${file.filename}`;
-          console.log(
-            `✅ Panch[${index}] photo assigned:`,
-            panch[index].photo
-          );
+      // Helper to consistently get indices as array
+      let indices = req.body.panchPhotoIndices;
+      if (!Array.isArray(indices)) {
+        indices = [indices];
+      }
+
+      req.files.panchPhotos.forEach((file, i) => {
+        const targetIndex = parseInt(indices[i]);
+
+        if (!isNaN(targetIndex) && panch[targetIndex]) {
+          panch[targetIndex].photo = `/uploads/${file.filename}`;
+          console.log(`✅ Panch[${targetIndex}] photo assigned:`, panch[targetIndex].photo);
         } else {
-          console.warn(`⚠️ Panch index ${index} not found`);
+          console.warn(`⚠️ Invalid target index ${targetIndex} for file ${file.filename}`);
         }
       });
     } else {
