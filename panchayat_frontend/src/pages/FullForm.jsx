@@ -267,12 +267,12 @@ export default function FullForm() {
         applicantPhoto: existingApplicantPhoto,
 
         // 🔥 Preview URL (display ke liye)
-       applicantPhotoPreview: existingApplicantPhoto
-          ? `${API_BASE_URL}${existingApplicantPhoto}`
+      //  applicantPhotoPreview: existingApplicantPhoto
+          // ? `${API_BASE_URL}${existingApplicantPhoto}`
 
 
-            //  applicantPhotoPreview: existingApplicantPhoto
-        //  ? `${API_BASE_URL}${existingApplicantPhoto.startsWith('/uploads') ? '/api' + existingApplicantPhoto : existingApplicantPhoto}`
+              applicantPhotoPreview: existingApplicantPhoto
+         ? `${API_BASE_URL}${existingApplicantPhoto.startsWith('/uploads') ? '/api' + existingApplicantPhoto : existingApplicantPhoto}`
 
           : null,
         applicantPhotoSource: savedForm.applicantPhotoSource || (existingApplicantPhoto ?

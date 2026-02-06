@@ -23,6 +23,8 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static('uploads'));
+ app.use('/api/uploads', express.static('uploads'));
+ // ✅ Serve via /api for production proxy
 
 // routes
 app.use("/api/auth", authRoutes);
