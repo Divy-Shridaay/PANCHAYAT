@@ -216,27 +216,17 @@ export default function Payment() {
             formData.append("paymentMethod", paymentMethod);
             formData.append("screenshot", selectedFile);
 
-            // Get token from localStorage
-            const token = localStorage.getItem("token");
-            if (!token) {
-                setSubmitError("લૉગિન ટોકન મળ્યો નથી. કૃપા કરીને ફરીથી લૉગિન કરો.");
-                setIsSubmitting(false);
-                return;
-            }
-
-            // Get API URL from environment or use default
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-
             // 1. Submit payment details and file
-            const paymentResponse = await fetch(`${apiUrl}/api/payment/submit`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
+            // apiFetch handles FormData and Authorization automatically
+            const { response: paymentResponse, data: paymentData } = await apiFetch(
+                "/api/payment/submit",
+                {
+                    method: "POST",
+                    body: formData,
                 },
-                body: formData
-            });
-
-            const paymentData = await paymentResponse.json();
+                navigate,
+                toast
+            );
 
             if (!paymentResponse.ok) {
                 throw new Error(paymentData.message || "ચુકવણી સબમિટ કરવામાં ભૂલ આવી");
