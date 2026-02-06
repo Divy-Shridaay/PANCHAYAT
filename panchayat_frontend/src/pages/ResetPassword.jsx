@@ -33,6 +33,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
   const [isValidToken, setIsValidToken] = useState(true);
 
   useEffect(() => {
@@ -88,6 +89,7 @@ export default function ResetPassword() {
 
       if (response.ok) {
         setMessage("Password reset successfully. You can now login with your new password.");
+        setMessageType("success");
         toast({
           title: "પાસવર્ડ સફળતાપૂર્વક બદલાયો છે",
           status: "success",
@@ -99,15 +101,36 @@ export default function ResetPassword() {
           navigate("/login");
         }, 2000);
       } else {
-        setIsValidToken(false);
-        setMessage(data.message || "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળતા");
-        toast({
-          title: data.message || "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળતા",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-          position: "top",
-        });
+        const backendMessage = (data && data.message) || "";
+
+        // If token is invalid or expired, show the invalid-token UI
+        if (response.status === 401 || /invalid|expired/i.test(backendMessage)) {
+          setIsValidToken(false);
+          setMessage("Invalid reset link");
+          setMessageType("error");
+        } else if (/same|previous|identical/i.test(backendMessage) || backendMessage.toLowerCase().includes('same password')) {
+          // Backend indicated the new password is the same as the previous one
+          const samePwdMsg = "આ પાસવર્ડ પહેલેથી ઉપયોગમાં છે. સુરક્ષા માટે કૃપા કરીને અલગ નવો પાસવર્ડ દાખલ કરો.";
+          setMessage(samePwdMsg);
+          setMessageType("error");
+          toast({
+            title: samePwdMsg,
+            status: "error",
+            duration: 4000,
+            isClosable: true,
+            position: "top",
+          });
+        } else {
+          setMessage(backendMessage || "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળતા");
+          setMessageType("error");
+          toast({
+            title: backendMessage || "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળતા",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "top",
+          });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -241,9 +264,9 @@ export default function ResetPassword() {
 
           {/* SUCCESS MESSAGE */}
           {message && (
-            <Alert status="success">
+            <Alert status={messageType}>
               <AlertIcon />
-              {message}
+              <Text>{message}</Text>
             </Alert>
           )}
 

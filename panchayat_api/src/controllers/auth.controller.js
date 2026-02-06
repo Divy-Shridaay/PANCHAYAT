@@ -192,7 +192,7 @@ export const resetPassword = async (req, res) => {
     // Check if new password is the same as current password
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
-      return res.status(400).json({ message: "નવો પાસવર્ડ તમારા હાલના પાસવર્ડ જેવો હોવો ન જોઈએ" });
+      return res.status(400).json({ message: "" });
     }
  
     // Hash new password
