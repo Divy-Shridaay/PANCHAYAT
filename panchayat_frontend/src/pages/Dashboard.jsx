@@ -98,6 +98,7 @@ export default function Dashboard() {
 
       if (response.ok) {
         setUserStatus(data);
+        
         // data example:
         // { canAccessModules: false }
       } else {
