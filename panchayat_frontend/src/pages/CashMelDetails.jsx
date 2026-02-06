@@ -66,8 +66,9 @@ const CashMelDetails = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const API_ROOT =
-    (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000") + "/api";
+    const API_ROOT = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
+    ? "http://localhost:5000/api"
+    : "https://panchayat.shridaay.com/api";
   const API_BASE = `${API_ROOT}/cashmel`;
 
   // ✅ HELPER FUNCTION FOR AUTHENTICATED FETCH

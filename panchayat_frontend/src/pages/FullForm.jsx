@@ -22,11 +22,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import CameraCapture from "../components/CameraCapture";
-import { apiFetch } from "../utils/api.js";
-
-const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
-  ? "http://localhost:5000"
-  : "https://panchayat.shridaay.com";
+import { apiFetch, API_BASE_URL } from "../utils/api.js";
 
 const gujaratiToEnglishDigits = (str) => {
   if (typeof str !== 'string') str = String(str || "");
@@ -267,12 +263,12 @@ export default function FullForm() {
         applicantPhoto: existingApplicantPhoto,
 
         // 🔥 Preview URL (display ke liye)
-      //  applicantPhotoPreview: existingApplicantPhoto
-          // ? `${API_BASE_URL}${existingApplicantPhoto}`
+        //  applicantPhotoPreview: existingApplicantPhoto
+        // ? `${API_BASE_URL}${existingApplicantPhoto}`
 
 
-              applicantPhotoPreview: existingApplicantPhoto
-         ? `${API_BASE_URL}${existingApplicantPhoto.startsWith('/uploads') ? '/api' + existingApplicantPhoto : existingApplicantPhoto}`
+        applicantPhotoPreview: existingApplicantPhoto
+          ? `${API_BASE_URL}${existingApplicantPhoto.startsWith('/uploads') ? '/api' + existingApplicantPhoto : existingApplicantPhoto}`
 
           : null,
         applicantPhotoSource: savedForm.applicantPhotoSource || (existingApplicantPhoto ?
@@ -615,7 +611,7 @@ export default function FullForm() {
 
     try {
       const { response: res, data: resData } = await apiFetch(
-        `/pedhinamu/form/${id}`,
+        `/api/pedhinamu/form/${id}`,
         {
           method: "POST",
           body: formData,
