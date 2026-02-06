@@ -23,7 +23,9 @@ const generateOTP = () => {
 // Generate random username
 const generateUsername = (firstName) => {
   const randomTwoDigit = Math.floor(10 + Math.random() * 90); // 10–99
-  const englishName = transliterateGujaratiToEnglish(firstName);
+  // Fallback if firstName is missing
+  const textToUse = firstName || "user";
+  const englishName = transliterateGujaratiToEnglish(textToUse);
   return `${englishName}_${randomTwoDigit}`;
 };
 
@@ -63,7 +65,7 @@ export const sendOTP = async (req, res) => {
 
     // Validate required fields
     // 1. Required fields
-    if (!firstName || !email || !phone || !pinCode || !taluko || !gam || !jillo) {
+    if (!email || !phone || !pinCode || !taluko || !gam || !jillo) {
       return res.status(400).json({
         message: "જરૂરી ફીલ્ડ ભરો"
       });
@@ -121,57 +123,57 @@ export const sendOTP = async (req, res) => {
 
     // Send OTP via email
     const htmlContent = `
-<!-- Header -->
-
-
-<h3>OTP Verification | OTP ચકાસણી</h3>
-
-<p><strong>નમસ્તે ${firstName},</strong></p>
-
-<p>
-Please use the OTP below to verify your email address.<br/>
-નીચે આપેલ OTP નો ઉપયોગ કરીને તમારું ઇમેઇલ ચકાસો.
-</p>
-
-<div style="text-align:center;margin:30px 0;">
-  <span style="
-    font-size:32px;
-    letter-spacing:6px;
-    background:#e0f2fe;
-    padding:15px 25px;
-    border-radius:10px;
-    color:#0369a1;
-    font-weight:bold;
-    display:inline-block;
-  ">
-    ${otp}
-  </span>
-</div>
-
-<p>
-⏱ This OTP is valid for <strong>10 minutes</strong> only.<br/>
-⏱ આ OTP માત્ર <strong>10 મિનિટ</strong> માટે માન્ય છે.
-</p>
-
-<p style="color:#b91c1c;font-weight:bold;">
-⚠ Do NOT share this OTP with anyone.<br/>
-⚠ આ OTP કોઈને પણ શેર કરશો નહીં.
-</p>
-
-<hr>
-
-<p style="font-size:13px;color:#666;">
-If you did not request this, please ignore this email.
-</p>
-
-<p>
-Regards,<br/>
-<strong>Panchayat System</strong><br/>
-<a href="https://panchayat.shridaay.com">
-panchayat.shridaay.com
-</a>
-</p>
-`;
+    <!DOCTYPE html>
+    <html lang="gu">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; border: 1px solid #e3ede8; }
+        .content { margin-bottom: 25px; }
+        .greeting { font-size: 18px; font-weight: bold; color: #1E4D2B; margin-bottom: 15px; }
+        .footer { border-top: 1px solid #eee; padding-top: 20px; font-size: 14px; color: #666; }
+        .otp-box { text-align:center; margin:30px 0; }
+        .otp-code { font-size:32px; letter-spacing:6px; background:#e0f2fe; padding:15px 25px; border-radius:10px; color:#0369a1; font-weight:bold; display:inline-block; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="content">
+          <h3 style="color: #1E4D2B; margin-top:0;">OTP Verification | OTP ચકાસણી</h3>
+          <p class="greeting">નમસ્તે ${firstName},</p>
+          
+          <p>Please use the OTP below to verify your email address.<br/>
+          નીચે આપેલ OTP નો ઉપયોગ કરીને તમારું ઇમેઇલ ચકાસો.</p>
+          
+          <div class="otp-box">
+            <span class="otp-code">${otp}</span>
+          </div>
+          
+          <p>⏱ This OTP is valid for <strong>10 minutes</strong> only.<br/>
+          ⏱ આ OTP માત્ર <strong>10 મિનિટ</strong> માટે માન્ય છે.</p>
+          
+          <p style="color:#b91c1c;font-weight:bold;">
+          ⚠ Do NOT share this OTP with anyone.<br/>
+          ⚠ આ OTP કોઈને પણ શેર કરશો નહીં.
+          </p>
+          
+          <p style="font-size:13px;color:#666;margin-top:20px;">
+          If you did not request this, please ignore this email.
+          </p>
+        </div>
+        
+        <div class="footer">
+          <p>આદર સહ,<br>
+          <strong>એડમિન ટીમ</strong><br>
+          Shridaay Technolabs<br>
+          it@shridaay.com</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
 
 
 
@@ -248,70 +250,57 @@ export const verifyOTP = async (req, res) => {
 
 
     const htmlContent = `
-<!-- Header -->
-<div style="text-align:center;">
-  
-  <h2 style="margin:10px 0 0;">${user.gam} Gram Panchayat</h2>
-  <p style="margin:4px;color:#555;">Taluka: ${user.taluko}</p>
-</div>
-
-<hr style="margin:25px 0" />
-
-<h3>Account Created Successfully | એકાઉન્ટ સફળતાપૂર્વક બનાવાયું</h3>
-
-<p><strong>Hello ${user.firstName} ${user.lastName},</strong></p>
-
-<p>
-Your account has been successfully created.<br/>
-તમારું એકાઉન્ટ સફળતાપૂર્વક બનાવવામાં આવ્યું છે.
-</p>
-
-<div style="margin:25px 0;padding:20px;
-            background:#f0fdf4;
-            border:1px solid #86efac;
-            border-radius:10px;">
-  <p style="margin:6px 0;">
-    <strong>Username:</strong> ${username}
-  </p>
-  <p style="margin:6px 0;">
-    <strong>Password:</strong> ${rawPassword}
-  </p>
-</div>
-
-
-
-
-<p style="margin-top:20px;">
-<strong>🔐 Login URL:</strong><br/>
-<a href="https://panchayat.shridaay.com/login">
-  https://panchayat.shridaay.com/login
-</a>
-</p>
-
-<p style="color:#dc2626;font-weight:bold;margin-top:20px;">
-⚠ Important: Please change your password after first login.<br/>
- પહેલી વખત Login કર્યા પછી Password બદલશો. <br/> 
-
-Do NOT share your password with anyone  <br/> 
-કોઈ સાથે તમારો પાસવર્ડ શેર ન કરો <br/> 
-
-પ્રથમ login પછી password બદલો
-</p>
-
-
- 
-
-
-<hr>
-
-
-
-<p>
-Regards,<br/>
-<strong>Panchayat System</strong><br/>
-
-</p>
-`;
+    <!DOCTYPE html>
+    <html lang="gu">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; border: 1px solid #e3ede8; }
+        .content { margin-bottom: 25px; }
+        .greeting { font-size: 18px; font-weight: bold; color: #1E4D2B; margin-bottom: 15px; }
+        .footer { border-top: 1px solid #eee; padding-top: 20px; font-size: 14px; color: #666; }
+        .cred-box { margin:25px 0; padding:20px; background:#f0fdf4; border:1px solid #86efac; border-radius:10px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="content">
+          <h3 style="color: #1E4D2B; margin-top:0;">Account Created Successfully | એકાઉન્ટ સફળતાપૂર્વક બનાવાયું</h3>
+          <p class="greeting">Hello ${user.firstName} ${user.lastName},</p>
+          
+          <p>Your account has been successfully created.<br/>
+          તમારું એકાઉન્ટ સફળતાપૂર્વક બનાવવામાં આવ્યું છે.</p>
+          
+          <div class="cred-box">
+            <p style="margin:6px 0;"><strong>Username:</strong> ${username}</p>
+            <p style="margin:6px 0;"><strong>Password:</strong> ${rawPassword}</p>
+          </div>
+          
+          <p style="margin-top:20px;">
+          <strong>🔐 Login URL:</strong><br/>
+          <a href="https://panchayat.shridaay.com/login" style="color:#059669;">https://panchayat.shridaay.com/login</a>
+          </p>
+          
+          <p style="color:#dc2626;font-weight:bold;margin-top:20px;">
+          ⚠ Important: Please change your password after first login.<br/>
+          પહેલી વખત Login કર્યા પછી Password બદલશો.<br/>
+          Do NOT share your password with anyone<br/>
+          કોઈ સાથે તમારો પાસવર્ડ શેર ન કરો
+          </p>
+        </div>
+        
+        <div class="footer">
+          <p>આદર સહ,<br>
+          <strong>એડમિન ટીમ</strong><br>
+          Shridaay Technolabs<br>
+          it@shridaay.com</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
 
 
 

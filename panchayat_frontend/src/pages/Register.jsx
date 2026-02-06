@@ -70,8 +70,6 @@ export default function Register() {
   const handleSendOTP = async () => {
     // Validate form
     if (
-      !formData.firstName ||
-
       !formData.email ||
       !formData.phone ||
       !formData.pinCode ||
