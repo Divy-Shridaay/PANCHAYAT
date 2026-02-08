@@ -47,7 +47,6 @@ export default function ResetPassword() {
     if (!newPassword || !confirmPassword) {
       toast({
         title: "મહેરબાની કરીને બધા ફીલ્ડ ભરો",
-
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -59,7 +58,6 @@ export default function ResetPassword() {
     if (newPassword !== confirmPassword) {
       toast({
        title: "પાસવર્ડ મેચ થતો નથી",
-
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -71,7 +69,6 @@ export default function ResetPassword() {
     if (newPassword.length < 6) {
       toast({
         title: "પાસવર્ડ ઓછામાં ઓછા 6 અક્ષરોનો હોવો જરૂરી છે",
-
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -108,11 +105,15 @@ export default function ResetPassword() {
           setIsValidToken(false);
           setMessage("Invalid reset link");
           setMessageType("error");
-        } else if (/same|previous|identical/i.test(backendMessage) || backendMessage.toLowerCase().includes('same password')) {
+        } else if (
+          /same|previous|identical/i.test(backendMessage) ||
+          backendMessage.toLowerCase().includes('same password') ||
+          // Also handle Gujarati backend message for "same password" to avoid showing the red alert box
+          (backendMessage.includes('નવો પાસવર્ડ') && (backendMessage.includes('હાલના') || backendMessage.includes('હાલ') || backendMessage.includes('જુના') || backendMessage.includes('જૂના') || backendMessage.includes('જુનો')))
+        ) {
           // Backend indicated the new password is the same as the previous one
+          // Only show toast, don't set message state to avoid duplicate display
           const samePwdMsg = "આ પાસવર્ડ પહેલેથી ઉપયોગમાં છે. સુરક્ષા માટે કૃપા કરીને અલગ નવો પાસવર્ડ દાખલ કરો.";
-          setMessage(samePwdMsg);
-          setMessageType("error");
           toast({
             title: samePwdMsg,
             status: "error",
@@ -262,7 +263,7 @@ export default function ResetPassword() {
             />
           </FormControl>
 
-          {/* SUCCESS MESSAGE */}
+          {/* SUCCESS MESSAGE - Only shown for non-same-password errors */}
           {message && (
             <Alert status={messageType}>
               <AlertIcon />

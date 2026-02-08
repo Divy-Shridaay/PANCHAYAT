@@ -378,9 +378,9 @@ export default function Dashboard() {
           filter={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? "grayscale(40%)" : "none"}
           _hover={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
           
-          // onClick={() => handleModuleClick( 
-          //   "/cashmelform",
-          //    "rojmel")}
+          onClick={() => handleModuleClick( 
+            "/cashmelform",
+             "rojmel")}
         >
           <FiTrendingUp size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">

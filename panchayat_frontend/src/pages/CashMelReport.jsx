@@ -455,7 +455,7 @@ const handleReportChange = (key, value) => {
                 }
 
                 /* ================= OPENING BALANCE ================= */
-                // 🔥 FIX: Opening balance = Previous day's closing balance (from start of time, not FY start)
+                // 🔥 FIX: Opening balance = Previous day's closing balance + opening balance entries from report period
                 let openingBalance = 0;
                 try {
                     const prevToDate = new Date(fromDate);
@@ -483,6 +483,13 @@ const handleReportChange = (key, value) => {
                     });
 
                     openingBalance = prevAavak - prevJavak;
+
+                    // 🔥 FIX: Also include opening balance entries (ઉઘડતી સિલક) from the current report period
+                    selectedDateRecords.forEach(r => {
+                        if (r.category === "ઉઘડતી સિલક" && r.vyavharType === "aavak") {
+                            openingBalance += r.amount || 0;
+                        }
+                    });
                 } catch (err) {
                     console.error("Error calculating opening balance:", err);
                 }
@@ -562,14 +569,16 @@ const handleReportChange = (key, value) => {
                 /* ================= DAILY ROWS ================= */
                 sortedDates.forEach(dateKey => {
                     const day = dateMap[dateKey];
-                    const maxRows = Math.max(day.aavak.length + 1, day.javak.length);
+                    // 🔥 FIX: Filter out opening balance entries (category "ઉઘડતી સિલક") from display
+                    const filteredAavak = day.aavak.filter(r => r.category !== "ઉઘડતી સિલક");
+                    const maxRows = Math.max(filteredAavak.length + 1, day.javak.length);
 
                     for (let i = 0; i < maxRows; i++) {
                         let a = null;
                         if (i === 0) {
                             a = { name: "ઉઘડતી સિલક", amount: openingBalance };
                         } else {
-                            a = day.aavak[i - 1];
+                            a = filteredAavak[i - 1];
                         }
 
                         const j = day.javak[i];
@@ -637,7 +646,8 @@ const handleReportChange = (key, value) => {
                     let dayAavak = 0;
                     let dayJavak = 0;
                     
-                    day.aavak.forEach(a => dayAavak += a.totalAmount || 0);
+                    // 🔥 FIX: Include all aavak entries (including opening balance) in balance calculation
+                    day.aavak.forEach(a => dayAavak += a.totalAmount || a.amount || 0);
                     day.javak.forEach(j => dayJavak += j.amount || 0);
                     
                     openingBalance = openingBalance + dayAavak - dayJavak;
@@ -706,6 +716,19 @@ const handleReportChange = (key, value) => {
                             else total -= r.amount || 0;
                         }
                     });
+
+                    // 🔥 FIX: Also include opening balance entries (ઉઘડતી સિલક) from current report period
+                    selectedDateRecords.forEach(r => {
+                        if (r.category === "ઉઘડતી સિલક" && r.vyavharType === "aavak") {
+                            const match = 
+                                (accountType === "cash" && r.paymentMethod !== "bank") ||
+                                (accountType === "bank" && r.paymentMethod === "bank" && r.bank === accountName);
+                            if (match) {
+                                total += r.amount || 0;
+                            }
+                        }
+                    });
+
                     return total;
                 }
 
@@ -783,12 +806,14 @@ const handleReportChange = (key, value) => {
                 const fyGujarati = getGujaratiFinancialYear(fromDate);
 
                 // ================= KHATA ફેરફાર ROWS (account transfers)
-                // Build rows from selectedDateRecords where a bank deposit occurred (aavak with paymentMethod 'bank' and category 'બેંક જમા' OR any aavak with paymentMethod 'bank')
+                // 🔥 FIX: Add serial number counter
                 const khataRowsSet = new Set();
                 let khataFerfarRows = "";
+                let khataSerialNo = 1;
 
                 selectedDateRecords.forEach(r => {
-                    if (r.vyavharType === 'aavak' && r.paymentMethod === 'bank') {
+                    // 🔥 FIX: Exclude opening balance entries from khata farfar
+                    if (r.vyavharType === 'aavak' && r.paymentMethod === 'bank' && r.category !== "ઉઘડતી સિલક") {
                         const key = `${r.date}-${r.amount}-${r.bank}-${r.remarks}`;
                         if (khataRowsSet.has(key)) return;
                         khataRowsSet.add(key);
@@ -800,7 +825,7 @@ const handleReportChange = (key, value) => {
 
                         khataFerfarRows += `
 <tr>
-  <td></td>
+  <td>${guj(khataSerialNo++)}</td>
   <td class="text-left">${giver}</td>
   <td class="text-left">${receiver}</td>
   <td class="text-left">${detail}</td>
@@ -1053,7 +1078,7 @@ if (!hasValidRecords) {
         // ================================
         // AAVAK / JAVAK MONTHLY REPORT------------------------------------------------------------
         // ================================
-        // 🔥 FIX: Exclude "બેંક જમા" entries from javak summary (they should only appear in rojmel khata ferफार)
+        // 🔥 FIX: Exclude "બેંક જમા" entries from javak summary (they should only appear in rojmel khata ferفાર)
         const records = allRecords.filter(r => 
             r.vyavharType === report.type && 
             !(report.type === "javak" && r.category === "બેંક જમા")

@@ -94,9 +94,7 @@ const toGujaratiDigits = (num) => {
 };
 
 const CashMelForm = () => {
-    const API_BASE = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
-      ? "http://localhost:5000/api"
-      : "https://panchayat.shridaay.com/api";
+    const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://panchayat.shridaay.com') + '/api';
     const { t } = useTranslation();
     const toast = useToast();
     const navigate = useNavigate();
@@ -144,6 +142,17 @@ const fileInputRef = useRef(null);
       amount: "",
     });
     const [modalSubmitting, setModalSubmitting] = useState(false);
+
+    // Opening balance (ઉઘડતી સિલક) modal state
+    const { isOpen: isOpenOpening, onOpen: onOpenOpening, onClose: onCloseOpening } = useDisclosure();
+    const [openingForm, setOpeningForm] = useState({
+      date: "",
+      dateDisplay: "",
+      rokadAmount: "",
+      banks: [],
+      remarks: "ઉઘડતી સિલક",
+    });
+    const [openingSubmitting, setOpeningSubmitting] = useState(false);
 
     // const [showBulkUpload, setShowBulkUpload] = useState(false);
     // const [showReports, setShowReports] = useState(false);
@@ -286,6 +295,78 @@ const fileInputRef = useRef(null);
             toast({ title: 'બેંક સેવ થઈતી નથી', status: 'error' });
             return false;
         }
+    };
+
+    const submitOpeningToServer = async () => {
+      // Create opening balance entries (aavak) for rokad and all banks as provided
+      const rokad = openingForm.rokadAmount || "";
+      const hasBankAmounts = openingForm.banks && openingForm.banks.length > 0 && openingForm.banks.some(b => b.amount && Number(b.amount) > 0);
+      
+      if (!rokad && !hasBankAmounts) {
+        toast({ title: "કૃપા કરીને રોકડ અથવા બેંક રકમ દાખલ કરો", status: "error", duration: 2500 });
+        return;
+      }
+
+      setOpeningSubmitting(true);
+      try {
+        const dateIso = openingForm.date || convertToISO(openingForm.dateDisplay || "");
+        const token = localStorage.getItem("token");
+
+        // If rokad amount provided -> create AAVAK (income) to increase cash opening
+        if (rokad && Number(rokad) > 0) {
+          const p = new FormData();
+          p.append("date", dateIso || "");
+          p.append("name", (openingForm.remarks || "ઉઘડતી સિલક").slice(0, 100));
+          p.append("receiptPaymentNo", "");
+          p.append("vyavharType", "aavak");
+          p.append("category", "ઉઘડતી સિલક");
+          p.append("amount", rokad);
+          p.append("paymentMethod", "rokad");
+          p.append("bank", "");
+          p.append("ddCheckNum", "");
+          p.append("remarks", openingForm.remarks || "ઉઘડતી સિલક");
+
+          const r1 = await fetch(`${API_BASE}/cashmel`, { method: "POST", body: p, headers: { ...(token && { Authorization: `Bearer ${token}` }) } });
+          if (!r1.ok) {
+            const txt = await r1.text();
+            throw new Error(txt || "Failed to save rokad opening");
+          }
+        }
+
+        // Create AAVAK entries for each bank with amount
+        if (openingForm.banks && openingForm.banks.length > 0) {
+          for (const bankEntry of openingForm.banks) {
+            if (bankEntry.amount && Number(bankEntry.amount) > 0) {
+              const p2 = new FormData();
+              p2.append("date", dateIso || "");
+              p2.append("name", (openingForm.remarks || "ઉઘડતી સિલક").slice(0, 100));
+              p2.append("receiptPaymentNo", "");
+              p2.append("vyavharType", "aavak");
+              p2.append("category", "ઉઘડતી સિલક");
+              p2.append("amount", bankEntry.amount);
+              p2.append("paymentMethod", "bank");
+              p2.append("bank", bankEntry.name || "");
+              p2.append("ddCheckNum", "");
+              p2.append("remarks", openingForm.remarks || "ઉઘડતી સિલક");
+
+              const r2 = await fetch(`${API_BASE}/cashmel`, { method: "POST", body: p2, headers: { ...(token && { Authorization: `Bearer ${token}` }) } });
+              if (!r2.ok) {
+                const txt = await r2.text();
+                throw new Error(txt || `Failed to save bank opening for ${bankEntry.name}`);
+              }
+            }
+          }
+        }
+
+        toast({ title: "ઉઘડતી સિલક સેવ થઈ ગઈ", status: "success", duration: 2500 });
+        setOpeningForm({ date: "", dateDisplay: "", rokadAmount: "", banks: [], remarks: "ઉઘડતી સિલક" });
+        onCloseOpening();
+      } catch (err) {
+        console.error(err);
+        toast({ title: "સંગ્રહમાં ભૂલ", description: err.message || "કૃપા કરીને ફરી પ્રયાસ કરો", status: "error", duration: 4000 });
+      } finally {
+        setOpeningSubmitting(false);
+      }
     };
 
   
@@ -684,9 +765,14 @@ const uploadExcelToServer = async () => {
                   <Heading size="md" color="green.700" borderLeft="4px solid #2A7F62" pl={3}>
                     {t("entryDetails")}
                   </Heading>
-                  <Button size="sm" colorScheme="blue" onClick={onOpen}>
-                    બેંક જમા
-                  </Button>
+                  <HStack spacing={2}>
+                    <Button size="sm" colorScheme="purple" onClick={onOpenOpening}>
+                      ઉઘડતી સિલક
+                    </Button>
+                    <Button size="sm" colorScheme="blue" onClick={onOpen}>
+                      બેંક જમા
+                    </Button>
+                  </HStack>
                 </Flex>
 
                 {/* Quick deposit modal */}
@@ -738,6 +824,108 @@ const uploadExcelToServer = async () => {
                         રદ કરો
                       </Button>
                       <Button colorScheme="green" onClick={submitModalToServer} isLoading={modalSubmitting}>
+                        સેવ
+                      </Button>
+                    </ModalFooter>
+                  </ModalContent>
+                </Modal>
+
+                {/* Opening balance modal (ઉઘડતી સિલક) */}
+                <Modal isOpen={isOpenOpening} onClose={onCloseOpening} size="lg">
+                  <ModalOverlay />
+                  <ModalContent>
+                    <ModalHeader>ઉઘડતી સિલક સમાવેશ</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                      <VStack spacing={4} align="stretch">
+                        <DateInput
+                          label={t("date")}
+                          formValue={openingForm}
+                          setFormValue={setOpeningForm}
+                          formatDisplayDate={formatDisplayDate}
+                          convertToISO={convertToISO}
+                          t={t}
+                        />
+
+                        <FormControl>
+                          <FormLabel fontWeight="600">રોકડ ઉઘડતી રકમ</FormLabel>
+                          <Input size="lg" bg="gray.100" value={toGujaratiDigits(openingForm.rokadAmount)} onChange={(e) => {
+                            const englishValue = gujaratiToEnglishDigits(e.target.value).replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                            setOpeningForm(p => ({ ...p, rokadAmount: englishValue }));
+                          }} />
+                        </FormControl>
+
+                        <Box borderTop="2px solid #e2e8f0" pt={4}>
+                          <Flex justify="space-between" align="center" mb={3}>
+                            <FormLabel fontWeight="600" mb={0}>બેંક ઉઘડતી રકમ</FormLabel>
+                            <Button 
+                              size="sm" 
+                              colorScheme="green" 
+                              onClick={() => {
+                                setOpeningForm(p => ({
+                                  ...p,
+                                  banks: [...(p.banks || []), { name: "", amount: "" }]
+                                }));
+                              }}
+                            >
+                              + બેંક ઉમેરો
+                            </Button>
+                          </Flex>
+
+                          {openingForm.banks && openingForm.banks.length > 0 && (
+                            <VStack spacing={3} align="stretch">
+                              {openingForm.banks.map((bankEntry, idx) => (
+                                <HStack key={idx} spacing={2}>
+                                  <Select 
+                                    size="lg" 
+                                    bg="gray.100" 
+                                    placeholder="બેંક પસંદ કરો"
+                                    value={bankEntry.name} 
+                                    onChange={(e) => {
+                                      const newBanks = [...openingForm.banks];
+                                      newBanks[idx].name = e.target.value;
+                                      setOpeningForm(p => ({ ...p, banks: newBanks }));
+                                    }}
+                                  >
+                                    {banks.map(b => (
+                                      <option key={b._id} value={b.name}>{b.name}</option>
+                                    ))}
+                                  </Select>
+                                  <Input 
+                                    size="lg" 
+                                    bg="gray.100" 
+                                    placeholder="રકમ"
+                                    value={toGujaratiDigits(bankEntry.amount)} 
+                                    onChange={(e) => {
+                                      const englishValue = gujaratiToEnglishDigits(e.target.value).replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                                      const newBanks = [...openingForm.banks];
+                                      newBanks[idx].amount = englishValue;
+                                      setOpeningForm(p => ({ ...p, banks: newBanks }));
+                                    }}
+                                  />
+                                  <Button 
+                                    colorScheme="red" 
+                                    size="lg"
+                                    onClick={() => {
+                                      const newBanks = openingForm.banks.filter((_, i) => i !== idx);
+                                      setOpeningForm(p => ({ ...p, banks: newBanks }));
+                                    }}
+                                  >
+                                    −
+                                  </Button>
+                                </HStack>
+                              ))}
+                            </VStack>
+                          )}
+                        </Box>
+                      </VStack>
+                    </ModalBody>
+
+                    <ModalFooter>
+                      <Button mr={3} onClick={() => { onCloseOpening(); }}>
+                        રદ કરો
+                      </Button>
+                      <Button colorScheme="purple" onClick={submitOpeningToServer} isLoading={openingSubmitting}>
                         સેવ
                       </Button>
                     </ModalFooter>
