@@ -94,8 +94,14 @@ const toGujaratiDigits = (num) => {
 };
 
 const CashMelForm = () => {
-    const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://panchayat.shridaay.com') + '/api';
-    const { t } = useTranslation();
+   
+  const API_BASE = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
+      ? "http://localhost:5000/api"
+      : "https://panchayat.shridaay.com/api";
+   
+    
+  
+  const { t } = useTranslation();
     const toast = useToast();
     const navigate = useNavigate();
    const { id } = useParams();
@@ -1236,7 +1242,7 @@ const uploadExcelToServer = async () => {
                 </HStack>
               </VStack>
 
-              {/* {form.excelData.length > 0 && (
+              {form.excelData.length > 0 && (
                 <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -1274,7 +1280,7 @@ const uploadExcelToServer = async () => {
                     </tbody>
                   </table>
                 </Box>
-              )} */}
+              )}
             </Box>
           </Collapse>
 
