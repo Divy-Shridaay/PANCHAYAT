@@ -673,7 +673,7 @@ const handleReportChange = (key, value) => {
                 tableRows += `
 <tr>
 <td colspan="100%" style="font-weight:bold;text-align:right;">
-    કુલ આવક : ${guj(totalAavakAmount)}<br/>
+    
     કુલ જાવક : ${guj(totalJavakAmount)}<br/>
     બંધ સિલક : ${guj(bandhSilak)}
 </td>

@@ -121,20 +121,34 @@ export default function Records() {
   //   }
   // };
 
-    const handleEditClick = (item) => {
+  //   const handleEditClick = (item) => {
+
+  //   const editUrl = `/pedhinamu/edit/${item._id}`;
+  //   if (item.hasFullForm) {
+  //     setEditTargetUrl(editUrl);
+  //     onEditModalOpen();
+  //   } else {
+  //     navigate(editUrl);
+  //   }
+  // };
+
+  
+
+  const confirmEdit = () => {
+    if (editTargetUrl) {
+      navigate(editTargetUrl);
+      onEditModalClose();
+    }
+  };
+
+      const handleEditClick = (item) => {
+      
     const editUrl = `/pedhinamu/edit/${item._id}`;
     if (item.hasFullForm) {
       setEditTargetUrl(editUrl);
       onEditModalOpen();
     } else {
       navigate(editUrl);
-    }
-  };
-
-  const confirmEdit = () => {
-    if (editTargetUrl) {
-      navigate(editTargetUrl);
-      onEditModalClose();
     }
   };
 
