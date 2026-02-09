@@ -165,8 +165,7 @@ export const sendOTP = async (req, res) => {
         </div>
         
         <div class="footer">
-          <p>આદર સહ,<br>
-          <strong>એડમિન ટીમ</strong><br>
+          <p>
           Shridaay Technolabs<br>
           it@shridaay.com</p>
         </div>
@@ -292,8 +291,7 @@ export const verifyOTP = async (req, res) => {
         </div>
         
         <div class="footer">
-          <p>આદર સહ,<br>
-          <strong>એડમિન ટીમ</strong><br>
+          <p>
           Shridaay Technolabs<br>
           it@shridaay.com</p>
         </div>
@@ -750,13 +748,20 @@ export const getUserStatus = async (req, res) => {
     // Printing: Block if pending verification AND not already allowed.
     const canPrint = (user.pedhinamuPrintAllowed ?? isUnderTrial) && (expiryDays.pedhinamu === null || expiryDays.pedhinamu > 0 || user.role === 'admin');
 
+    // Check if any purchased subscription has expired
+    const isSubscriptionExpired = moduleKeys.some(key => {
+      // Check if module is enabled (purchased) AND has an expiry date calculated AND that date is passed/today (<= 0)
+      return user.modules?.[key] === true && expiryDays[key] !== null && expiryDays[key] <= 0;
+    });
+
     const statusData = {
       daysSinceTrial,
       expiryDays, // { pedhinamu: 28, rojmel: 15, jaminMehsul: null }
       modulesAccess,
       pendingModules,
-      moduleDates: user.moduleDates, // New addition
-      canPrint
+      moduleDates: user.moduleDates,
+      canPrint,
+      isSubscriptionExpired // True if any paid module is expired
     };
 
     return res.json({

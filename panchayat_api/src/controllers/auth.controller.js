@@ -101,64 +101,57 @@ export const forgotPassword = async (req, res) => {
       to: email,
       subject: "Password Reset Request",
       html: `
-<!-- Header -->
-<div style="text-align:center;">
-  <h2 style="margin:10px 0 0;">
-    ${user.gam} Gram Panchayat
-  </h2>
-  <p style="margin:4px;color:#555;">
-    Taluka: ${user.taluko}
-  </p>
-</div>
- 
-<hr style="margin:25px 0" />
- 
-<h3>Password Reset Request</h3>
- 
-<p>
-  <strong>Hello ${user.firstName} ${user.lastName},</strong>
-</p>
- 
-<p>
-We received a request to reset your password.<br/>
-તમારા password reset માટે વિનંતી પ્રાપ્ત થઈ છે.
-</p>
- 
-<div style="text-align:center;margin:30px 0;">
-  <a href="${resetUrl}"
-     style="
-       background:#0f766e;
-       color:#ffffff;
-       padding:14px 26px;
-       border-radius:8px;
-       text-decoration:none;
-       font-weight:bold;
-       display:inline-block;
-     ">
-    Reset Password
-  </a>
-</div>
- 
-<p>
-⏳ This link is valid for a limited time only.<br/>
-⏳ આ લિંક મર્યાદિત સમય માટે જ માન્ય છે.
-</p>
- 
-<p style="color:#b91c1c;font-weight:bold;">
-⚠ Do NOT share this link with anyone.<br/>
-⚠ આ લિંક કોઈને પણ શેર ન કરો.
-</p>
- 
-<hr>
- 
-<p>
-Regards,<br/>
-<strong>Panchayat System</strong><br/>
-<a href="https://panchayat.shridaay.com">
-panchayat.shridaay.com
-</a>
-</p>
-`,
+    <!DOCTYPE html>
+    <html lang="gu">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f6f9fc; }
+        .container { max-width: 600px; margin: 20px auto; background: white; padding: 30px; border-radius: 12px; border: 1px solid #e3ede8; }
+        .content { margin-bottom: 25px; }
+        .greeting { font-size: 18px; font-weight: bold; color: #1E4D2B; margin-bottom: 15px; }
+        .footer { border-top: 1px solid #eee; padding-top: 20px; font-size: 14px; color: #666; }
+        .btn { background:#0f766e; color:#ffffff; padding:14px 26px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="content">
+          <h3 style="color: #1E4D2B; margin-top:0;">Password Reset Request</h3>
+          <p class="greeting">Hello ${user.firstName} ${user.lastName},</p>
+
+          <p>
+            We received a request to reset your password.<br/>
+            તમારા password reset માટે વિનંતી પ્રાપ્ત થઈ છે.
+          </p>
+
+          <div style="text-align:center;margin:30px 0;">
+            <a href="${resetUrl}" style="background:#0f766e; color:#ffffff; padding:14px 26px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">
+              Reset Password
+            </a>
+          </div>
+
+          <p>
+            ⏳ This link is valid for a limited time only.<br/>
+            ⏳ આ લિંક મર્યાદિત સમય માટે જ માન્ય છે.
+          </p>
+
+          <p style="color:#b91c1c;font-weight:bold;">
+            ⚠ Do NOT share this link with anyone.<br/>
+            ⚠ આ લિંક કોઈને પણ શેર કરશો નહીં.
+          </p>
+        </div>
+
+        <div class="footer">
+          <p>
+          Shridaay Technolabs<br>
+          it@shridaay.com</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `,
     });
 
 

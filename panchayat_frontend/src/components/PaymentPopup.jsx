@@ -45,7 +45,7 @@ export default function PaymentPopup({ isOpen, onClose, type, isSubscriptionExpi
   };
 
   const getMessage = () => {
-    if (isSubscriptionExpired) return "તમારું 12 મહિનાનું સબસક્રિપ્સન પૂર્ણ થયું છે. એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને રિન્યૂ કરો.";
+    if (isSubscriptionExpired) return "તમારું 12 મહિનાનું સબ્સ્ક્રિપ્શન પૂર્ણ થયું છે. એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને સબ્સ્ક્રિપ્શન ફરી સક્રિય કરો.";
     if (type === "module") return "તમારો 7 દિવસનો ટ્રાયલ પૂર્ણ થયો છે એપનો ઉપયોગ ચાલુ રાખવા માટે કૃપા કરીને સબસક્રિપ્સન લો.";
     if (type === "entryLimit") return "તમે ટ્રાયલ દરમ્યાન 5 પેઢીનામું બનાવી સકો છો. વધુ પેઢીનામું બનાવવાની મંજૂરી નથી.";
     return "તમારી મર્યાદા પૂર્ણ થઈ ગઈ છે.";

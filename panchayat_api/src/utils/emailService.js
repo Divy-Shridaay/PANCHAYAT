@@ -68,8 +68,7 @@ export const sendPaymentConfirmationEmail = async (email, userName, paymentDetai
           </div>
           
           <div class="footer">
-            <p>આદર સહ,<br>
-            <strong>એડમિન ટીમ</strong><br>
+            <p>
             Shridaay Technolabs<br>
             it@shridaay.com</p>
           </div>
@@ -181,8 +180,7 @@ export const sendAdminPaymentNotification = async (adminEmail, userDetails, paym
           </div>
 
           <div class="footer">
-            <p>આદર સહ,<br>
-            <strong>ચુકવણી સિસ્ટમ</strong><br>
+            <p>
             Shridaay Technolabs</p>
           </div>
         </div>
@@ -249,8 +247,7 @@ export const sendPaymentApprovalEmail = async (email, userName) => {
           </div>
           
           <div class="footer">
-            <p>આદર સહ,<br>
-            <strong>એડમિન ટીમ</strong><br>
+            <p>
             Shridaay Technolabs<br>
             it@shridaay.com</p>
           </div>
@@ -299,7 +296,7 @@ export const sendPaymentRejectionEmail = async (email, userName, reason) => {
       <body>
         <div class="container">
           <div class="content">
-            <p class="greeting">પ્રિય ગ્રાહક,</p>
+            <p class="greeting">પ્રિય ${userName},</p>
             
             <p>તમારા દ્વારા સબમિટ કરવામાં આવેલ ચુકવણી પુરાવાની અમારી ટીમ દ્વારા સમીક્ષા કરવામાં આવી છે. દુર્ભાગ્યવશ, હાલ આપવામાં આવેલ પુરાવો માન્ય નથી માનવામાં આવ્યો.</p>
             
@@ -315,8 +312,7 @@ export const sendPaymentRejectionEmail = async (email, userName, reason) => {
             <p>આપના સહકાર બદલ આભાર.</p>
           </div>
           <div class="footer">
-            <p>સાદર,<br>
-            <strong>એડમિન ટીમ</strong><br>
+            <p>
             Shridaay Technolabs<br>
             it@shridaay.com</p>
           </div>

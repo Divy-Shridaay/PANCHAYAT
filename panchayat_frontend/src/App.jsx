@@ -51,6 +51,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import ModuleAccessGuard from "./components/ModuleAccessGuard";
 import AdminGuard from "./components/AdminGuard";
 import UserGuard from "./components/UserGuard";
+import GuestGuard from "./components/GuestGuard";
 
 
 import PdfViewer from "./pages/settings/help/PdfViewer";
@@ -68,11 +69,11 @@ export default function App() {
       <Routes>
 
         {/* ===================== AUTH (PUBLIC) ===================== */}
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/" element={<GuestGuard><Login /></GuestGuard>} />
+        <Route path="/login" element={<GuestGuard><Login /></GuestGuard>} />
+        <Route path="/register" element={<GuestGuard><Register /></GuestGuard>} />
+        <Route path="/forgot-password" element={<GuestGuard><ForgotPassword /></GuestGuard>} />
+        <Route path="/reset-password/:token" element={<GuestGuard><ResetPassword /></GuestGuard>} />
 
         {/* ===================== CORE (PROTECTED) ===================== */}
         <Route
@@ -106,7 +107,7 @@ export default function App() {
           element={<PrivateRoute><ProfileSettings /></PrivateRoute>}
         />
 
-        <Route path="/settings/categories" element={<CategorySettings />} />
+        <Route path="/settings/categories" element={<PrivateRoute><CategorySettings /></PrivateRoute>} />
 
 
         <Route
@@ -231,7 +232,7 @@ export default function App() {
 
         <Route
           path="/settings/security/change-password"
-          element={<ChangePassword />}
+          element={<PrivateRoute><ChangePassword /></PrivateRoute>}
         />
 
         <Route
