@@ -1262,7 +1262,7 @@ const uploadExcelToServer = async () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {form.excelData.map((r, i) => (
+                      {/* {form.excelData.map((r, i) => (
                         <tr key={i}>
                           {Object.values(r).map((v, j) => (
                             <td
@@ -1276,7 +1276,7 @@ const uploadExcelToServer = async () => {
                             </td>
                           ))}
                         </tr>
-                      ))}
+                      ))} */}
                     </tbody>
                   </table>
                 </Box>

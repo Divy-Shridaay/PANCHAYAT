@@ -697,7 +697,7 @@ export default function FullForm() {
       </Button>
 
       <HStack justify="space-between" align="center" mb={10}>
-        {id && (
+        {/* {id && (
           <Button
   size="sm"
   variant="ghost"
@@ -710,7 +710,7 @@ export default function FullForm() {
   વારસદાર એડિટ
 </Button>
 
-        )}
+        )} */}
 
         <Heading textAlign="center" color="#1E4D2B" fontWeight="800" flex="1">
           {t("pedhinamu")}
