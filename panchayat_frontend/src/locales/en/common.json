@@ -223,5 +223,6 @@
   "ddCheckNum": "DD/Check Number",
   "editWarningMessage": "If you update the information, the updated information will also appear while printing the Pedhinamu, for which you will be responsible.",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+  "editVarsdar": "Edit Family Details"
 }

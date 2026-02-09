@@ -1236,7 +1236,7 @@ const uploadExcelToServer = async () => {
                 </HStack>
               </VStack>
 
-              {form.excelData.length > 0 && (
+              {/* {form.excelData.length > 0 && (
                 <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -1274,7 +1274,7 @@ const uploadExcelToServer = async () => {
                     </tbody>
                   </table>
                 </Box>
-              )}
+              )} */}
             </Box>
           </Collapse>
 

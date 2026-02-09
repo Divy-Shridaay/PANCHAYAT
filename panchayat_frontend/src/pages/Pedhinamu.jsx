@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import {
     Box, Button, Input, Heading, VStack, HStack,
@@ -17,6 +17,7 @@ import { apiFetch } from "../utils/api.js";
 export default function Pedhinamu() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const isEdit = !!id;
     const { t } = useTranslation();
     // const formRef = useRef({});
@@ -278,7 +279,8 @@ export default function Pedhinamu() {
 
                 setForm(formatted);
                 setTotalHeirs(formatted.heirs.length);
-                setStep(formatted.heirs.length > 0 ? 2 : 1);
+                const desiredStep = (location && location.state && location.state.step) ? location.state.step : (formatted.heirs.length > 0 ? 2 : 1);
+                setStep(desiredStep);
 
                 setInitialLoading(false);
             } catch (err) {
@@ -2573,12 +2575,25 @@ export default function Pedhinamu() {
 
 
 
-                    <HStack mt={6}>
+                    <HStack mt={6} spacing={3}>
+                        {/* Edit Varsdar Button */}
+                        {/* {isEdit && (
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                colorScheme="orange"
+                                rounded="xl"
+                                onClick={() => navigate(`/pedhinamu/form/${id}`)}
+                            >
+                                {t("editVarsdar") || "Edit Varsdar"}
+                            </Button>
+                        )} */}
+
                         <Button
                             size="lg"
                             variant="outline"
                             colorScheme="green"
-                            width="50%"
+                            flex="1"
                             rounded="xl"
                             onClick={() => setStep(1)}
                         >
@@ -2588,7 +2603,7 @@ export default function Pedhinamu() {
                         <Button
                             size="lg"
                             colorScheme="green"
-                            width="50%"
+                            flex="1"
                             rounded="xl"
                             onClick={handleSave}
                         >

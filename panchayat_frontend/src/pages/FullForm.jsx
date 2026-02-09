@@ -696,9 +696,28 @@ export default function FullForm() {
         {t("back")}
       </Button>
 
-      <Heading textAlign="center" mb={10} color="#1E4D2B" fontWeight="800">
-        {t("pedhinamu")}
-      </Heading>
+      <HStack justify="space-between" align="center" mb={10}>
+        {id && (
+          <Button
+  size="sm"
+  variant="ghost"
+  colorScheme="orange"
+  rounded="md"
+  border="1px solid"
+  borderColor="orange.400"
+  onClick={() => navigate(`/pedhinamu/edit/${id}`, { state: { step: 2 } })}
+>
+  વારસદાર એડિટ
+</Button>
+
+        )}
+
+        <Heading textAlign="center" color="#1E4D2B" fontWeight="800" flex="1">
+          {t("pedhinamu")}
+        </Heading>
+
+        <Box width="90px" />
+      </HStack>
 
       {/* APPLICANT DETAILS */}
       <Heading {...sectionTitle}>{t("applicantDetails")}</Heading>
