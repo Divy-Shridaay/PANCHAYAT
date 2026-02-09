@@ -111,8 +111,18 @@ export default function Records() {
     }
   };
 
-  const handleEditClick = (item) => {
-    const editUrl = `/pedhinamu/form/${item._id}?from=records`;
+  // const handleEditClick = (item) => {
+  //   const editUrl = `/pedhinamu/form/${item._id}?from=records`;
+  //   if (item.hasFullForm) {
+  //     setEditTargetUrl(editUrl);
+  //     onEditModalOpen();
+  //   } else {
+  //     navigate(editUrl);
+  //   }
+  // };
+
+    const handleEditClick = (item) => {
+    const editUrl = `/pedhinamu/edit/${item._id}`;
     if (item.hasFullForm) {
       setEditTargetUrl(editUrl);
       onEditModalOpen();
