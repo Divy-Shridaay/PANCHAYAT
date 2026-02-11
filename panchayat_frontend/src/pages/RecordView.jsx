@@ -101,10 +101,10 @@ export default function RecordView() {
     const [userStatus, setUserStatus] = useState(null);
     const [showPaymentPopup, setShowPaymentPopup] = useState(false);
 
-        // 🌐 API Base URL for image serving
+    // 🌐 API Base URL for image serving
     const API_BASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
-      ? "http://localhost:5000"
-      : "https://panchayat.shridaay.com";
+        ? "http://localhost:5000"
+        : "https://panchayat.shridaay.com";
 
     useEffect(() => {
         (async () => {
@@ -185,6 +185,32 @@ export default function RecordView() {
         if (!num) return "-";
         const digits = num.toString().replace(/\D/g, "").slice(0, 12);
         return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8)}`;
+    };
+
+    // 🖼️ ROBUST PHOTO URL HELPER
+    const getPhotoUrl = (path) => {
+        if (!path) return "";
+        let cleanPath = path.toString().trim();
+
+        // 0. If it's already an absolute URL, return it
+        if (cleanPath.startsWith("http")) return cleanPath;
+
+        // 1. Normalize slashes
+        cleanPath = cleanPath
+            .replace(/\\/g, "/")       // Fix Windows backslashes
+            .replace(/^\/+/, "");     // Remove all leading slashes
+
+        // 2. Normalize to api/uploads/filename
+        if (cleanPath.startsWith("api/uploads/")) {
+            // Already correct
+        } else if (cleanPath.startsWith("uploads/")) {
+            cleanPath = "api/" + cleanPath;
+        } else {
+            // Handle cases where only filename is stored
+            cleanPath = "api/uploads/" + cleanPath;
+        }
+
+        return `${API_BASE_URL}/${cleanPath}`;
     };
 
 
@@ -594,17 +620,15 @@ export default function RecordView() {
             let applicantPhotoHtml = '';
 
             if (form?.applicantPhoto) {
-                const photoPath = form.applicantPhoto.startsWith('/uploads')
-                    ? form.applicantPhoto
-                    : `/uploads/${form.applicantPhoto}`;
+                const photoUrl = getPhotoUrl(form.applicantPhoto);
 
                 applicantPhotoHtml = `<img 
-        src="${import.meta.env.VITE_API_BASE_URL}${photoPath}" 
+        src="${photoUrl}" 
         style="width:120px; height:120px; object-fit:cover; border:1px solid #000;" 
         alt="Applicant Photo" 
         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;\\'>No Photo</div>';"
       />`;
-                console.log('✅ Applicant photo HTML generated:', applicantPhotoHtml.substring(0, 100) + '...');
+                console.log('✅ Applicant photo HTML generated:', photoUrl);
             } else {
                 applicantPhotoHtml = `<div style="width:120px; height:120px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#f5f5f5; color:#666;">No Photo</div>`;
                 console.log('⚠️ No applicant photo available');
@@ -714,12 +738,10 @@ export default function RecordView() {
                     let photoHtml = '';
 
                     if (p.photo) {
-                        const panchPhotoPath = p.photo.startsWith('/uploads')
-                            ? p.photo
-                            : `/uploads/${p.photo}`;
+                        const photoUrl = getPhotoUrl(p.photo);
 
                         photoHtml = `<img 
-            src="${import.meta.env.VITE_API_BASE_URL}${panchPhotoPath}" 
+            src="${photoUrl}" 
             style="width:120px; height:120px; object-fit:cover; border:1px solid #ccc;" 
             alt="Panch Photo"
             onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:120px;height:120px;border:1px solid #ccc;background:#f5f5f5;\\'>No Photo</div>';"
@@ -1055,8 +1077,13 @@ export default function RecordView() {
                                         {p.photo && (
                                             <Box>
                                                 <img
-                                                    src={`${import.meta.env.VITE_API_BASE_URL}${p.photo}`}
+                                                    src={getPhotoUrl(p.photo)}
                                                     alt={`Panch ${p.name}`}
+                                                    onError={(e) => {
+                                                        console.error("❌ Panch photo failed to load:", e.target.src);
+                                                        e.target.style.display = 'none';
+                                                        e.target.parentElement.innerHTML = '<div style="width:80px;height:80px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border-radius:8px;font-size:10px;">No Photo</div>';
+                                                    }}
                                                     style={{
                                                         width: '80px',
                                                         height: '80px',
@@ -1088,8 +1115,13 @@ export default function RecordView() {
                                 {form.applicantPhoto && (
                                     <Box>
                                         <img
-                                            src={`${import.meta.env.VITE_API_BASE_URL}${form.applicantPhoto}`}
+                                            src={getPhotoUrl(form.applicantPhoto)}
                                             alt="Applicant Photo"
+                                            onError={(e) => {
+                                                console.error("❌ Applicant photo failed to load:", e.target.src);
+                                                e.target.style.display = 'none';
+                                                e.target.parentElement.innerHTML = '<div style="width:80px;height:80px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border-radius:8px;font-size:10px;">No Photo</div>';
+                                            }}
                                             style={{
                                                 width: '80px',
                                                 height: '80px',
