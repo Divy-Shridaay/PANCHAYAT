@@ -87,13 +87,65 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         };
     };
 
+    // 🔥 Function to get months list for dropdown
+    const getMonths = () => {
+        return [
+            { value: "01", label: "જાન્યુઆરી" },
+            { value: "02", label: "ફેબ્રુઆરી" },
+            { value: "03", label: "માર્ચ " },
+            { value: "04", label: "એપ્રિલ " },
+            { value: "05", label: "મે " },
+            { value: "06", label: "જૂન " },
+            { value: "07", label: "જુલાઈ " },
+            { value: "08", label: "ઓગસ્ટ " },
+            { value: "09", label: "સપ્ટેમ્બર " },
+            { value: "10", label: "ઓક્ટોબર " },
+            { value: "11", label: "નવેમ્બર " },
+            { value: "12", label: "ડિસેમ્બર " }
+        ];
+    };
+
+    // 🔥 Function to get years list for dropdown
+    const getYearsForMonthly = () => {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let i = 10; i >= 0; i--) {
+            const year = currentYear - i;
+            years.push({ value: `${year}`, label: `${year}` });
+        }
+        return years;
+    };
+
+    // 🔥 Function to get date range from month and year
+    const getDateRangeFromMonthYear = (month, year) => {
+        if (!month || !year) return { from: "", to: "" };
+        const monthNum = parseInt(month);
+        const yearNum = parseInt(year);
+        
+        let daysInMonth;
+        if (monthNum === 2) {
+            daysInMonth = (yearNum % 4 === 0 && yearNum % 100 !== 0) || (yearNum % 400 === 0) ? 29 : 28;
+        } else if ([4, 6, 9, 11].includes(monthNum)) {
+            daysInMonth = 30;
+        } else {
+            daysInMonth = 31;
+        }
+        
+        const fromDate = `01/${String(monthNum).padStart(2, "0")}/${yearNum}`;
+        const toDate = `${daysInMonth}/${String(monthNum).padStart(2, "0")}/${yearNum}`;
+        
+        return { from: fromDate, to: toDate };
+    };
+
     const [report, setReport] = useState({
         from: "",
         to: "",
         type: "aavak",
         fy: "",
         selectedBank: "",
-        selectedYear: ""
+        selectedYear: "",
+        selectedMonth: "",
+        selectedYear_aavak: ""
     });
 
     const dateErrorShownRef = useRef(false);
@@ -199,7 +251,25 @@ const handleReportChange = (key, value) => {
                 updated.fy = "";
                 updated.selectedYear = "";
                 updated.selectedBank = "";
+                updated.selectedMonth = "";
+                updated.selectedYear_aavak = "";
                 dateErrorShownRef.current = false;
+                return updated;
+            }
+
+            // 🔥 If Month is selected for aavak/javak, auto-set from and to dates
+            if (key === "selectedMonth" && value && (prev.type === "aavak" || prev.type === "javak")) {
+                const { from, to } = getDateRangeFromMonthYear(value, prev.selectedYear_aavak);
+                updated.from = from;
+                updated.to = to;
+                return updated;
+            }
+
+            // 🔥 If Year is selected for aavak/javak, auto-set from and to dates
+            if (key === "selectedYear_aavak" && value && (prev.type === "aavak" || prev.type === "javak")) {
+                const { from, to } = getDateRangeFromMonthYear(prev.selectedMonth, value);
+                updated.from = from;
+                updated.to = to;
                 return updated;
             }
 
@@ -282,8 +352,29 @@ const handleReportChange = (key, value) => {
     };
 
     const handlePrintReport = async () => {
+        // Special validation for aavak/javak with month and year
+        if (report.type === "aavak" || report.type === "javak") {
+            if (!report.selectedMonth) {
+                toast({
+                    title: "મહિનો પસંદ કરો",
+                    status: "error",
+                    duration: 2000,
+                    position: "top",
+                });
+                return;
+            }
+            if (!report.selectedYear_aavak) {
+                toast({
+                    title: "વર્ષ પસંદ કરો",
+                    status: "error",
+                    duration: 2000,
+                    position: "top",
+                });
+                return;
+            }
+        }
         // Special validation for checkIssue
-        if (report.type === "checkIssue") {
+        else if (report.type === "checkIssue") {
             if (!report.selectedBank) {
                 toast({
                     title: "બેંક પસંદ કરો",
@@ -302,7 +393,9 @@ const handleReportChange = (key, value) => {
                 });
                 return;
             }
-        } else if (!report.from || !report.to) {
+        } 
+        // Validation for other report types
+        else if (!report.from || !report.to) {
             toast({
                 title: "તારીખ પસંદ કરો",
                 status: "error",
@@ -1327,6 +1420,37 @@ if (!hasValidRecords) {
             formatDisplayDate={formatDisplayDate}
             convertToISO={convertToISO}
         />
+    ) : report.type === "aavak" || report.type === "javak" ? (
+        <>
+            {/* 🔥 Month and Year Dropdowns for aavak/javak */}
+            <Select
+                width="150px"
+                value={report.selectedMonth}
+                onChange={(e) => handleReportChange("selectedMonth", e.target.value)}
+                // placeholder="મહિનો પસંદ કરો"
+            >
+                <option value="">મહિનો પસંદ કરો</option>
+                {getMonths().map((month) => (
+                    <option key={month.value} value={month.value}>
+                        {month.label}
+                    </option>
+                ))}
+            </Select>
+
+            <Select
+                width="120px"
+                value={report.selectedYear_aavak}
+                onChange={(e) => handleReportChange("selectedYear_aavak", e.target.value)}
+                // placeholder="વર્ષ પસંદ કરો"
+            >
+                <option value="">વર્ષ પસંદ કરો</option>
+                {getYearsForMonthly().map((year) => (
+                    <option key={year.value} value={year.value}>
+                        {year.label}
+                    </option>
+                ))}
+            </Select>
+        </>
     ) : (
         <>
             {/* 🔥 Hide date inputs when FY is selected for tarij/checkIssue or single date for rojmel */}
