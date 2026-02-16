@@ -23,10 +23,19 @@ import {
     ModalBody,
     ModalFooter,
     useDisclosure,
+    Table,
+    Thead,
+    Tbody,
+    Tr,
+    Th,
+    Td,
+    TableContainer,
+    IconButton,
   } from "@chakra-ui/react";
 import CashMelReport from "./CashMelReport.jsx";
 import * as XLSX from "xlsx";
 import { FiArrowLeft } from "react-icons/fi";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { useRef } from "react";
 
 
@@ -138,16 +147,17 @@ const fileInputRef = useRef(null);
     const [showAddBank, setShowAddBank] = useState(false);
     const [newBankName, setNewBankName] = useState("");
 
-    // Quick deposit modal state
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const [modalForm, setModalForm] = useState({
+    // Bank deposit modal state
+    const { isOpen: isOpenBankDeposit, onOpen: onOpenBankDeposit, onClose: onCloseBankDeposit } = useDisclosure();
+    const [bankDepositForm, setBankDepositForm] = useState({
       date: "",
       dateDisplay: "",
       bank: "",
       remarks: "",
       amount: "",
     });
-    const [modalSubmitting, setModalSubmitting] = useState(false);
+    const [bankDepositSubmitting, setBankDepositSubmitting] = useState(false);
+    const [editingDepositId, setEditingDepositId] = useState(null);
 
     // Opening balance (ઉઘડતી સિલક) modal state
     const { isOpen: isOpenOpening, onOpen: onOpenOpening, onClose: onCloseOpening } = useDisclosure();
@@ -159,6 +169,13 @@ const fileInputRef = useRef(null);
       remarks: "ઉઘડતી સિલક",
     });
     const [openingSubmitting, setOpeningSubmitting] = useState(false);
+    const [existingOpening, setExistingOpening] = useState(null);
+    const [openingEditMode, setOpeningEditMode] = useState(false);
+    const [existingOpeningIds, setExistingOpeningIds] = useState([]);
+
+    // Bank deposits list state
+    const [bankDeposits, setBankDeposits] = useState([]);
+    const [loadingDeposits, setLoadingDeposits] = useState(false);
 
     // const [showBulkUpload, setShowBulkUpload] = useState(false);
     // const [showReports, setShowReports] = useState(false);
@@ -225,10 +242,101 @@ const fileInputRef = useRef(null);
         }
     }, [API_BASE]);
 
+    const fetchBankDeposits = useCallback(async () => {
+        try {
+            setLoadingDeposits(true);
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/cashmel?category=બેંક જમા`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
+            if (!res.ok) throw new Error("Failed to fetch bank deposits");
+            const data = await res.json();
+            // Get only aavak entries (bank deposits), not javak
+            const deposits = data.data ? data.data.filter(d => d.vyavharType === 'aavak') : [];
+            setBankDeposits(deposits);
+        } catch (err) {
+            console.error(err);
+            toast({ title: "બેંક જમા લોડ કરવામાં ભૂલ", status: "error", duration: 2000 });
+        } finally {
+            setLoadingDeposits(false);
+        }
+    }, [API_BASE, toast]);
+
     useEffect(() => {
         fetchCategories();
         fetchBanks();
     }, [fetchCategories, fetchBanks]);
+
+    // Fetch bank deposits when modal opens
+    useEffect(() => {
+        if (isOpenBankDeposit) {
+            fetchBankDeposits();
+        }
+    }, [isOpenBankDeposit, fetchBankDeposits]);
+
+    // Fetch existing opening seal when modal opens
+    useEffect(() => {
+        if (isOpenOpening) {
+            fetchExistingOpening();
+        }
+    }, [isOpenOpening]);
+
+    const fetchExistingOpening = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/cashmel?category=ઉઘડતી%20સિલક`, {
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                }
+            });
+            if (!res.ok) throw new Error("Failed to fetch opening seal");
+            const data = await res.json();
+            const openings = data.data ? data.data.filter(d => d.category === "ઉઘડતી સિલક") : [];
+            
+            if (openings.length > 0) {
+                // If opening seal exists, populate form for editing
+                setExistingOpening(openings);
+                setOpeningEditMode(true);
+                setExistingOpeningIds(openings.map(o => o._id));
+                
+                // Get the first opening seal date to populate the date field
+                const firstOpening = openings[0];
+                const dateParts = firstOpening.date ? firstOpening.date.split("-") : [];
+                const displayDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : "";
+                
+                // Get rokad and bank entries from existing openings
+                const rokadEntry = openings.find(o => o.paymentMethod === "rokad");
+                const bankEntries = openings.filter(o => o.paymentMethod === "bank");
+                
+                setOpeningForm({
+                    date: firstOpening.date || "",
+                    dateDisplay: displayDate,
+                    rokadAmount: rokadEntry ? rokadEntry.amount.toString() : "",
+                    banks: bankEntries.map(b => ({ name: b.bank, amount: b.amount.toString() })),
+                    remarks: firstOpening.remarks || "ઉઘડતી સિલક",
+                });
+            } else {
+                // No existing opening seal, set to create mode
+                setExistingOpening(null);
+                setOpeningEditMode(false);
+                setExistingOpeningIds([]);
+                setOpeningForm({
+                    date: "",
+                    dateDisplay: "",
+                    rokadAmount: "",
+                    banks: [],
+                    remarks: "ઉઘડતી સિલક",
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            // On error, allow creating new opening
+            setExistingOpening(null);
+            setOpeningEditMode(false);
+        }
+    };
 
     // Fetch data for editing if id is present
     useEffect(() => {
@@ -302,7 +410,70 @@ const fileInputRef = useRef(null);
             return false;
         }
     };
+  
+    const editBankDeposit = (deposit) => {
+        const dateParts = deposit.date ? deposit.date.split("-") : [];
+        const displayDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : "";
+        setModalForm({
+            date: deposit.date || "",
+            dateDisplay: displayDate,
+            bank: deposit.bank || "",
+            remarks: deposit.remarks || "",
+            amount: deposit.amount?.toString() || "",
+        });
+        setEditingDepositId(deposit._id);
+    };
 
+    const deleteBankDeposit = async (depositId) => {
+        if (!window.confirm("શું તમે આ બેંક જમા રદ કરવા માંગો છો?")) return;
+        
+        try {
+            setLoadingDeposits(true);
+            const token = localStorage.getItem("token");
+            
+            // Find the aavak deposit to delete
+            const aavakDeposit = bankDeposits.find(d => d._id === depositId);
+            if (!aavakDeposit) throw new Error("Deposit not found");
+            
+            // Find corresponding javak entry by date and amount
+            const res = await fetch(`${API_BASE}/cashmel?category=બેંક જમા`, {
+                headers: { ...(token && { Authorization: `Bearer ${token}` }) }
+            });
+            const data = await res.json();
+            const javakDeposit = data.data?.find(d => 
+                d.vyavharType === 'javak' && 
+                d.date === aavakDeposit.date && 
+                d.amount === aavakDeposit.amount
+            );
+            
+            // Delete aavak entry
+            await fetch(`${API_BASE}/cashmel/delete/${depositId}`, {
+                method: "DELETE",
+                headers: { ...(token && { Authorization: `Bearer ${token}` }) }
+            });
+            
+            // Delete javak entry if found
+            if (javakDeposit) {
+                await fetch(`${API_BASE}/cashmel/delete/${javakDeposit._id}`, {
+                    method: "DELETE",
+                    headers: { ...(token && { Authorization: `Bearer ${token}` }) }
+                });
+            }
+            
+            toast({ title: "બેંક જમા રદ કરવામાં આવી", status: "success", duration: 2000 });
+            fetchBankDeposits();
+        } catch (err) {
+            console.error(err);
+            toast({ title: "રદ કરવામાં ભૂલ", status: "error", duration: 2000 });
+        } finally {
+            setLoadingDeposits(false);
+        }
+    };
+    //         toast({ title: 'બેંક સેવ થઈતી નથી', status: 'error' });
+    //         return false;
+    //     }
+    // };
+  
     const submitOpeningToServer = async () => {
       // Create opening balance entries (aavak) for rokad and all banks as provided
       const rokad = openingForm.rokadAmount || "";
@@ -317,6 +488,25 @@ const fileInputRef = useRef(null);
       try {
         const dateIso = openingForm.date || convertToISO(openingForm.dateDisplay || "");
         const token = localStorage.getItem("token");
+
+        // If in edit mode, delete old opening entries first
+        if (openingEditMode && existingOpeningIds.length > 0) {
+          for (const id of existingOpeningIds) {
+            try {
+              const res = await fetch(`${API_BASE}/cashmel/${id}`, {
+                method: "DELETE",
+                headers: {
+                  ...(token && { Authorization: `Bearer ${token}` })
+                }
+              });
+              if (!res.ok) {
+                console.error(`Failed to delete old opening entry ${id}`);
+              }
+            } catch (err) {
+              console.error(`Error deleting old opening entry: ${err}`);
+            }
+          }
+        }
 
         // If rokad amount provided -> create AAVAK (income) to increase cash opening
         if (rokad && Number(rokad) > 0) {
@@ -364,14 +554,119 @@ const fileInputRef = useRef(null);
           }
         }
 
-        toast({ title: "ઉઘડતી સિલક સેવ થઈ ગઈ", status: "success", duration: 2500 });
+        toast({ title: openingEditMode ? "ઉઘડતી સિલક અપડેટ થઈ ગઈ" : "ઉઘડતી સિલક સેવ થઈ ગઈ", status: "success", duration: 2500 });
         setOpeningForm({ date: "", dateDisplay: "", rokadAmount: "", banks: [], remarks: "ઉઘડતી સિલક" });
+        setExistingOpening(null);
+        setOpeningEditMode(false);
+        setExistingOpeningIds([]);
         onCloseOpening();
       } catch (err) {
         console.error(err);
         toast({ title: "સંગ્રહમાં ભૂલ", description: err.message || "કૃપા કરીને ફરી પ્રયાસ કરો", status: "error", duration: 4000 });
       } finally {
         setOpeningSubmitting(false);
+      }
+    };
+
+    const submitBankDepositToServer = async () => {
+      if (!bankDepositForm.bank || !bankDepositForm.amount || !bankDepositForm.dateDisplay) {
+        toast({ title: "કૃપા કરીને તમામ ફીલ્ડ ભરો", status: "error", duration: 2500 });
+        return;
+      }
+
+      setBankDepositSubmitting(true);
+      try {
+        // Prepare common values
+        const dateIso = bankDepositForm.date || convertToISO(bankDepositForm.dateDisplay || "");
+        const amount = bankDepositForm.amount;
+        const remarks = bankDepositForm.remarks || "બેંક જમા";
+        const bankName = bankDepositForm.bank || "";
+        const token = localStorage.getItem("token");
+
+        if (editingDepositId) {
+          // UPDATE existing deposit
+          const fd = new FormData();
+          fd.append("date", dateIso || "");
+          fd.append("bank", bankName);
+          fd.append("remarks", remarks);
+          fd.append("amount", amount);
+
+          const res = await fetch(`${API_BASE}/cashmel/${editingDepositId}`, {
+            method: "POST",
+            body: fd,
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          });
+
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt || "Failed to update");
+          }
+
+          toast({ title: "બેંક જમા અપડેટ થયું", status: "success", duration: 2500 });
+          setEditingDepositId(null);
+          setBankDepositForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+          onCloseBankDeposit();
+          fetchBankDeposits();
+        } else {
+          // CREATE new deposit entries
+          // 1) Create a JAVAK entry to reduce cash (rokad) -> expense from cash
+          const javakPayload = new FormData();
+          javakPayload.append("date", dateIso || "");
+          javakPayload.append("name", remarks.slice(0, 100));
+          javakPayload.append("receiptPaymentNo", "");
+          javakPayload.append("vyavharType", "javak");
+          javakPayload.append("category", "બેંક જમા");
+          javakPayload.append("amount", amount);
+          javakPayload.append("paymentMethod", "rokad");
+          javakPayload.append("bank", "");
+          javakPayload.append("ddCheckNum", "");
+          javakPayload.append("remarks", remarks);
+
+          const res1 = await fetch(`${API_BASE}/cashmel`, {
+            method: "POST",
+            body: javakPayload,
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          });
+
+          if (!res1.ok) {
+            const txt = await res1.text();
+            throw new Error(txt || "Failed to save cash (javak) entry");
+          }
+
+          // 2) Create an AAVAK entry to add to bank -> income to bank
+          const aavakPayload = new FormData();
+          aavakPayload.append("date", dateIso || "");
+          aavakPayload.append("name", remarks.slice(0, 100));
+          aavakPayload.append("receiptPaymentNo", "");
+          aavakPayload.append("vyavharType", "aavak");
+          aavakPayload.append("category", "બેંક જમા");
+          aavakPayload.append("amount", amount);
+          aavakPayload.append("paymentMethod", "bank");
+          aavakPayload.append("bank", bankName);
+          aavakPayload.append("ddCheckNum", "");
+          aavakPayload.append("remarks", remarks);
+
+          const res2 = await fetch(`${API_BASE}/cashmel`, {
+            method: "POST",
+            body: aavakPayload,
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          });
+
+          if (!res2.ok) {
+            const txt = await res2.text();
+            throw new Error(txt || "Failed to save bank (aavak) entry");
+          }
+
+          toast({ title: "બેંક જમા સફળતાપૂર્વક નોંધાઈ ગઈ", status: "success", duration: 2500 });
+          setBankDepositForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+          onCloseBankDeposit();
+          fetchBankDeposits();
+        }
+      } catch (err) {
+        console.error(err);
+        toast({ title: "સંગ્રહમાં ભૂલ", description: err.message || "કૃપા કરીને ફરી પ્રયાસ કરો", status: "error", duration: 4000 });
+      } finally {
+        setBankDepositSubmitting(false);
       }
     };
 
@@ -442,29 +737,45 @@ const cancelExcelUpload = () => {
 
 
     const downloadSampleExcel = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`${API_BASE}/cashmel/sample-excel`, {
-                headers: {
-                    ...(token && { Authorization: `Bearer ${token}` }),
-                }
-            });
-            if (!response.ok) throw new Error("Download failed");
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "sample_cashmel.xlsx";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            toast({ title: "Sample Excel ડાઉનલોડ થયું!", status: "success" });
-        } catch (err) {
-            console.error(err);
-            toast({ title: "ડાઉનલોડમાં ભૂલ", status: "error" });
+      // Download both aavak.xlsx and javak.xlsx from the uploads folder
+      try {
+        const urls = [
+          `${API_BASE}/uploads/aavak.xlsx`,
+          `${API_BASE}/uploads/javak.xlsx`,
+        ];
+
+        const token = localStorage.getItem("token");
+
+        const fetchOptions = token
+          ? { headers: { Authorization: `Bearer ${token}` } }
+          : {};
+
+        const results = await Promise.all(urls.map(u => fetch(u, fetchOptions)));
+
+        for (let i = 0; i < results.length; i++) {
+          const res = results[i];
+          if (!res.ok) throw new Error(`Failed to download ${urls[i]}`);
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          // set filename based on url
+          const name = urls[i].split('/').pop() || `sample_${i}.xlsx`;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
         }
+
+        toast({ title: "Sample Excel દાવનલોડ થયું!", status: "success" });
+      } catch (err) {
+        console.error(err);
+        toast({ title: "ડાઉનલોડમાં ભૂલ", status: "error" });
+      }
     };
+
+// 🔥 આ function તમારી CashMelForm.jsx માં replace કરો
 
 const uploadExcelToServer = async () => {
   if (!form.excelFile) {
@@ -492,23 +803,33 @@ const uploadExcelToServer = async () => {
       },
     });
 
-    const data = await res.json(); // ✅ JSON parse કરો
+    const data = await res.json();
 
-    // ❌ Error Response
+    // ❌ Error Response - Validation errors
     if (!res.ok || !data.success) {
-   if (data.errors && data.errors.length > 0) {
-  const errorMessage = `Excel માં ભૂલો મળી આવી.
-જરૂરી ફીલ્ડ ખૂટે છે`;
-
-  alert(errorMessage); // ya toast / modal
-  return;
-}
-
       
+      // 📋 If detailed validation errors exist
+      if (data.details && data.details.length > 0) {
+        const errorSummary = `${data.message || "Excel અપલોડમાં ભૂલ"}\n\n📊 કુલ ભૂલો: ${data.details.length}\n\n`;
+        
+        // Show first 8 errors in alert
+        const errorDetails = data.details.slice(0, 8).map(err => 
+          `📍 ${err.sheet} - પંક્તિ ${err.row}:\n${err.reasons.map(r => `   ❌ ${r}`).join('\n')}`
+        ).join('\n\n');
+
+        const moreErrors = data.details.length > 8 
+          ? `\n\n... અને ${data.details.length - 8} વધુ ભૂલો` 
+          : '';
+
+        alert(errorSummary + errorDetails + moreErrors + "\n\n✅ આ બધી ભૂલો સુધારીને ફરી અપલોડ કરો.");
+        
+        console.log("📋 Validation Errors:");
+        console.table(data.details);
+      } 
       else {
         toast({
-          title: "અપલોડમાં ભૂલ",
-          description: data.message || "કૃપા કરીને ફરી પ્રયાસ કરો",
+          title: data.message || "અપલોડમાં ભૂલ",
+          description: data.userFriendlyMessage || "કૃપા કરીને ફાઇલ તપાસો",
           status: "error",
           duration: 5000,
         });
@@ -516,30 +837,60 @@ const uploadExcelToServer = async () => {
       return;
     }
 
+    // ⚠️ Warning Response - All duplicates, nothing saved
+    if (data.success && data.warning && data.savedCount === 0) {
+      toast({
+        title: "⚠️ ચેતવણી!",
+        description: `બધી ${data.skippedCount} entries પહેલેથી database માં છે.\n\nકંઈ નવું સેવ થયું નથી.`,
+        status: "warning",
+        duration: 6000,
+        isClosable: true,
+      });
+      
+      console.log("⚠️ All entries were duplicates:");
+      console.table(data.skipped);
+      
+      cancelExcelUpload();
+      return;
+    }
+
     // ✅ Success Response
-    let successMsg = `${data.savedCount} entries સફળતાપૂર્વક સેવ થઈ!`;
+    let successMsg = `સફળતાપૂર્વક સેવ થયું!\n\n`;
+    successMsg += `✅ કુલ સેવ: ${data.savedCount}\n`;
+    successMsg += `📥 આવક: ${data.aavakCount}\n`;
+    successMsg += `📤 જાવક: ${data.javakCount}`;
+    
     if (data.skippedCount > 0) {
-      successMsg += `\n${data.skippedCount} ડુપ્લિકેટ entries skip થઈ.`;
+      successMsg += `\n⏭️ ડુપ્લિકેટ: ${data.skippedCount}`;
     }
 
     toast({
       title: "સફળતા!",
       description: successMsg,
       status: "success",
-      duration: 4000,
+      duration: 5000,
+      isClosable: true,
     });
 
-    // Reset for next upload
+    // Show warning if some were duplicates
+    if (data.skippedCount > 0) {
+      setTimeout(() => {
+        toast({
+          title: "નોંધ",
+          description: `${data.skippedCount} duplicates છોડી દેવામાં આવી`,
+          status: "info",
+          duration: 3000,
+        });
+      }, 1000);
+    }
+
     cancelExcelUpload();
 
-    // ✅ Data refresh કરો
-    // fetchAllEntries(); // તમારું data refresh function call કરો
-
   } catch (err) {
-    console.error(err);
+    console.error("Upload error:", err);
     toast({
       title: "અપલોડમાં ભૂલ",
-      description: "કૃપા કરીને ફરી પ્રયાસ કરો",
+      description: "સર્વર સાથે જોડાણમાં સમસ્યા. ફરી પ્રયાસ કરો.",
       status: "error",
       duration: 5000,
     });
@@ -663,66 +1014,98 @@ const uploadExcelToServer = async () => {
         const amount = modalForm.amount;
         const remarks = modalForm.remarks || "બેંક જમા";
         const bankName = modalForm.bank || "";
-
         const token = localStorage.getItem("token");
 
-        // 1) Create a JAVAK entry to reduce cash (rokad) -> expense from cash
-        const javakPayload = new FormData();
-        javakPayload.append("date", dateIso || "");
-        javakPayload.append("name", remarks.slice(0, 100));
-        javakPayload.append("receiptPaymentNo", "");
-        javakPayload.append("vyavharType", "javak");
-        javakPayload.append("category", "બેંક જમા");
-        javakPayload.append("amount", amount);
-        javakPayload.append("paymentMethod", "rokad");
-        javakPayload.append("bank", "");
-        javakPayload.append("ddCheckNum", "");
-        javakPayload.append("remarks", remarks);
+        if (editingDepositId) {
+          // UPDATE existing deposit
+          const fd = new FormData();
+          fd.append("date", dateIso || "");
+          fd.append("bank", bankName);
+          fd.append("remarks", remarks);
+          fd.append("amount", amount);
 
-        const res1 = await fetch(`${API_BASE}/cashmel`, {
-          method: "POST",
-          body: javakPayload,
-          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-        });
+          const res = await fetch(`${API_BASE}/cashmel/${editingDepositId}`, {
+            method: "POST",
+            body: fd,
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          });
 
-        if (!res1.ok) {
-          const txt = await res1.text();
-          throw new Error(txt || "Failed to save cash (javak) entry");
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt || "Failed to update");
+          }
+
+          toast({ title: "બેંક જમા અપડેટ થયું", status: "success", duration: 2500 });
+          setEditingDepositId(null);
+          setModalForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+          onClose();
+          fetchBankDeposits();
+        } else {
+          // CREATE new deposit entries
+          // 1) Create a JAVAK entry to reduce cash (rokad) -> expense from cash
+          const javakPayload = new FormData();
+          javakPayload.append("date", dateIso || "");
+          javakPayload.append("name", remarks.slice(0, 100));
+          javakPayload.append("receiptPaymentNo", "");
+          javakPayload.append("vyavharType", "javak");
+          javakPayload.append("category", "બેંક જમા");
+          javakPayload.append("amount", amount);
+          javakPayload.append("paymentMethod", "rokad");
+          javakPayload.append("bank", "");
+          javakPayload.append("ddCheckNum", "");
+          javakPayload.append("remarks", remarks);
+
+          const res1 = await fetch(`${API_BASE}/cashmel`, {
+            method: "POST",
+            body: javakPayload,
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          });
+
+          if (!res1.ok) {
+            const txt = await res1.text();
+            throw new Error(txt || "Failed to save cash (javak) entry");
+          }
+
+          // 2) Create an AAVAK entry to add to bank -> income to bank
+          const aavakPayload = new FormData();
+          aavakPayload.append("date", dateIso || "");
+          aavakPayload.append("name", remarks.slice(0, 100));
+          aavakPayload.append("receiptPaymentNo", "");
+          aavakPayload.append("vyavharType", "aavak");
+          aavakPayload.append("category", "બેંક જમા");
+          aavakPayload.append("amount", amount);
+          aavakPayload.append("paymentMethod", "bank");
+          aavakPayload.append("bank", bankName);
+          aavakPayload.append("ddCheckNum", "");
+          aavakPayload.append("remarks", remarks);
+
+          const res2 = await fetch(`${API_BASE}/cashmel`, {
+            method: "POST",
+            body: aavakPayload,
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          });
+
+          if (!res2.ok) {
+            const txt = await res2.text();
+            throw new Error(txt || "Failed to save bank (aavak) entry");
+          }
+
+          toast({ title: "બેંક જમા સફળતાપૂર્વક નોંધાઈ ગઈ", status: "success", duration: 2500 });
+          setModalForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+          onClose();
+          fetchBankDeposits();
         }
-
-        // 2) Create an AAVAK entry to add to bank -> income to bank
-        const aavakPayload = new FormData();
-        aavakPayload.append("date", dateIso || "");
-        aavakPayload.append("name", remarks.slice(0, 100));
-        aavakPayload.append("receiptPaymentNo", "");
-        aavakPayload.append("vyavharType", "aavak");
-        aavakPayload.append("category", "બેંક જમા");
-        aavakPayload.append("amount", amount);
-        aavakPayload.append("paymentMethod", "bank");
-        aavakPayload.append("bank", bankName);
-        aavakPayload.append("ddCheckNum", "");
-        aavakPayload.append("remarks", remarks);
-
-        const res2 = await fetch(`${API_BASE}/cashmel`, {
-          method: "POST",
-          body: aavakPayload,
-          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-        });
-
-        if (!res2.ok) {
-          const txt = await res2.text();
-          throw new Error(txt || "Failed to save bank (aavak) entry");
-        }
-
-        toast({ title: "બેંક જમા સફળતાપૂર્વક નોંધાઈ ગઈ", status: "success", duration: 2500 });
-        setModalForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
-        onClose();
       } catch (err) {
         console.error(err);
         toast({ title: "સંગ્રહમાં ભૂલ", description: err.message || "કૃપા કરીને ફરી પ્રયાસ કરો", status: "error", duration: 4000 });
       } finally {
         setModalSubmitting(false);
       }
+    };
+
+    const cancelEditDeposit = () => {
+      setEditingDepositId(null);
+      setModalForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
     };
 
     /* ==================== UI ==================== */
@@ -772,75 +1155,27 @@ const uploadExcelToServer = async () => {
                     {t("entryDetails")}
                   </Heading>
                   <HStack spacing={2}>
-                    <Button size="sm" colorScheme="purple" onClick={onOpenOpening}>
-                      ઉઘડતી સિલક
+                    <Button size="sm" colorScheme={openingEditMode ? "cyan" : "purple"} onClick={onOpenOpening}>
+                      {openingEditMode ? "✓ ઉઘડતી સિલક (ફેર કરો)" : "ઉઘડતી સિલક"}
                     </Button>
-                    <Button size="sm" colorScheme="blue" onClick={onOpen}>
+                    <Button size="sm" colorScheme="blue" onClick={onOpenBankDeposit}>
                       બેંક જમા
                     </Button>
                   </HStack>
                 </Flex>
 
-                {/* Quick deposit modal */}
-                <Modal isOpen={isOpen} onClose={onClose}>
-                  <ModalOverlay />
-                  <ModalContent>
-                    <ModalHeader>બેંક જમા વિગત</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                      <VStack spacing={4} align="stretch">
-                        <DateInput
-                          label={t("date")}
-                          formValue={modalForm}
-                          setFormValue={setModalForm}
-                          formatDisplayDate={formatDisplayDate}
-                          convertToISO={convertToISO}
-                          t={t}
-                        />
-
-                        <FormControl>
-                          <FormLabel fontWeight="600">બેંક</FormLabel>
-                          <Select size="lg" bg="gray.100" value={modalForm.bank} onChange={(e) => setModalForm(p => ({ ...p, bank: e.target.value }))}>
-                            <option value="">{t("select")}</option>
-                            {banks.map(b => (
-                              <option key={b._id} value={b.name}>{b.name}</option>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-                        <FormControl>
-                          <FormLabel fontWeight="600">વ્યવહારની વિગત</FormLabel>
-                          <Input size="lg" bg="gray.100" value={modalForm.remarks} onChange={(e) => setModalForm(p => ({ ...p, remarks: e.target.value }))} />
-                        </FormControl>
-
-                        <FormControl>
-                          <FormLabel fontWeight="600">{t("amount")}</FormLabel>
-                          <Input size="lg" bg="gray.100" value={toGujaratiDigits(modalForm.amount)} onChange={(e) => {
-                            const englishValue = gujaratiToEnglishDigits(e.target.value)
-                              .replace(/[^0-9.]/g, "")
-                              .replace(/(\..*)\./g, "$1");
-                            setModalForm(p => ({ ...p, amount: englishValue }));
-                          }} />
-                        </FormControl>
-                      </VStack>
-                    </ModalBody>
-
-                    <ModalFooter>
-                      <Button mr={3} onClick={() => { onClose(); }}>
-                        રદ કરો
-                      </Button>
-                      <Button colorScheme="green" onClick={submitModalToServer} isLoading={modalSubmitting}>
-                        સેવ
-                      </Button>
-                    </ModalFooter>
-                  </ModalContent>
-                </Modal>
-
                 {/* Opening balance modal (ઉઘડતી સિલક) */}
                 <Modal isOpen={isOpenOpening} onClose={onCloseOpening} size="lg">
                   <ModalOverlay />
                   <ModalContent>
-                    <ModalHeader>ઉઘડતી સિલક સમાવેશ</ModalHeader>
+                    <ModalHeader>
+                      {openingEditMode ? "ઉઘડતી સિલક ફેરફાર" : "ઉઘડતી સિલક સમાવેશ"}
+                      {openingEditMode && (
+                        <Box fontSize="sm" color="blue.600" mt={1} fontWeight="normal">
+                          (પહેલેથી અસ્તિત્વમાં છે)
+                        </Box>
+                      )}
+                    </ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                       <VStack spacing={4} align="stretch">
@@ -932,11 +1267,174 @@ const uploadExcelToServer = async () => {
                         રદ કરો
                       </Button>
                       <Button colorScheme="purple" onClick={submitOpeningToServer} isLoading={openingSubmitting}>
-                        સેવ
+                        {openingEditMode ? "અપડેટ" : "સેવ"}
                       </Button>
                     </ModalFooter>
                   </ModalContent>
                 </Modal>
+
+                {/* Bank Deposit Modal */}
+                <Modal isOpen={isOpenBankDeposit} onClose={onCloseBankDeposit} size="2xl">
+                  <ModalOverlay />
+                  <ModalContent>
+                    <ModalHeader>બેંક જમા સમાવેશ</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                      <VStack spacing={5} align="stretch">
+                        {/* Input Form */}
+                        <Box borderBottom="2px solid #e2e8f0" pb={4}>
+                          <Heading size="sm" mb={4} color="blue.700">
+                            {editingDepositId ? "બેંક જમા ફેરફાર" : "બેંક જમા ઉમેરો"}
+                          </Heading>
+                          
+                          <VStack spacing={3}>
+                            <DateInput
+                              label={t("date")}
+                              formValue={bankDepositForm}
+                              setFormValue={setBankDepositForm}
+                              formatDisplayDate={formatDisplayDate}
+                              convertToISO={convertToISO}
+                              t={t}
+                            />
+
+                            <FormControl isRequired>
+                              <FormLabel fontWeight="600">બેંક</FormLabel>
+                              <Select 
+                                size="lg" 
+                                bg="gray.100" 
+                                placeholder="બેંક પસંદ કરો"
+                                value={bankDepositForm.bank} 
+                                onChange={(e) => setBankDepositForm(p => ({ ...p, bank: e.target.value }))}
+                              >
+                                {banks.map(b => (
+                                  <option key={b._id} value={b.name}>{b.name}</option>
+                                ))}
+                              </Select>
+                            </FormControl>
+
+                            <FormControl isRequired>
+                              <FormLabel fontWeight="600">રકમ</FormLabel>
+                              <Input 
+                                size="lg" 
+                                bg="gray.100" 
+                                placeholder="રકમ દાખલ કરો"
+                                value={toGujaratiDigits(bankDepositForm.amount)} 
+                                onChange={(e) => {
+                                  const englishValue = gujaratiToEnglishDigits(e.target.value).replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                                  setBankDepositForm(p => ({ ...p, amount: englishValue }));
+                                }}
+                              />
+                            </FormControl>
+
+                            <FormControl>
+                              <FormLabel fontWeight="600">નોંધ</FormLabel>
+                              <Input 
+                                size="lg" 
+                                bg="gray.100" 
+                                placeholder="નોંધ (વૈકલ્પિક)"
+                                value={bankDepositForm.remarks}
+                                onChange={(e) => setBankDepositForm(p => ({ ...p, remarks: e.target.value }))}
+                              />
+                            </FormControl>
+
+                            <HStack spacing={2} w="full">
+                              {editingDepositId && (
+                                <Button colorScheme="gray" flex={1} onClick={() => {
+                                  setEditingDepositId(null);
+                                  setBankDepositForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+                                }}>
+                                  રદ કરો
+                                </Button>
+                              )}
+                              <Button colorScheme="blue" flex={1} onClick={submitBankDepositToServer} isLoading={bankDepositSubmitting}>
+                                {editingDepositId ? "અપડેટ" : "ઉમેરો"}
+                              </Button>
+                            </HStack>
+                          </VStack>
+                        </Box>
+
+                        {/* Deposits List */}
+                        {/* {bankDeposits.length > 0 && (
+                          <Box>
+                            <Heading size="sm" mb={3} color="green.700">
+                              બેંક જમા યાદી ({bankDeposits.length})
+                            </Heading>
+                            <TableContainer>
+                              <Table size="sm" variant="striped">
+                                <Thead bg="green.50">
+                                  <Tr>
+                                    <Th>તારીખ</Th>
+                                    <Th>બેંક</Th>
+                                    <Th isNumeric>રકમ</Th>
+                                    <Th>નોંધ</Th>
+                                    <Th>ક્રિયા</Th>
+                                  </Tr>
+                                </Thead>
+                                <Tbody>
+                                  {bankDeposits.map((deposit) => (
+                                    <Tr key={deposit._id}>
+                                      <Td>{deposit.date}</Td>
+                                      <Td>{deposit.bank}</Td>
+                                      <Td isNumeric fontWeight="600" color="blue.600">
+                                        {toGujaratiDigits(deposit.amount)}
+                                      </Td>
+                                      <Td fontSize="sm">{deposit.remarks}</Td>
+                                      <Td>
+                                        <HStack spacing={1}>
+                                          <IconButton
+                                            icon={<FiEdit2 />}
+                                            size="sm"
+                                            colorScheme="blue"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              const dateParts = deposit.date ? deposit.date.split("-") : [];
+                                              const displayDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : "";
+                                              setBankDepositForm({
+                                                date: deposit.date || "",
+                                                dateDisplay: displayDate,
+                                                bank: deposit.bank || "",
+                                                remarks: deposit.remarks || "",
+                                                amount: deposit.amount?.toString() || "",
+                                              });
+                                              setEditingDepositId(deposit._id);
+                                            }}
+                                          />
+                                          <IconButton
+                                            icon={<FiTrash2 />}
+                                            size="sm"
+                                            colorScheme="red"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              if (window.confirm("શું તમે આ બેંક જમા રદ કરવા માંગો છો?")) {
+                                                deleteBankDeposit(deposit._id);
+                                              }
+                                            }}
+                                          />
+                                        </HStack>
+                                      </Td>
+                                    </Tr>
+                                  ))}
+                                </Tbody>
+                              </Table>
+                            </TableContainer>
+                          </Box>
+                        )} */}
+                      </VStack>
+                    </ModalBody>
+
+                    <ModalFooter>
+                      <Button onClick={() => { 
+                        onCloseBankDeposit();
+                        setEditingDepositId(null);
+                        setBankDepositForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
+                      }}>
+                        બંધ કરો
+                      </Button>
+                    </ModalFooter>
+                  </ModalContent>
+                </Modal>
+                 
+              
 
                 <VStack spacing={4}>
 
@@ -998,6 +1496,8 @@ const uploadExcelToServer = async () => {
                             placeholder=""
                         />
                     </FormControl>
+
+                
 
                     {/* VYAVHAR TYPE */}
                     <FormControl isRequired>
@@ -1242,7 +1742,7 @@ const uploadExcelToServer = async () => {
                 </HStack>
               </VStack>
 
-              {/* {form.excelData.length > 0 && (
+              {form.excelData.length > 0 && (
                 <Box maxH="200px" overflowY="auto" fontSize="sm" mt={3}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -1280,7 +1780,7 @@ const uploadExcelToServer = async () => {
                     </tbody>
                   </table>
                 </Box>
-              )} */}
+              )}
             </Box>
           </Collapse>
 

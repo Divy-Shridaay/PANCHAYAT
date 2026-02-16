@@ -44,6 +44,7 @@ import RecordView from "./pages/RecordView";
 import CashMelForm from "./pages/CashMelForm";
 import CashMelDetails from "./pages/CashMelDetails";
 import CashMelView from "./pages/CashMelView";
+import BankDeposits from "./pages/BankDeposits";
 import Payment from "./pages/Payment";
 
 // Components
@@ -214,6 +215,10 @@ export default function App() {
           element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><CashMelView /></ModuleAccessGuard></PrivateRoute>}
         />
 
+        <Route
+          path="/cashmel/bank-deposits"
+          element={<PrivateRoute><ModuleAccessGuard moduleName="rojmel"><BankDeposits /></ModuleAccessGuard></PrivateRoute>}
+        />
 
         <Route
           path="/settings/help/videos/login-register"

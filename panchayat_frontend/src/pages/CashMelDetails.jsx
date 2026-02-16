@@ -327,14 +327,23 @@ const paymentMethodGujarati = (method) => {
            {t("cashmelDetails")}
           </Heading>
 
-          <Button
-            leftIcon={<FiArrowLeft />}
-            colorScheme="green"
-            variant="outline"
-            onClick={() => navigate("/cashmelform")}
-          >
-            {t("goBack")}
-          </Button>
+          <HStack spacing={3}>
+            {/* <Button
+              colorScheme="blue"
+              variant="outline"
+              onClick={() => navigate("/cashmel/bank-deposits")}
+            >
+              જમા કરેલી બેંક જમા
+            </Button> */}
+            <Button
+              leftIcon={<FiArrowLeft />}
+              colorScheme="green"
+              variant="outline"
+              onClick={() => navigate("/cashmelform")}
+            >
+              {t("goBack")}
+            </Button>
+          </HStack>
         </Flex>
 
         <Box
