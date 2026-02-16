@@ -813,9 +813,14 @@ const uploadExcelToServer = async () => {
         const errorSummary = `${data.message || "Excel અપલોડમાં ભૂલ"}\n\n📊 કુલ ભૂલો: ${data.details.length}\n\n`;
         
         // Show first 8 errors in alert
-        const errorDetails = data.details.slice(0, 8).map(err => 
-          `📍 ${err.sheet} - પંક્તિ ${err.row}:\n${err.reasons.map(r => `   ❌ ${r}`).join('\n')}`
-        ).join('\n\n');
+        const errorDetails = data.details.slice(0, 8).map(err => {
+          const errorType = err.type || err.sheet || "અજ્ઞાત";
+          const rowNum = err.row || "અજ્ઞાત";
+          const reasonsText = Array.isArray(err.reasons) && err.reasons.length > 0
+            ? err.reasons.map(r => `   ❌ ${r || "અજ્ઞાત ભૂલ"}`).join('\n')
+            : "   ❌ કોઈ કારણ નથી";
+          return `📍 ${errorType} - પંક્તિ ${rowNum}:\n${reasonsText}`;
+        }).join('\n\n');
 
         const moreErrors = data.details.length > 8 
           ? `\n\n... અને ${data.details.length - 8} વધુ ભૂલો` 
@@ -856,7 +861,7 @@ const uploadExcelToServer = async () => {
 
     // ✅ Success Response
     let successMsg = `સફળતાપૂર્વક સેવ થયું!\n\n`;
-    successMsg += `✅ કુલ સેવ: ${data.savedCount}\n`;
+    
     successMsg += `📥 આવક: ${data.aavakCount}\n`;
     successMsg += `📤 જાવક: ${data.javakCount}`;
     

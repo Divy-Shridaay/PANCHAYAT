@@ -1055,17 +1055,19 @@ export const uploadExcel = async (req, res, next) => {
     };
 
     for (const entry of allEntries) {
-      const sheetType = entry.vyavharType === "aavak" ? "આવક" : "જાવક";
+      // Ensure vyavharType is always a valid string
+      const validVyavharType = entry.vyavharType || "javak";
+      const sheetType = validVyavharType === "aavak" ? "આવક" : "જાવક";
       const errorsForRow = [];
 
       if (!entry.date || isNaN(entry.date.getTime())) {
-        errorsForRow.push(`${fieldNamesGJ.date} ખૂટે છે`);
+        errorsForRow.push(`${fieldNamesGJ.date || "તારીખ"} ખૂટે છે`);
       } else if (entry.date > today) {
         errorsForRow.push("ભવિષ્યની તારીખ માન્ય નથી");
       }
 
       if (!entry.receiptPaymentNo?.trim()) {
-        errorsForRow.push(`${fieldNamesGJ.receiptPaymentNo} ખૂટે છે`);
+        errorsForRow.push(`${fieldNamesGJ.receiptPaymentNo || "પાવતી/વાઉચર નંબર"} ખૂટે છે`);
       }
 
       // if (!entry.name?.trim()) {
@@ -1074,7 +1076,7 @@ export const uploadExcel = async (req, res, next) => {
       // }
 
       // ❌ Name validation ONLY for JAVAK
-if (entry.vyavharType === "javak") {
+if (validVyavharType === "javak") {
   if (!entry.name?.trim()) {
     errorsForRow.push("કોને આપ્યા ખૂટે છે");
   }
@@ -1082,45 +1084,45 @@ if (entry.vyavharType === "javak") {
 
 
       if (!entry.paymentMethod) {
-        errorsForRow.push(`${fieldNamesGJ.paymentMethod} ખૂટે છે (rokad અથવા bank)`);
+        errorsForRow.push(`${fieldNamesGJ.paymentMethod || "વ્યવહાર"} ખૂટે છે (rokad અથવા bank)`);
       } else if (!["rokad", "bank"].includes(entry.paymentMethod)) {
-        errorsForRow.push(`${fieldNamesGJ.paymentMethod} ખોટું છે`);
+        errorsForRow.push(`${fieldNamesGJ.paymentMethod || "વ્યવહાર"} ખોટું છે`);
       }
 
       if (entry.paymentMethod === "bank") {
         if (!entry.bank?.trim()) {
-          errorsForRow.push(`${fieldNamesGJ.bank} જરૂરી છે (વ્યવહાર = bank)`);
+          errorsForRow.push(`${fieldNamesGJ.bank || "બેંક"} જરૂરી છે (વ્યવહાર = bank)`);
         }
         if (!entry.ddCheckNum?.trim()) {
-          errorsForRow.push(`${fieldNamesGJ.ddCheckNum} જરૂરી છે (વ્યવહાર = bank)`);
+          errorsForRow.push(`${fieldNamesGJ.ddCheckNum || "ચેક નંબર"} જરૂરી છે (વ્યવહાર = bank)`);
         }
       }
 
       if (entry.paymentMethod === "rokad") {
         if (entry.bank?.trim()) {
-          errorsForRow.push(`${fieldNamesGJ.bank} નહીં હોવું જોઈએ (વ્યવહાર = rokad)`);
+          errorsForRow.push(`${fieldNamesGJ.bank || "બેંક"} નહીં હોવું જોઈએ (વ્યવહાર = rokad)`);
         }
         if (entry.ddCheckNum?.trim()) {
-          errorsForRow.push(`${fieldNamesGJ.ddCheckNum} નહીં હોવી જોઈએ (વ્યવહાર = rokad)`);
+          errorsForRow.push(`${fieldNamesGJ.ddCheckNum || "ચેક નંબર"} નહીં હોવી જોઈએ (વ્યવહાર = rokad)`);
         }
       }
 
       if (!entry.remarks?.trim()) {
-        errorsForRow.push(`${fieldNamesGJ.remarks} જરૂરી છે`);
+        errorsForRow.push(`${fieldNamesGJ.remarks || "રીમાર્ક્સ"} જરૂરી છે`);
       }
 
       if (!entry.category?.trim()) {
-        errorsForRow.push(`${fieldNamesGJ.category} ખૂટે છે`);
+        errorsForRow.push(`${fieldNamesGJ.category || "કેટેગરી"} ખૂટે છે`);
       }
 
       const amt = Number(entry.amount);
       if (isNaN(amt) || amt <= 0) {
-        errorsForRow.push(`${fieldNamesGJ.amount} ખૂટે છે અથવા 0 છે`);
+        errorsForRow.push(`${fieldNamesGJ.amount || "રકમ"} ખૂટે છે અથવા 0 છે`);
       }
 
       if (errorsForRow.length > 0) {
         validationErrors.push({
-          type: sheetType,
+          type: sheetType || "જાવક",
           row: entry.rowNum,
           reasons: errorsForRow
         });
@@ -1147,9 +1149,14 @@ if (entry.vyavharType === "javak") {
     console.log(` ❌ Errors: ${validationErrors.length}`);
 
     if (validationErrors.length > 0) {
-      const formattedErrors = validationErrors.map(e => 
-        `${e.type} - પંક્તિ ${e.row}:\n${e.reasons.map(r => `   • ${r}`).join("\n")}`
-      ).join("\n\n");
+      const formattedErrors = validationErrors.map(e => {
+        const errorType = e.type && e.type.trim() ? e.type : "અજ્ઞાત";
+        const rowNum = e.row || "અજ્ઞાત";
+        const reasons = Array.isArray(e.reasons) && e.reasons.length > 0 
+          ? e.reasons.map(r => `   • ${r || "અજ્ઞાત ભૂલ"}`).join("\n")
+          : "   • કોઈ કારણ નથી";
+        return `${errorType} - પંક્તિ ${rowNum}:\n${reasons}`;
+      }).join("\n\n");
 
       return res.status(400).json({
         success: false,
