@@ -948,6 +948,7 @@ export const uploadExcel = async (req, res, next) => {
       const entries = [];
       for (let i = 0; i < data.length; i++) {
         const r = data[i];
+        
         const rowNum = i + 3;
 
         console.log(`\n🔍 Processing Row ${rowNum}:`, {

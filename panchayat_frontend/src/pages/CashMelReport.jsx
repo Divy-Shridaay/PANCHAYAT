@@ -105,8 +105,11 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         ];
     };
 
-    // 🔥 Function to get years list for dropdown
+    // 🔥 Function to get years list for dropdown 
+
+
     const getYearsForMonthly = () => {
+
         const currentYear = new Date().getFullYear();
         const years = [];
         for (let i = 10; i >= 0; i--) {
