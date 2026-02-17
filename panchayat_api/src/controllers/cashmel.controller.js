@@ -818,13 +818,14 @@ export const uploadExcel = async (req, res, next) => {
     function processAavakSheet(ws) {
       console.log(`\n🔍 Processing આવક sheet...`);
       
+      // ✅ FIXED: Removed "kulRakam" from header array
       const data = XLSX.utils.sheet_to_json(ws, {
         range: 2,
         header: [
           "date", "receiptPaymentNo", "name", "anyaVero",
           "gharVero", "samanyaPaniVero", "khasPaniVero", "lightVero",
           "safaiVero", "gutarVero", "vyavsayVero", "anyaAavak",
-          "kulRakam", "paymentMethod", "bank", "ddCheckNum", "remarks"
+          "paymentMethod", "bank", "ddCheckNum", "remarks"  // ✅ Now correctly mapped!
         ],
         defval: ""
       });
@@ -841,7 +842,7 @@ export const uploadExcel = async (req, res, next) => {
           r.date, r.receiptPaymentNo, r.name, r.anyaVero,
           r.gharVero, r.samanyaPaniVero, r.khasPaniVero, r.lightVero,
           r.safaiVero, r.gutarVero, r.vyavsayVero, r.anyaAavak,
-          r.kulRakam, r.paymentMethod, r.bank, r.ddCheckNum, r.remarks
+          r.paymentMethod, r.bank, r.ddCheckNum, r.remarks
         ];
 
         const isCompletelyEmpty = allFields.every(field => isTrulyEmpty(field));
@@ -859,7 +860,7 @@ export const uploadExcel = async (req, res, next) => {
         const ddCheckNum = String(r.ddCheckNum || "").trim();
         const remarks = String(r.remarks || "").trim();
         
-        console.log(`📝 Row ${rowNum}: Date=${entryDate ? entryDate.toISOString().split('T')[0] : 'null'}, Name=${name}`);
+        console.log(`📝 Row ${rowNum}: Date=${entryDate ? entryDate.toISOString().split('T')[0] : 'null'}, Name=${name}, Payment=${paymentMethod}, Remarks=${remarks}`);
 
         const staticVeros = {};
         for (const [field, catName] of Object.entries(staticCategoryMapping)) {
@@ -1071,18 +1072,12 @@ export const uploadExcel = async (req, res, next) => {
         errorsForRow.push(`${fieldNamesGJ.receiptPaymentNo || "પાવતી/વાઉચર નંબર"} ખૂટે છે`);
       }
 
-      // if (!entry.name?.trim()) {
-      //   const nameField = entry.vyavharType === "aavak" ? "કોના તરફ થી આવી" : "કોને આપ્યા";
-      //   errorsForRow.push(`${nameField} ખૂટે છે`);
-      // }
-
       // ❌ Name validation ONLY for JAVAK
-if (validVyavharType === "javak") {
-  if (!entry.name?.trim()) {
-    errorsForRow.push("કોને આપ્યા ખૂટે છે");
-  }
-}
-
+      if (validVyavharType === "javak") {
+        if (!entry.name?.trim()) {
+          errorsForRow.push("કોને આપ્યા ખૂટે છે");
+        }
+      }
 
       if (!entry.paymentMethod) {
         errorsForRow.push(`${fieldNamesGJ.paymentMethod || "વ્યવહાર"} ખૂટે છે (rokad અથવા bank)`);
