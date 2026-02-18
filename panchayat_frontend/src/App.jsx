@@ -27,6 +27,7 @@ import FaqHelp from "./pages/settings/help/FaqHelp";
 import LoginRegisterVideo from "./pages/settings/help/videos/LoginRegisterVideo";
 import PedhinamuVideo from "./pages/settings/help/videos/PedhinamuVideo";
 import RojmelVideo from "./pages/settings/help/videos/RojmelVideo";
+import PaymentVideo from "./pages/settings/help/videos/PaymentVideo";
 
 
 // Pedhinamu
@@ -233,6 +234,11 @@ export default function App() {
         <Route
           path="/settings/help/videos/rojmel"
           element={<PrivateRoute><RojmelVideo /></PrivateRoute>}
+        />
+
+        <Route
+          path="/settings/help/videos/payment-flow"
+          element={<PrivateRoute><PaymentVideo /></PrivateRoute>}
         />
 
         <Route

@@ -14,6 +14,7 @@ import {
   FiLogIn,
   FiFileText,
   FiBookOpen,
+  FiCreditCard,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -76,7 +77,7 @@ export default function VideoHelp() {
 
       {/* FULL WIDTH, BIG CARDS */}
       <SimpleGrid
-        columns={{ base: 1, md: 3 }}
+        columns={{ base: 1, md: 2, lg: 4 }}
         spacing={6}
         maxW="100%"
       >
@@ -104,6 +105,15 @@ export default function VideoHelp() {
           subtitle="રોજમેળ નોંધ અને વ્યવહાર માર્ગદર્શન"
           onClick={() =>
             navigate("/settings/help/videos/rojmel")
+          }
+        />
+
+        <VideoCard
+          icon={FiCreditCard}
+          title="પેમેન્ટ ફ્લો"
+          subtitle="પેમેન્ટ કરવાની પ્રક્રિયાની માહિતી"
+          onClick={() =>
+            navigate("/settings/help/videos/payment-flow")
           }
         />
       </SimpleGrid>

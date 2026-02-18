@@ -114,7 +114,7 @@ export default function RojmelVideo() {
       >
        <video
   ref={videoRef}
-  src="/videos/Gram-Panchayatrojmed.mp4"
+  src="/videos/Rojmel.mp4"
   style={{ width: "100%" }}
   autoPlay
   muted

@@ -146,7 +146,7 @@ export default function LoginRegisterVideo() {
         {/* VIDEO */}
         <video
           ref={videoRef}
-          src="/videos/dummy.mp4"
+          src="/videos/Registration.mp4"
           style={{ width: "100%" }}
           autoPlay
           muted
