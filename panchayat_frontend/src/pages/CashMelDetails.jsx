@@ -66,20 +66,19 @@ const CashMelDetails = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-    const API_ROOT = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
-    ? "http://localhost:5000/api"
-    : "https://panchayat.shridaay.com/api";
+  const API_ROOT =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
+      ? "http://localhost:5000/api"
+      : "https://panchayat.shridaay.com/api";
   const API_BASE = `${API_ROOT}/cashmel`;
 
-  // ✅ HELPER FUNCTION FOR AUTHENTICATED FETCH
   const authFetch = (url, options = {}) => {
     const token = localStorage.getItem("token");
-    
-    // Debug: Log token (remove in production)
     if (!token) {
       console.warn("⚠️ No token found in localStorage");
     }
-
     return fetch(url, {
       ...options,
       headers: {
@@ -89,16 +88,30 @@ const CashMelDetails = () => {
     });
   };
 
+  // ✅ Sort helper
+// ✅ આ function બદલો — નવી date પહેલા, પછી receipt ascending
+const sortEntries = (data) => {
+  return [...data].sort((a, b) => {
+    // 1. Date DESCENDING (આજની/નવી date પહેલા)
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    if (dateA !== dateB) return dateB - dateA; // ← dateB - dateA = descending
+
+    // 2. Same date → receipt number ASCENDING (3, 11, 11, 22)
+    const rA = parseInt(String(a.receiptPaymentNo), 10) || 0;
+    const rB = parseInt(String(b.receiptPaymentNo), 10) || 0;
+    if (rA !== rB) return rA - rB;
+
+    // 3. Same receipt → MongoDB _id sort
+    return String(a._id || "").localeCompare(String(b._id || ""));
+  });
+};
+
   const deleteRecord = async () => {
     try {
       const url = `${API_BASE}/delete/${deleteId}`;
-
       setDeleting(true);
-
-      // ✅ FIXED: Added Authorization header
-      const res = await authFetch(url, {
-        method: "DELETE",
-      });
+      const res = await authFetch(url, { method: "DELETE" });
 
       if (!res.ok) {
         let body = null;
@@ -107,7 +120,6 @@ const CashMelDetails = () => {
         } catch {
           body = await res.text();
         }
-        console.error("Delete failed", res.status, body);
         throw new Error(body?.message || `Delete failed: ${res.status}`);
       }
 
@@ -118,6 +130,7 @@ const CashMelDetails = () => {
         position: "top",
       });
 
+      setAllEntries((prev) => prev.filter((x) => x._id !== deleteId));
       setFilteredEntries((prev) => prev.filter((x) => x._id !== deleteId));
       onClose();
     } catch (err) {
@@ -133,54 +146,45 @@ const CashMelDetails = () => {
     }
   };
 
-const paymentMethodGujarati = (method) => {
-  if (!method) return "-";
-
-  const value = method.toString().toLowerCase().trim();
-
-  // CASH / ROKAD
-  if (
-    value === "cash" ||
-    value === "rokad" ||
-    value === "rokad-yes" ||
-    value.includes("rokad")
-  ) {
-    return "રોકડ";
-  }
-
-  // BANK
-  if (
-    value === "bank" ||
-    value === "cheque" ||
-    value === "check" ||
-    value === "dd" ||
-    value.includes("bank")
-  ) {
-    return "બેંક";
-  }
-
-  return method; // fallback
-};
-
-
+  const paymentMethodGujarati = (method) => {
+    if (!method) return "-";
+    const value = method.toString().toLowerCase().trim();
+    if (
+      value === "cash" ||
+      value === "rokad" ||
+      value === "rokad-yes" ||
+      value.includes("rokad")
+    ) {
+      return "રોકડ";
+    }
+    if (
+      value === "bank" ||
+      value === "cheque" ||
+      value === "check" ||
+      value === "dd" ||
+      value.includes("bank")
+    ) {
+      return "બેંક";
+    }
+    return method;
+  };
 
   const [rows, setRows] = useState([]);
-  const customCategories = { aavak: [], javak: [] };
 
-  // ✅ FIXED: Fetch all entries with Authorization
+  // ✅ Fetch all entries with sort
   useEffect(() => {
     if (!id) {
       setLoading(true);
       authFetch(API_BASE)
         .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
         .then((data) => {
-          setAllEntries(data.data || []);
-          setFilteredEntries(data.data || []);
+          const sorted = sortEntries(data.data || []);
+          console.log("✅ Sorted receipts:", sorted.map((x) => x.receiptPaymentNo));
+          setAllEntries(sorted);
+          setFilteredEntries(sorted);
         })
         .catch((err) => {
           console.error("Failed to load entries:", err);
@@ -196,33 +200,35 @@ const paymentMethodGujarati = (method) => {
   }, [id]);
 
   // Filter entries based on search and type
- useEffect(() => {
-  if (!id) {
-    let filtered = allEntries;
+  useEffect(() => {
+    if (!id) {
+      let filtered = allEntries;
 
-    if (filterType !== "all") {
-      filtered = filtered.filter(
-        (entry) => entry.vyavharType?.toLowerCase() === filterType
-      );
+      if (filterType !== "all") {
+        filtered = filtered.filter(
+          (entry) => entry.vyavharType?.toLowerCase() === filterType
+        );
+      }
+
+      if (searchTerm) {
+        filtered = filtered.filter(
+          (entry) =>
+            entry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            entry.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            entry.receiptPaymentNo
+              ?.toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            entry.ddCheckNum?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      // ✅ After filter, re-sort to maintain order
+      const sorted = sortEntries(filtered);
+      setFilteredEntries(sorted);
+      setTotalPages(Math.ceil(sorted.length / itemsPerPage));
+      setCurrentPage(1);
     }
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (entry) =>
-          entry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          entry.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          entry.receiptPaymentNo
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          entry.ddCheckNum?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    setFilteredEntries(filtered);
-    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-    setCurrentPage(1);
-  }
-}, [searchTerm, filterType, allEntries, id, itemsPerPage]);
+  }, [searchTerm, filterType, allEntries, id, itemsPerPage]);
 
   const getPaginatedData = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -230,15 +236,13 @@ const paymentMethodGujarati = (method) => {
     return filteredEntries.slice(startIndex, endIndex);
   };
 
-  // ✅ FIXED: Fetch single entry with Authorization
+  // Fetch single entry
   useEffect(() => {
     if (id) {
       setLoading(true);
       authFetch(`${API_BASE}/${id}`)
         .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
         .then((data) => {
@@ -258,10 +262,8 @@ const paymentMethodGujarati = (method) => {
     }
   }, [id]);
 
-  // ✅ FIXED: Save/Update with Authorization
   const handleSave = async () => {
     if (!entry) return;
-
     setLoading(true);
     try {
       const fd = new FormData();
@@ -313,9 +315,7 @@ const paymentMethodGujarati = (method) => {
   const formatDateToGujarati = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
-    return `${toGujaratiDigits(day)}/${toGujaratiDigits(
-      month
-    )}/${toGujaratiDigits(year)}`;
+    return `${toGujaratiDigits(day)}/${toGujaratiDigits(month)}/${toGujaratiDigits(year)}`;
   };
 
   // LIST PAGE
@@ -324,17 +324,17 @@ const paymentMethodGujarati = (method) => {
       <Box bg="#F8FAF9" minH="100vh" p={10}>
         <Flex justify="space-between" align="center" mb={10}>
           <Heading size="lg" color="#1E4D2B" fontWeight="700">
-           {t("cashmelDetails")}
+            {t("cashmelDetails")}
           </Heading>
 
           <HStack spacing={3}>
-            {/* <Button
+                <Button
               colorScheme="blue"
               variant="outline"
               onClick={() => navigate("/cashmel/bank-deposits")}
             >
               જમા કરેલી બેંક જમા
-            </Button> */}
+            </Button> 
             <Button
               leftIcon={<FiArrowLeft />}
               colorScheme="green"
@@ -419,7 +419,6 @@ const paymentMethodGujarati = (method) => {
                       key={row._id}
                       _hover={{ bg: "gray.50" }}
                       cursor="pointer"
-                      // onClick={() => navigate(`/cashmel/details/${row._id}`)}
                     >
                       <Td>{formatDateToGujarati(row.date)}</Td>
                       <Td>{row.name}</Td>
@@ -441,17 +440,12 @@ const paymentMethodGujarati = (method) => {
                         </Badge>
                       </Td>
                       <Td>{row.category}</Td>
-                  <Td>{paymentMethodGujarati(row.paymentMethod)}</Td>
-
-
-
-                    <Td>{row.ddCheckNum?.trim() ? row.ddCheckNum : "-"}</Td>
-
+                      <Td>{paymentMethodGujarati(row.paymentMethod)}</Td>
+                      <Td>{row.ddCheckNum?.trim() ? row.ddCheckNum : "-"}</Td>
                       <Td isNumeric>₹{toGujaratiDigits(row.amount)}</Td>
-
-                    <Td maxW="300px" whiteSpace="normal" breakwords="break-word">
-  <ExpandableText text={row.remarks} />
-</Td>
+                      <Td maxW="300px" whiteSpace="normal" breakwords="break-word">
+                        <ExpandableText text={row.remarks} />
+                      </Td>
 
 {/* <td className="max-w-[280px] whitespace-normal break-words">
   <ExpandableText text={row.remarks} wordLimit={6} />
@@ -485,7 +479,6 @@ const paymentMethodGujarati = (method) => {
                               navigate(`/cashmelform/${row._id}`);
                             }}
                           />
-
                           <IconButton
                             size="sm"
                             icon={<DeleteIcon />}
@@ -506,24 +499,18 @@ const paymentMethodGujarati = (method) => {
               </Table>
             </TableContainer>
 
-            
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
-                itemsPerPage={itemsPerPage}
-                setItemsPerPage={setItemsPerPage}
-              />
-            
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => setCurrentPage(page)}
+              itemsPerPage={itemsPerPage}
+              setItemsPerPage={setItemsPerPage}
+            />
           </>
         )}
 
-        <Modal
-          isOpen={isOpen}
-          onClose={onClose}
-          isCentered
-          motionPreset="scale"
-        >
+        {/* Delete Modal */}
+        <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
           <ModalOverlay bg="rgba(0,0,0,0.45)" />
           <ModalContent
             rounded="2xl"
@@ -582,7 +569,6 @@ const paymentMethodGujarati = (method) => {
               >
                 {t("cancel")}
               </Button>
-
               <Button
                 colorScheme="red"
                 rounded="full"
@@ -602,188 +588,7 @@ const paymentMethodGujarati = (method) => {
   }
 
   // SINGLE ENTRY PAGE
-  return (
-    <Box bg="#F8FAF9" minH="100vh" p={10}>
-      {/* <Flex justify="space-between" align="center" mb={10}>
-        <Heading size="lg" color="#1E4D2B" fontWeight="700" mr={2}>
-          ✏️ {t("updateCashmel")}
-        </Heading>
-
-        <Button
-          leftIcon={<FiArrowLeft />}
-          colorScheme="green"
-          variant="outline"
-          onClick={() => navigate("/cashmel/details")}
-        >
-          {t("goBack")}
-        </Button>
-      </Flex> */}
-
-      {/* <Box
-        bg="white"
-        p={8}
-        rounded="2xl"
-        shadow="lg"
-        border="1px solid #E3EDE8"
-        maxW="700px"
-        mx="auto"
-      >
-        {loading ? (
-          <Flex justify="center" py={10}>
-            <Spinner size="xl" />
-          </Flex>
-        ) : entry ? (
-          <VStack spacing={5} align="stretch">
-            {[
-              { label: t("fieldDate"), key: "date" },
-              { label: t("fieldName"), key: "name" },
-              { label: t("fieldReceiptPaymentNo"), key: "receiptPaymentNo" },
-              { label: t("fieldVyavharType"), key: "vyavharType" },
-              { label: t("category"), key: "category" },
-              { label: t("fieldAmount"), key: "amount" },
-            ].map(({ label, key }) => (
-              <FormControl key={key}>
-                <FormLabel fontWeight="600" color="green.800">
-                  {label}
-                </FormLabel>
-
-                <Flex gap={3}>
-                  <Input
-                    type={key === "amount" ? "number" : "text"}
-                    value={entry[key] || ""}
-                    isDisabled={!editMode[key]}
-                    onChange={(e) =>
-                      setEntry({ ...entry, [key]: e.target.value })
-                    }
-                    bg={editMode[key] ? "green.50" : "white"}
-                  />
-
-                  {!editMode[key] ? (
-                    <IconButton
-                      icon={<EditIcon />}
-                      colorScheme="green"
-                      variant="outline"
-                      onClick={() => setEditMode({ ...editMode, [key]: true })}
-                    />
-                  ) : (
-                    <>
-                      <IconButton
-                        icon={<CheckIcon />}
-                        colorScheme="green"
-                        variant="solid"
-                        onClick={() =>
-                          setEditMode({ ...editMode, [key]: false })
-                        }
-                      />
-                      <IconButton
-                        icon={<CloseIcon />}
-                        colorScheme="red"
-                        variant="ghost"
-                        onClick={() => {
-                          setEntry({
-                            ...entry,
-                            [key]: originalEntry[key],
-                          });
-                          setEditMode({ ...editMode, [key]: false });
-                        }}
-                      />
-                    </>
-                  )}
-                </Flex>
-              </FormControl>
-            ))}
-
-            <Button
-              colorScheme="green"
-              size="lg"
-              rounded="lg"
-              onClick={handleSave}
-              isLoading={loading}
-            >
-              {t("saveChanges")}
-            </Button>
-          </VStack>
-        ) : (
-          <Text>No data found</Text>
-        )}
-      </Box> */}
-
-      {/* <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="scale">
-        <ModalOverlay bg="rgba(0,0,0,0.45)" />
-        <ModalContent
-          rounded="2xl"
-          p={2}
-          bg="white"
-          shadow="2xl"
-          border="1px solid #f2dede"
-        >
-          <ModalCloseButton />
-
-          <Flex justify="center" mt={6}>
-            <Flex
-              bg="red.100"
-              w="70px"
-              h="70px"
-              rounded="full"
-              align="center"
-              justify="center"
-              border="2px solid #fc8181"
-            >
-              <Text fontSize="4xl" color="red.600">
-                ⚠️
-              </Text>
-            </Flex>
-          </Flex>
-
-          <ModalHeader
-            textAlign="center"
-            mt={4}
-            fontSize="2xl"
-            fontWeight="800"
-            color="red.600"
-          >
-            {t("deleteTitle")}
-          </ModalHeader>
-
-          <ModalBody pb={6}>
-            <Text
-              fontSize="lg"
-              textAlign="center"
-              color="gray.700"
-              px={4}
-              lineHeight="1.7"
-            >
-              {t("deleteConfirmFull")}
-            </Text>
-          </ModalBody>
-
-          <ModalFooter justifyContent="center" gap={4} pb={6}>
-            <Button
-              variant="outline"
-              onClick={onClose}
-              rounded="full"
-              px={8}
-              size="lg"
-            >
-              {t("cancel")}
-            </Button>
-
-            <Button
-              colorScheme="red"
-              rounded="full"
-              px={8}
-              size="lg"
-              onClick={deleteRecord}
-              isLoading={deleting}
-              loadingText="Deleting"
-            >
-              {t("delete")}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal> */}
-    </Box>
-  );
+  return <Box bg="#F8FAF9" minH="100vh" p={10}></Box>;
 };
 
 export default CashMelDetails;
