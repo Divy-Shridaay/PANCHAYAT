@@ -310,14 +310,27 @@ const fileInputRef = useRef(null);
                 // Get rokad and bank entries from existing openings
                 const rokadEntry = openings.find(o => o.paymentMethod === "rokad");
                 const bankEntries = openings.filter(o => o.paymentMethod === "bank");
-                
-                setOpeningForm({
-                    date: firstOpening.date || "",
-                    dateDisplay: displayDate,
-                    rokadAmount: rokadEntry ? rokadEntry.amount.toString() : "",
-                    banks: bankEntries.map(b => ({ name: b.bank, amount: b.amount.toString() })),
-                    remarks: firstOpening.remarks || "ઉઘડતી સિલક",
-                });
+          // Group bank entries by bank name, summing amounts
+const bankMap = {};
+bankEntries.forEach(b => {
+    if (bankMap[b.bank]) {
+        bankMap[b.bank] += Number(b.amount);
+    } else {
+        bankMap[b.bank] = Number(b.amount);
+    }
+});
+const groupedBanks = Object.entries(bankMap).map(([name, amount]) => ({
+    name,
+    amount: amount.toString()
+}));
+
+setOpeningForm({
+    date: firstOpening.date || "",
+    dateDisplay: displayDate,
+    rokadAmount: rokadEntry ? rokadEntry.amount.toString() : "",
+    banks: groupedBanks,
+    remarks: firstOpening.remarks || "ઉઘડતી સિલક",
+});
             } else {
                 // No existing opening seal, set to create mode
                 setExistingOpening(null);
@@ -494,8 +507,8 @@ const fileInputRef = useRef(null);
         if (openingEditMode && existingOpeningIds.length > 0) {
           for (const id of existingOpeningIds) {
             try {
-              const res = await fetch(`${API_BASE}/cashmel/${id}`, {
-                method: "DELETE",
+            const res = await fetch(`${API_BASE}/cashmel/delete/${id}`, {  // ✅ SAHI
+    method: "DELETE",
                 headers: {
                   ...(token && { Authorization: `Bearer ${token}` })
                 }

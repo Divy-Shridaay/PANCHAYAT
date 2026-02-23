@@ -828,20 +828,24 @@ const handleReportChange = (key, value) => {
                     return total;
                 }
 
-                function getPeriodAccountFlow(accountType, accountName) {
-                    let income = 0, expense = 0;
-                    selectedDateRecords.forEach(r => {
-                        const match = 
-                            (accountType === "cash" && r.paymentMethod !== "bank") ||
-                            (accountType === "bank" && r.paymentMethod === "bank" && r.bank === accountName);
+             function getPeriodAccountFlow(accountType, accountName) {
+    let income = 0, expense = 0;
+    selectedDateRecords.forEach(r => {
+        // 🔥 Exclude ઉઘડતી સિલક entries from આવક column in tapsil
+        // They should only appear in the ઉઘડતી સિલક (opening balance) column
+        if (r.category === "ઉઘડતી સિલક" && r.vyavharType === "aavak") return;
 
-                        if (match) {
-                            if (r.vyavharType === "aavak") income += r.amount || 0;
-                            else expense += r.amount || 0;
-                        }
-                    });
-                    return { income, expense };
-                }
+        const match = 
+            (accountType === "cash" && r.paymentMethod !== "bank") ||
+            (accountType === "bank" && r.paymentMethod === "bank" && r.bank === accountName);
+
+        if (match) {
+            if (r.vyavharType === "aavak") income += r.amount || 0;
+            else expense += r.amount || 0;
+        }
+    });
+    return { income, expense };
+}
 
                 let accountTransferRows = "";
                 let srNo = 1;
