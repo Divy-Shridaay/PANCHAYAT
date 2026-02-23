@@ -240,7 +240,18 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 updated.rojmelMonth = "";
                 updated.rojmelYear = "";
                 updated.rojmelFullYear = "";
+                updated.rojmelMode = "month";
                 dateErrorShownRef.current = false;
+                return updated;
+            }
+
+            // 🔥 Handle rojmelMode change - clear related fields
+            if (key === "rojmelMode" && prev.type === "rojmel") {
+                updated.from = "";
+                updated.to = "";
+                updated.rojmelMonth = "";
+                updated.rojmelYear = "";
+                updated.rojmelFullYear = "";
                 return updated;
             }
 
@@ -264,8 +275,6 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     updated.from = from;
                     updated.to = to;
                 }
-                updated.rojmelMonth = "";
-                updated.rojmelYear = "";
                 return updated;
             }
 
@@ -733,18 +742,32 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 return;
             }
         }
-        // 🔥 NEW: Rojmel validation
+        // 🔥 Rojmel validation - all 3 modes
         else if (report.type === "rojmel") {
-            const hasMonth = report.rojmelMonth && report.rojmelYear;
-            const hasFullYear = report.rojmelFullYear;
-            if (!hasMonth && !hasFullYear) {
-                toast({
-                    title: "મહિનો અને વર્ષ અથવા આર્થિક વર્ષ પસંદ કરો",
-                    status: "error",
-                    duration: 2500,
-                    position: "top",
-                });
-                return;
+            const mode = report.rojmelMode || "month";
+            if (mode === "month") {
+                if (!report.rojmelMonth) {
+                    toast({ title: "મહિનો પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+                if (!report.rojmelYear) {
+                    toast({ title: "વર્ષ પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+            } else if (mode === "fullyear") {
+                if (!report.rojmelFullYear) {
+                    toast({ title: "આ.વ. પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+            } else if (mode === "custom") {
+                if (!report.from || report.from.length !== 10) {
+                    toast({ title: "From તારીખ પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+                if (!report.to || report.to.length !== 10) {
+                    toast({ title: "To તારીખ પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
             }
         }
         // Special validation for checkIssue
@@ -1353,49 +1376,81 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     </>
                 )}
 
-                {/* 🔥 NEW: Rojmel - Month + Year OR Full Year dropdown */}
+                {/* 🔥 Rojmel - Mode selector + inputs */}
                 {report.type === "rojmel" && (
                     <>
-                        {/* Month dropdown */}
+                        {/* Mode selector dropdown */}
                         <Select
-                            width="150px"
-                            value={report.rojmelMonth}
-                            onChange={(e) => handleReportChange("rojmelMonth", e.target.value)}
+                            width="160px"
+                            value={report.rojmelMode || "month"}
+                            onChange={(e) => handleReportChange("rojmelMode", e.target.value)}
                         >
-                            <option value="">મહિનો પસંદ કરો</option>
-                            {getMonths().map((month) => (
-                                <option key={month.value} value={month.value}>{month.label}</option>
-                            ))}
+                            <option value="month">મહિનો / વર્ષ</option>
+                            <option value="fullyear">આખું આ.વ.</option>
+                            <option value="custom">કસ્ટમ તારીખ</option>
                         </Select>
 
-                        {/* Year dropdown (for month selection) */}
-                        <Select
-                            width="120px"
-                            value={report.rojmelYear}
-                            onChange={(e) => handleReportChange("rojmelYear", e.target.value)}
-                        >
-                            <option value="">વર્ષ પસંદ કરો</option>
-                            {getYearsForMonthly().map((year) => (
-                                <option key={year.value} value={year.value}>{year.label}</option>
-                            ))}
-                        </Select>
+                        {/* Month + Year mode */}
+                        {(!report.rojmelMode || report.rojmelMode === "month") && (
+                            <>
+                                <Select
+                                    width="150px"
+                                    value={report.rojmelMonth}
+                                    onChange={(e) => handleReportChange("rojmelMonth", e.target.value)}
+                                >
+                                    <option value="">મહિનો પસંદ કરો</option>
+                                    {getMonths().map((month) => (
+                                        <option key={month.value} value={month.value}>{month.label}</option>
+                                    ))}
+                                </Select>
+                                <Select
+                                    width="120px"
+                                    value={report.rojmelYear}
+                                    onChange={(e) => handleReportChange("rojmelYear", e.target.value)}
+                                >
+                                    <option value="">વર્ષ પસંદ કરો</option>
+                                    {getYearsForMonthly().map((year) => (
+                                        <option key={year.value} value={year.value}>{year.label}</option>
+                                    ))}
+                                </Select>
+                            </>
+                        )}
 
-                        {/* Divider text */}
-                        <Box fontSize="sm" color="gray.500" fontWeight="bold" alignSelf="center">
-                            અથવા
-                        </Box>
+                        {/* Full Financial Year mode */}
+                        {report.rojmelMode === "fullyear" && (
+                            <Select
+                                width="180px"
+                                value={report.rojmelFullYear}
+                                onChange={(e) => handleReportChange("rojmelFullYear", e.target.value)}
+                                placeholder="આ.વ. પસંદ કરો"
+                            >
+                                {getFinancialYears().map((fy) => (
+                                    <option key={fy.value} value={fy.value}>{fy.label}</option>
+                                ))}
+                            </Select>
+                        )}
 
-                        {/* Full Financial Year dropdown */}
-                        <Select
-                            width="180px"
-                            value={report.rojmelFullYear}
-                            onChange={(e) => handleReportChange("rojmelFullYear", e.target.value)}
-                            placeholder="આખું આ.વ. પસંદ કરો"
-                        >
-                            {getFinancialYears().map((fy) => (
-                                <option key={fy.value} value={fy.value}>{fy.label}</option>
-                            ))}
-                        </Select>
+                        {/* Custom Date Range mode */}
+                        {report.rojmelMode === "custom" && (
+                            <>
+                                <DateInput
+                                    label="From"
+                                    name="from"
+                                    value={report.from}
+                                    onDateChange={handleReportChange}
+                                    formatDisplayDate={formatDisplayDate}
+                                    convertToISO={convertToISO}
+                                />
+                                <DateInput
+                                    label="To"
+                                    name="to"
+                                    value={report.to}
+                                    onDateChange={handleReportChange}
+                                    formatDisplayDate={formatDisplayDate}
+                                    convertToISO={convertToISO}
+                                />
+                            </>
+                        )}
                     </>
                 )}
 
