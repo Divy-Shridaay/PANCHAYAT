@@ -10,7 +10,8 @@ import {
   getEntry,
   getAllEntries,
   updateEntry,
-  softDeleteCashMel
+  softDeleteCashMel,
+  deleteByDate
 } from "../controllers/cashmel.controller.js";
 
 const router = express.Router();
@@ -50,6 +51,9 @@ router.get("/report/pdf", auth, generatePDFReport);
 // router.delete("/:id", softDeleteCashMel);
 
 router.delete("/delete/:id", auth, softDeleteCashMel);
+
+// Delete all records by date
+router.delete("/delete-by-date/:date", auth, deleteByDate);
 
 
 // Update entry

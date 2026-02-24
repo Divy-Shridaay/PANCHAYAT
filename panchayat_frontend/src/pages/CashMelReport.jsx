@@ -163,8 +163,18 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
     const guj = (num) => {
         if (num === null || num === undefined || num === "") return "";
+        
+        // Convert to number
+        const roundedNum = typeof num === 'number' ? num : parseFloat(num);
+        if (isNaN(roundedNum)) return "";
+        
+        // Check if it's a whole number
+        const formattedNum = Number.isInteger(roundedNum) ? 
+            roundedNum.toString() : 
+            roundedNum.toFixed(2);
+        
         const gujaratiDigits = ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"];
-        return String(num).replace(/\d/g, (d) => gujaratiDigits[parseInt(d)]);
+        return formattedNum.replace(/\d/g, (d) => gujaratiDigits[parseInt(d)]);
     };
 
     const formatDateToGujarati = (display) => {
@@ -241,7 +251,29 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 updated.rojmelYear = "";
                 updated.rojmelFullYear = "";
                 updated.rojmelMode = "month";
+                updated.aavakMode = "month";
+                updated.aavakFullYear = "";
                 dateErrorShownRef.current = false;
+                return updated;
+            }
+
+            // 🔥 Handle aavakMode change
+            if (key === "aavakMode" && (prev.type === "aavak" || prev.type === "javak")) {
+                updated.from = "";
+                updated.to = "";
+                updated.selectedMonth = "";
+                updated.selectedYear_aavak = "";
+                updated.aavakFullYear = "";
+                return updated;
+            }
+
+            // 🔥 aavakFullYear handler
+            if (key === "aavakFullYear" && (prev.type === "aavak" || prev.type === "javak")) {
+                if (value) {
+                    const { from, to } = getDateRangeFromFY(value);
+                    updated.from = from;
+                    updated.to = to;
+                }
                 return updated;
             }
 
@@ -731,15 +763,32 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     };
 
     const handlePrintReport = async () => {
-        // Special validation for aavak/javak with month and year
+        // Special validation for aavak/javak
         if (report.type === "aavak" || report.type === "javak") {
-            if (!report.selectedMonth) {
-                toast({ title: "મહિનો પસંદ કરો", status: "error", duration: 2000, position: "top" });
-                return;
-            }
-            if (!report.selectedYear_aavak) {
-                toast({ title: "વર્ષ પસંદ કરો", status: "error", duration: 2000, position: "top" });
-                return;
+            const mode = report.aavakMode || "month";
+            if (mode === "month") {
+                if (!report.selectedMonth) {
+                    toast({ title: "મહિનો પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+                if (!report.selectedYear_aavak) {
+                    toast({ title: "વર્ષ પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+            } else if (mode === "fullyear") {
+                if (!report.aavakFullYear) {
+                    toast({ title: "આ.વ. પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+            } else if (mode === "custom") {
+                if (!report.from || report.from.length !== 10) {
+                    toast({ title: "From તારીખ પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
+                if (!report.to || report.to.length !== 10) {
+                    toast({ title: "To તારીખ પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                    return;
+                }
             }
         }
         // 🔥 Rojmel validation - all 3 modes
@@ -1165,10 +1214,20 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             }
 
             // AAVAK / JAVAK MONTHLY REPORT
-            const records = allRecords.filter(r =>
-                r.vyavharType === report.type &&
-                !(report.type === "javak" && r.category === "બેંક જમા")
-            );
+            // 🔥 FIX: For custom mode, only use records within the exact date range
+            const isCustomMode = (report.type === "aavak" || report.type === "javak") && report.aavakMode === "custom";
+
+            const records = allRecords.filter(r => {
+                if (r.vyavharType !== report.type) return false;
+                if (report.type === "javak" && r.category === "બેંક જમા") return false;
+                // 🔥 Custom mode: strictly filter by date range
+                if (isCustomMode) {
+                    if (!r.date) return false;
+                    const d = r.date.slice(0, 10);
+                    return d >= fromDate && d <= toDate;
+                }
+                return true;
+            });
             const monthGroups = {};
             const allCategories = new Set();
 
@@ -1179,6 +1238,10 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 if (!rec.date) return;
                 const d = new Date(rec.date);
                 if (isNaN(d)) return;
+
+                // 🔥 Custom mode: only include days within selected range
+                const recDateStr = rec.date.slice(0, 10);
+                if (isCustomMode && (recDateStr < fromDate || recDateStr > toDate)) return;
 
                 const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
                 const day = d.getDate();
@@ -1211,16 +1274,19 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             const carryForward = {};
             const firstSelectedMonth = `${fromDateObj.getFullYear()}-${String(fromDateObj.getMonth() + 1).padStart(2, "0")}`;
 
-            allSortedMonths.forEach(monthKey => {
-                if (monthKey >= firstSelectedMonth) return;
-                const mg = monthGroups[monthKey];
-                allCategories.forEach(catKey => {
-                    const entry = mg.categoriesMap[catKey];
-                    const chaluMas = entry ? entry.currentTotal : 0;
-                    const gatMas = carryForward[catKey] || 0;
-                    carryForward[catKey] = chaluMas + gatMas;
+            // 🔥 Custom mode: no carry forward needed (only selected range data exists)
+            if (!isCustomMode) {
+                allSortedMonths.forEach(monthKey => {
+                    if (monthKey >= firstSelectedMonth) return;
+                    const mg = monthGroups[monthKey];
+                    allCategories.forEach(catKey => {
+                        const entry = mg.categoriesMap[catKey];
+                        const chaluMas = entry ? entry.currentTotal : 0;
+                        const gatMas = carryForward[catKey] || 0;
+                        carryForward[catKey] = chaluMas + gatMas;
+                    });
                 });
-            });
+            }
 
             const toDateObj = new Date(toDate + "T00:00:00Z");
             const selectedMonths = allSortedMonths.filter(mk =>
@@ -1289,10 +1355,49 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 <td>${guj(totalKulRakam)}</td>
             </tr>`;
 
+                // 🔥 Build labels
+                // Title (1st h3): always shows overall selected range
+                const overallRangeLabel = isCustomMode
+                    ? `${formatDateToGujarati(report.from)} થી ${formatDateToGujarati(report.to)}`
+                    : (selectedMonths.length === 1
+                        ? `${monthName} ${guj(year)}`
+                        : `${formatDateToGujarati(report.from)} થી ${formatDateToGujarati(report.to)}`);
+
+                // Subtitle (3rd h3): always shows specific month of this page
+                const monthLabel = `${monthName} ${guj(year)}`;
+
+                // Replace: first occurrence = title (overall), second = subtitle (this month)
+                let replaceCount = 0;
                 pageHTML = pageHTML
-                    .replace("{{dateRange}}", `${monthName} ${guj(year)}`)
+                    .replace(/\{\{dateRange\}\}/g, () => {
+                        replaceCount++;
+                        return replaceCount === 1 ? overallRangeLabel : monthLabel;
+                    })
                     .replace("{{tableRows}}", tableRows)
                     .replace("{{grandTotal}}", guj(mg.monthTotal));
+
+                // 🔥 Fill {{monthBanner}} placeholder
+                if (selectedMonths.length > 1 || isCustomMode) {
+                    const bannerMonth = isCustomMode
+                        ? `${formatDateToGujarati(report.from)} થી ${formatDateToGujarati(report.to)}`
+                        : `${monthName} ${guj(year)} નો રિપોર્ટ (${mIdx + 1}/${selectedMonths.length})`;
+                    const monthBanner = `
+<div style="
+  text-align:center;
+  background:#1565c0;
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  padding:8px 20px;
+  margin-bottom:8px;
+  border-radius:4px;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+">📅 ${bannerMonth}</div>`;
+                    pageHTML = pageHTML.replace("{{monthBanner}}", monthBanner);
+                } else {
+                    pageHTML = pageHTML.replace("{{monthBanner}}", "");
+                }
 
                 allPagesHTML += pageHTML;
                 if (mIdx < selectedMonths.length - 1) {
@@ -1454,30 +1559,81 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     </>
                 )}
 
-                {/* Aavak / Javak: Month + Year */}
+                {/* Aavak / Javak: Mode selector + inputs */}
                 {(report.type === "aavak" || report.type === "javak") && (
                     <>
+                        {/* Mode selector */}
                         <Select
-                            width="150px"
-                            value={report.selectedMonth}
-                            onChange={(e) => handleReportChange("selectedMonth", e.target.value)}
+                            width="160px"
+                            value={report.aavakMode || "month"}
+                            onChange={(e) => handleReportChange("aavakMode", e.target.value)}
                         >
-                            <option value="">મહિનો પસંદ કરો</option>
-                            {getMonths().map((month) => (
-                                <option key={month.value} value={month.value}>{month.label}</option>
-                            ))}
+                            <option value="month">મહિનો / વર્ષ</option>
+                            <option value="fullyear">આખું આ.વ.</option>
+                            <option value="custom">કસ્ટમ તારીખ</option>
                         </Select>
 
-                        <Select
-                            width="120px"
-                            value={report.selectedYear_aavak}
-                            onChange={(e) => handleReportChange("selectedYear_aavak", e.target.value)}
-                        >
-                            <option value="">વર્ષ પસંદ કરો</option>
-                            {getYearsForMonthly().map((year) => (
-                                <option key={year.value} value={year.value}>{year.label}</option>
-                            ))}
-                        </Select>
+                        {/* Month + Year mode */}
+                        {(!report.aavakMode || report.aavakMode === "month") && (
+                            <>
+                                <Select
+                                    width="150px"
+                                    value={report.selectedMonth}
+                                    onChange={(e) => handleReportChange("selectedMonth", e.target.value)}
+                                >
+                                    <option value="">મહિનો પસંદ કરો</option>
+                                    {getMonths().map((month) => (
+                                        <option key={month.value} value={month.value}>{month.label}</option>
+                                    ))}
+                                </Select>
+                                <Select
+                                    width="120px"
+                                    value={report.selectedYear_aavak}
+                                    onChange={(e) => handleReportChange("selectedYear_aavak", e.target.value)}
+                                >
+                                    <option value="">વર્ષ પસંદ કરો</option>
+                                    {getYearsForMonthly().map((year) => (
+                                        <option key={year.value} value={year.value}>{year.label}</option>
+                                    ))}
+                                </Select>
+                            </>
+                        )}
+
+                        {/* Full Financial Year mode */}
+                        {report.aavakMode === "fullyear" && (
+                            <Select
+                                width="180px"
+                                value={report.aavakFullYear}
+                                onChange={(e) => handleReportChange("aavakFullYear", e.target.value)}
+                                placeholder="આ.વ. પસંદ કરો"
+                            >
+                                {getFinancialYears().map((fy) => (
+                                    <option key={fy.value} value={fy.value}>{fy.label}</option>
+                                ))}
+                            </Select>
+                        )}
+
+                        {/* Custom Date Range mode */}
+                        {report.aavakMode === "custom" && (
+                            <>
+                                <DateInput
+                                    label="From"
+                                    name="from"
+                                    value={report.from}
+                                    onDateChange={handleReportChange}
+                                    formatDisplayDate={formatDisplayDate}
+                                    convertToISO={convertToISO}
+                                />
+                                <DateInput
+                                    label="To"
+                                    name="to"
+                                    value={report.to}
+                                    onDateChange={handleReportChange}
+                                    formatDisplayDate={formatDisplayDate}
+                                    convertToISO={convertToISO}
+                                />
+                            </>
+                        )}
                     </>
                 )}
 

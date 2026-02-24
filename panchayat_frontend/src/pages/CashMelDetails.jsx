@@ -37,7 +37,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { DeleteIcon } from "@chakra-ui/icons";
-import { EditIcon, CheckIcon, CloseIcon, SearchIcon } from "@chakra-ui/icons";
+import { EditIcon, CheckIcon, CloseIcon, SearchIcon, CalendarIcon } from "@chakra-ui/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import Pagination from "../components/Pagination";
@@ -65,6 +65,8 @@ const CashMelDetails = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteDate, setDeleteDate] = useState(null);
+  const [deleteMode, setDeleteMode] = useState(null); // 'single' or 'date'
 
   const API_ROOT =
     typeof window !== "undefined" &&
@@ -137,6 +139,48 @@ const sortEntries = (data) => {
       console.error("Delete error", err);
       toast({
         title: t("deleteError"),
+        status: "error",
+        duration: 2000,
+        position: "top",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteRecordsByDate = async (date) => {
+    try {
+      const url = `${API_BASE}/delete-by-date/${date}`;
+      setDeleting(true);
+      const res = await authFetch(url, { method: "DELETE" });
+
+      if (!res.ok) {
+        let body = null;
+        try {
+          body = await res.json();
+        } catch {
+          body = await res.text();
+        }
+        throw new Error(body?.message || `Delete failed: ${res.status}`);
+      }
+
+      const result = await res.json();
+      
+      toast({
+        title: `તારીખ ${date} ના ${result.deletedCount} રેકોર્ડ્સ સફળતાપૂર્વક કાઢી નાખ્યા`,
+        status: "success",
+        duration: 3000,
+        position: "top",
+      });
+
+      // Remove deleted entries from state
+      setAllEntries((prev) => prev.filter((x) => x.date !== date));
+      setFilteredEntries((prev) => prev.filter((x) => x.date !== date));
+      onClose();
+    } catch (err) {
+      console.error("Delete by date error", err);
+      toast({
+        title: "તારીખ મુજબ કાઢવામાં ભૂલ",
         status: "error",
         duration: 2000,
         position: "top",
@@ -305,11 +349,18 @@ const sortEntries = (data) => {
 
   const toGujaratiDigits = (num) => {
     if (!num && num !== 0) return "";
+    
+    // Convert to number
+    const roundedNum = typeof num === 'number' ? num : parseFloat(num);
+    if (isNaN(roundedNum)) return "";
+    
+    // Check if it's a whole number
+    const formattedNum = Number.isInteger(roundedNum) ? 
+        roundedNum.toString() : 
+        roundedNum.toFixed(2);
+    
     const guj = ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"];
-    return String(num)
-      .split("")
-      .map((d) => guj[d] || d)
-      .join("");
+    return formattedNum.replace(/\d/g, (d) => guj[parseInt(d)]);
   };
 
   const formatDateToGujarati = (dateStr) => {
@@ -447,27 +498,8 @@ const sortEntries = (data) => {
                         <ExpandableText text={row.remarks} />
                       </Td>
 
-{/* <td className="max-w-[280px] whitespace-normal break-words">
-  <ExpandableText text={row.remarks} wordLimit={6} />
-</td> */}
-
-
-
-
                       <Td>
                         <HStack spacing={2}>
-                          {/* <IconButton
-                            size="sm"
-                            icon={<ViewIcon />}
-                            variant="ghost"
-                            colorScheme="green"
-                            rounded="full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/cashmel/view/${row._id}`);
-                            }}
-                          /> */}
-
                           <IconButton
                             size="sm"
                             icon={<EditIcon />}
@@ -479,6 +511,25 @@ const sortEntries = (data) => {
                               navigate(`/cashmelform/${row._id}`);
                             }}
                           />
+                          
+                          {/* Date-wise delete button - only show once per date */}
+                          {getPaginatedData().findIndex((r) => r.date === row.date) === getPaginatedData().findIndex((r) => r._id === row._id) && (
+                            <IconButton
+                              size="sm"
+                              icon={<CalendarIcon />}
+                              variant="ghost"
+                              colorScheme="orange"
+                              rounded="full"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteDate(row.date);
+                                setDeleteMode('date');
+                                onOpen();
+                              }}
+                              title={`તારીખ ${formatDateToGujarati(row.date)} ના બધા રેકોર્ડ્સ કાઢો`}
+                            />
+                          )}
+                          
                           <IconButton
                             size="sm"
                             icon={<DeleteIcon />}
@@ -488,6 +539,7 @@ const sortEntries = (data) => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeleteId(row._id);
+                              setDeleteMode('single');
                               onOpen();
                             }}
                           />
@@ -544,7 +596,7 @@ const sortEntries = (data) => {
               fontWeight="800"
               color="red.600"
             >
-              {t("deleteTitle")}
+              {deleteMode === 'date' ? 'તારીખ મુજબ કાઢવું' : t("deleteTitle")}
             </ModalHeader>
 
             <ModalBody pb={6}>
@@ -555,7 +607,10 @@ const sortEntries = (data) => {
                 px={4}
                 lineHeight="1.7"
               >
-                {t("deleteConfirmFull")}
+                {deleteMode === 'date' 
+                  ? `શું તમે ખરેખર તારીખ ${formatDateToGujarati(deleteDate)} ના બધા રેકોર્ડ્સ કાઢી નાખવા માંગો છો?`
+                  : t("deleteConfirmFull")
+                }
               </Text>
             </ModalBody>
 
@@ -574,11 +629,11 @@ const sortEntries = (data) => {
                 rounded="full"
                 px={8}
                 size="lg"
-                onClick={deleteRecord}
+                onClick={deleteMode === 'date' ? () => deleteRecordsByDate(deleteDate) : deleteRecord}
                 isLoading={deleting}
                 loadingText="Deleting"
               >
-                {t("delete")}
+                {deleteMode === 'date' ? 'બધા કાઢો' : t("delete")}
               </Button>
             </ModalFooter>
           </ModalContent>

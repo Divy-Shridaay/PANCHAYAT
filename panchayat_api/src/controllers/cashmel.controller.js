@@ -671,6 +671,7 @@ export const uploadExcel = async (req, res, next) => {
         message: "No file uploaded",
       });
     }
+    
 
     const buffer = req.file.buffer;
     // ✅ Read WITHOUT cellDates first to see the raw values
@@ -1335,6 +1336,38 @@ export const softDeleteCashMel = async (req, res) => {
   } catch (err) {
     console.log("DELETE ERROR:", err);
     res.status(500).json({ error: "Failed to delete record" });
+  }
+};
+
+// ============================================================
+// 7. DELETE BY DATE (CashMel) - Delete all records for a specific date
+// ============================================================
+export const deleteByDate = async (req, res) => {
+  try {
+    const { date } = req.params;
+
+    if (!date) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Date is required' 
+      });
+    }
+
+    let query = { date, isDeleted: false };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+
+    const result = await CashMel.updateMany(query, { isDeleted: true });
+
+    return res.json({
+      success: true,
+      message: `Deleted ${result.modifiedCount} records for date ${date}`,
+      deletedCount: result.modifiedCount,
+    });
+  } catch (err) {
+    console.log("DELETE BY DATE ERROR:", err);
+    res.status(500).json({ error: "Failed to delete records by date" });
   }
 };
 

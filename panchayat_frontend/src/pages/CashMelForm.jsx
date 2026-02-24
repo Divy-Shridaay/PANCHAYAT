@@ -148,6 +148,11 @@ const fileInputRef = useRef(null);
     const [showAddBank, setShowAddBank] = useState(false);
     const [newBankName, setNewBankName] = useState("");
 
+    // Bank management modal state
+    const { isOpen: isOpenBankManagement, onOpen: onOpenBankManagement, onClose: onCloseBankManagement } = useDisclosure();
+    const [editingBank, setEditingBank] = useState(null);
+    const [bankFormName, setBankFormName] = useState("");
+
     // Bank deposit modal state
     const { isOpen: isOpenBankDeposit, onOpen: onOpenBankDeposit, onClose: onCloseBankDeposit } = useDisclosure();
     const [bankDepositForm, setBankDepositForm] = useState({
@@ -399,7 +404,7 @@ setOpeningForm({
         }
     }, [id, API_BASE, toast]);
 
-   
+
     const createBankApi = async (name) => {
         try {
             const token = localStorage.getItem("token");
@@ -407,9 +412,9 @@ setOpeningForm({
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    ...(token && { Authorization: `Bearer ${token}` }),
+                    ...(token && { Authorization: `Bearer ${token}` })
                 },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name })
             });
             if (!res.ok) {
                 const txt = await res.text();
@@ -419,12 +424,88 @@ setOpeningForm({
             toast({ title: 'બેંક સંગ્રહીત', status: 'success', duration: 2000 });
             return true;
         } catch (err) {
-            console.error(err);
-            toast({ title: 'બેંક સેવ થઈતી નથી', status: 'error' });
+            toast({ title: 'બેંક બનાવવામાં ભૂલ', status: 'error', duration: 2000 });
             return false;
         }
     };
-  
+
+    // Bank management functions
+    const openBankManagement = () => {
+        setEditingBank(null);
+        setBankFormName("");
+        onOpenBankManagement();
+    };
+
+    const startEditBank = (bank) => {
+        setEditingBank(bank);
+        setBankFormName(bank.name);
+    };
+
+    const saveBank = async () => {
+        if (!bankFormName.trim()) {
+            toast({ title: "બેંકનું નામ દાખલ કરો", status: "error", duration: 2000 });
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("token");
+            
+            if (editingBank) {
+                // Update existing bank
+                const res = await fetch(`${API_BASE}/banks/${editingBank._id}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(token && { Authorization: `Bearer ${token}` })
+                    },
+                    body: JSON.stringify({ name: bankFormName.trim() })
+                });
+                
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(txt || 'Update failed');
+                }
+                
+                toast({ title: 'બેંક અપડેટ થઈ', status: 'success', duration: 2000 });
+            } else {
+                // Create new bank
+                const ok = await createBankApi(bankFormName.trim());
+                if (!ok) return;
+            }
+            
+            await fetchBanks();
+            setBankFormName("");
+            setEditingBank(null);
+            onCloseBankManagement();
+        } catch (err) {
+            toast({ title: 'બેંક સેવ કરવામાં ભૂલ', status: 'error', duration: 2000 });
+        }
+    };
+
+    const deleteBank = async (bankId) => {
+        if (!window.confirm("શું તમે આ બેંક કાઢી નાખવા માંગો છો?")) return;
+        
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/banks/${bankId}`, {
+                method: 'DELETE',
+                headers: { 
+                    ...(token && { Authorization: `Bearer ${token}` })
+                }
+            });
+            
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || 'Delete failed');
+            }
+            
+            await fetchBanks();
+            toast({ title: 'બેંક કાઢી નાખાઈ', status: 'success', duration: 2000 });
+        } catch (err) {
+            toast({ title: 'બેંક કાઢવામાં ભૂલ', status: 'error', duration: 2000 });
+        }
+    };
+
     const editBankDeposit = (deposit) => {
         const dateParts = deposit.date ? deposit.date.split("-") : [];
         const displayDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : "";
@@ -1122,13 +1203,9 @@ const uploadExcelToServer = async () => {
       }
     };
 
-    const cancelEditDeposit = () => {
-      setEditingDepositId(null);
-      setModalForm({ date: "", dateDisplay: "", bank: "", remarks: "", amount: "" });
-    };
-
     /* ==================== UI ==================== */
     return (
+        <>
         <Box p={8} maxW="900px" mx="auto" bg="#F8FAF9" minH="100vh">
         <Flex align="center" mb={6}>
     {/* 🔙 LEFT */}
@@ -1620,6 +1697,9 @@ const uploadExcelToServer = async () => {
                                 <Button size="lg" colorScheme="blue" onClick={() => setShowAddBank(!showAddBank)}>
                                     +
                                 </Button>
+                                <Button size="lg" colorScheme="purple" onClick={openBankManagement}>
+                                    ⚙️
+                                </Button>
                             </HStack>
                             {showAddBank && (
                                 <VStack spacing={2} mt={2} align="stretch">
@@ -1814,11 +1894,103 @@ const uploadExcelToServer = async () => {
   />
 </Collapse>
 
-
                 </VStack>
             </Box>
         </Box>
+
+        {/* Bank Management Modal */}
+        
+        <Modal isOpen={isOpenBankManagement} onClose={onCloseBankManagement} size="lg" isCentered>
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>
+                    {editingBank ? 'બેંક સુધારો' : 'બેંક વ્યવસ્થાપન'}
+                </ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    {/* Bank List */}
+                    <TableContainer mb={4}>
+                        <Table size="sm">
+                            <Thead>
+                                <Tr>
+                                    <Th>બેંકનું નામ</Th>
+                                    <Th width="100px">ક્રિયા</Th>
+                                </Tr>
+                            </Thead>
+                            <Tbody>
+                                {banks.map(bank => (
+                                    <Tr key={bank._id}>
+                                        <Td>{bank.name}</Td>
+                                        <Td>
+                                            <HStack spacing={1}>
+                                                <IconButton
+                                                    icon={<FiEdit2 />}
+                                                    size="sm"
+                                                    colorScheme="blue"
+                                                    variant="ghost"
+                                                    onClick={() => startEditBank(bank)}
+                                                />
+                                                <IconButton
+                                                    icon={<FiTrash2 />}
+                                                    size="sm"
+                                                    colorScheme="red"
+                                                    variant="ghost"
+                                                    onClick={() => deleteBank(bank._id)}
+                                                />
+                                            </HStack>
+                                        </Td>
+                                    </Tr>
+                                ))}
+                            </Tbody>
+                        </Table>
+                    </TableContainer>
+
+                    {/* Add/Edit Bank Form */}
+                    <VStack spacing={3} pt={3} borderTop="1px solid" borderColor="gray.200">
+                        <FormControl>
+                            <FormLabel>
+                                {editingBank ? 'બેંકનું નામ સુધારો' : 'નવી બેંક ઉમેરો'}
+                            </FormLabel>
+                            <Input
+                                value={bankFormName}
+                                onChange={(e) => setBankFormName(e.target.value)}
+                                placeholder="બેંકનું નામ દાખલ કરો"
+                            />
+                        </FormControl>
+                        <HStack spacing={2} width="100%">
+                            <Button
+                                colorScheme="green"
+                                onClick={saveBank}
+                                flex={1}
+                            >
+                                {editingBank ? 'અપડેટ કરો' : 'ઉમેરો'}
+                            </Button>
+                            {editingBank && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setEditingBank(null);
+                                        setBankFormName("");
+                                    }}
+                                    flex={1}
+                                >
+                                    રદ કરો
+                                </Button>
+                            )}
+                        </HStack>
+                    </VStack>
+                </ModalBody>
+                <ModalFooter>
+                    <Button variant="outline" onClick={onCloseBankManagement}>
+                        બંધ કરો
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
+        </>
     );
+  
+
 };
 
 export default CashMelForm;
