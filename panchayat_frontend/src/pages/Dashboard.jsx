@@ -399,11 +399,13 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-          cursor={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "not-allowed" : "pointer"}
-          opacity={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? 0.6 : 1}
-          filter={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "grayscale(40%)" : "none"}
-          _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
-           onClick={() => {
+
+          // cursor={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "not-allowed" : "pointer"}
+          // opacity={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? 0.6 : 1}
+          // filter={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "grayscale(40%)" : "none"}
+          // _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
+           
+          onClick={() => {
              if (userStatus?.user?.modulesAccess?.jaminMehsul) {
               window.location.href = 'http://magna.panchayat.shridaay.com/';
              } else {
