@@ -435,14 +435,14 @@ const sortEntries = (data) => {
             >
               જમા કરેલી બેંક જમા
             </Button> 
-            <Button
+            {/* <Button
               colorScheme="purple"
               variant="outline"
               onClick={handleDownloadRojmelPDF}
               isLoading={loading}
             >
               રોજમેળ PDF ડાઉનલોડ
-            </Button>
+            </Button> */}
             <Button
               leftIcon={<FiArrowLeft />}
               colorScheme="green"
