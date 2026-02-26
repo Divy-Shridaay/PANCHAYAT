@@ -400,18 +400,21 @@ export default function Dashboard() {
           border="1px solid #E3EDE8"
           textAlign="center"
 
-          // cursor={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "not-allowed" : "pointer"}
-          // opacity={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? 0.6 : 1}
-          // filter={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "grayscale(40%)" : "none"}
-          // _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
+          cursor={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "not-allowed" : "pointer"}
+          opacity={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? 0.6 : 1}
+          filter={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "grayscale(40%)" : "none"}
+          _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
            
           onClick={() => {
-             if (userStatus?.user?.modulesAccess?.jaminMehsul) {
-              window.location.href = 'http://magna.panchayat.shridaay.com/';
-             } else {
+            //  if (userStatus?.user?.modulesAccess?.jaminMehsul) {
+            //   window.location.href = 'http://magna.panchayat.shridaay.com/';
+            //  } else {
+
                handleModuleClick(null, "jaminMehsul");
-             }
-           }}
+
+          //    }
+           } 
+          }
         >
           <HiOutlineDocumentCurrencyRupee size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">
