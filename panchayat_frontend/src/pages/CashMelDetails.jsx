@@ -369,55 +369,6 @@ const sortEntries = (data) => {
     return `${toGujaratiDigits(day)}/${toGujaratiDigits(month)}/${toGujaratiDigits(year)}`;
   };
 
-  const handleDownloadRojmelPDF = async () => {
-    try {
-      setLoading(true);
-      
-      // Get date range from filtered entries or default to current month
-      const dates = filteredEntries.map(e => e.date).filter(d => d);
-      const from = dates.length > 0 ? Math.min(...dates.map(d => new Date(d).getTime())) : null;
-      const to = dates.length > 0 ? Math.max(...dates.map(d => new Date(d).getTime())) : null;
-      
-      const params = new URLSearchParams();
-      if (from) params.append('from', new Date(from).toISOString().split('T')[0]);
-      if (to) params.append('to', new Date(to).toISOString().split('T')[0]);
-      params.append('taluko', 'તાલુકો'); // You can make this dynamic
-      params.append('yearRange', '2023-2024'); // You can make this dynamic
-      
-      const url = `${API_BASE}/rojmel/pdf?${params.toString()}`;
-      
-      const response = await authFetch(url);
-      if (!response.ok) throw new Error('Failed to generate PDF');
-      
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `rojmel_${Date.now()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      
-      toast({
-        title: "PDF સફળતાપૂર્વક ડાઉનલોડ થયું",
-        status: "success",
-        duration: 3000,
-        position: "top",
-      });
-    } catch (err) {
-      console.error("PDF download error:", err);
-      toast({
-        title: "PDF ડાઉનલોડમાં ભૂલ",
-        status: "error",
-        duration: 3000,
-        position: "top",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // LIST PAGE
   if (!id) {
     return (
@@ -428,21 +379,13 @@ const sortEntries = (data) => {
           </Heading>
 
           <HStack spacing={3}>
-            <Button
+                <Button
               colorScheme="blue"
               variant="outline"
               onClick={() => navigate("/cashmel/bank-deposits")}
             >
               જમા કરેલી બેંક જમા
             </Button> 
-            {/* <Button
-              colorScheme="purple"
-              variant="outline"
-              onClick={handleDownloadRojmelPDF}
-              isLoading={loading}
-            >
-              રોજમેળ PDF ડાઉનલોડ
-            </Button> */}
             <Button
               leftIcon={<FiArrowLeft />}
               colorScheme="green"
@@ -455,6 +398,7 @@ const sortEntries = (data) => {
         </Flex>
 
         <Box
+          bg="white"
           p={6}
           rounded="2xl"
           shadow="md"
