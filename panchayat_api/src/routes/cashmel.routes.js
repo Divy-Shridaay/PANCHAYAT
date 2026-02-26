@@ -7,6 +7,7 @@ import {
   uploadExcel, 
   getReport, 
   generatePDFReport,
+  generateRojmelPDF,
   getEntry,
   getAllEntries,
   updateEntry,
@@ -46,6 +47,9 @@ router.get("/report", auth, getReport);
 
 // PDF Report
 router.get("/report/pdf", auth, generatePDFReport);
+
+// Rojmel PDF
+router.get("/rojmel/pdf", auth, generateRojmelPDF);
 
 // Soft delete (must be BEFORE get by ID)
 // router.delete("/:id", softDeleteCashMel);

@@ -763,6 +763,30 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     };
 
     const handlePrintReport = async () => {
+        setLoading(true);
+        
+        // Add print CSS to control paper size
+        const printCSS = `
+<style>
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0.5cm;
+    }
+    body {
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    table {
+        page-break-inside: auto;
+    }
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+}
+</style>`;
         // Special validation for aavak/javak
         if (report.type === "aavak" || report.type === "javak") {
             const mode = report.aavakMode || "month";
@@ -878,53 +902,9 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
                 // Generate HTML for each date
                 let allPagesHTML = `
-<style>
-  @media screen {
-    .rojmel-date-separator {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 32px 0 20px 0;
-      padding: 10px 18px;
-      background: linear-gradient(90deg, #e8f5e9 0%, #f9fbe7 100%);
-      border-left: 5px solid #388e3c;
-      border-radius: 0 8px 8px 0;
-      box-shadow: 0 2px 6px rgba(56,142,60,0.10);
-    }
-    .rojmel-date-separator .date-badge {
-      background: #388e3c;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 5px 16px;
-      border-radius: 20px;
-      letter-spacing: 1px;
-      white-space: nowrap;
-    }
-    .rojmel-date-separator .date-label {
-      font-size: 13px;
-      color: #555;
-      font-weight: 500;
-    }
-    .rojmel-date-separator .date-line {
-      flex: 1;
-      height: 1px;
-      background: #c8e6c9;
-    }
-    .rojmel-page-wrapper {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-  }
-  @media print {
-    .rojmel-date-separator { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
-    .rojmel-page-wrapper { border: none !important; padding: 0 !important; box-shadow: none !important; margin: 0 !important; }
-    .rojmel-new-page { page-break-before: always !important; }
-  }
+                
+  <style>
+ 
 </style>`;
 
                 for (let i = 0; i < datesWithRecords.length; i++) {
@@ -960,14 +940,16 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                     return;
                 }
 
-                const win = window.open("", "_blank", "width=1200,height=800");
-                setLoading(false);
-                win.document.write(allPagesHTML);
-                win.document.close();
-                setTimeout(() => {
-                    win.focus();
-                    win.print();
-                }, 800);
+          const win = window.open("", "_blank", "width=1400,height=900");
+// ...
+win.document.write(printCSS + allPagesHTML);
+win.document.close();
+// Give user option to Save As PDF from browser menu instead of print dialog
+// Or add this line to auto-trigger:
+setTimeout(() => {
+    win.focus();
+    win.print();
+}, 1200); // ← increase delay to 1200ms so fonts load properly
 
                 setLoading(false);
                 return;
@@ -1026,7 +1008,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
                 const win = window.open("", "_blank", "width=900,height=700");
                 setLoading(false);
-                win.document.write(htmlTemplate);
+                win.document.write(printCSS + htmlTemplate);
                 win.document.close();
                 setTimeout(() => { win.focus(); win.print(); }, 500);
                 setLoading(false);
@@ -1206,7 +1188,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
                 const win = window.open("", "_blank", "width=1200,height=800");
                 setLoading(false);
-                win.document.write(htmlTemplate);
+                win.document.write(printCSS + htmlTemplate);
                 win.document.close();
                 setTimeout(() => { win.focus(); win.print(); }, 500);
                 setLoading(false);
@@ -1407,7 +1389,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 
             const win = window.open("", "_blank", "width=1200,height=800");
             setLoading(false);
-            win.document.write(allPagesHTML);
+            win.document.write(printCSS + allPagesHTML);
             win.document.close();
             setTimeout(() => { win.focus(); win.print(); }, 500);
 
@@ -1570,7 +1552,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                         >
                             <option value="month">મહિનો / વર્ષ</option>
                             <option value="fullyear">આખું આ.વ.</option>
-                            <option value="custom">કસ્ટમ તારીખ</option>
+                            {/* <option value="custom">કસ્ટમ તારીખ</option> */}
                         </Select>
 
                         {/* Month + Year mode */}

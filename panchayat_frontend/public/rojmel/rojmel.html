@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="gu">
 
@@ -6,189 +7,231 @@
     <title>નમૂનો નં. ૫ સામાન્ય રોકડમેળ</title>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@300;400;500;600&display=swap');
 
         /* ================= BASE ================= */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: "Noto Sans Gujarati", sans-serif;
-            margin: 20px;
-            color: #000;
+            margin: 24px 28px;
+            color: #1a1a1a;
+            font-weight: 400;
+            background: #fff;
+            font-size: 13px;
         }
 
-        h3,
-        h4 {
+        /* ================= HEADINGS ================= */
+        .report-title {
             text-align: center;
-            margin: 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            letter-spacing: 0.3px;
         }
 
-        /* ================= UNDERLINE ================= */
-        .underline {
+        .report-subtitle {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 0 0 4px 0;
+            color: #333;
+        }
+
+        .report-info {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 0 0 2px 0;
+        }
+
+        .report-info .underline {
             display: inline-block;
-            padding-bottom: 2px;
-            border-bottom: 2px solid #000;
+            border-bottom: 1.5px solid #1a1a1a;
+            padding-bottom: 1px;
         }
 
-        /* ================= TABLE ================= */
+        .udhar-label {
+            text-align: right;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 6px 0 4px 0;
+            color: #333;
+        }
+
+        /* ================= MAIN TABLE ================= */
         .table-wrapper {
             width: 100%;
             overflow-x: auto;
-            /* screen only */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 9px;
+            font-size: 12px;
+            font-weight: 400;
         }
 
-        th,
-        td {
-            border: 1px solid #000;
-            padding: 2px 4px;
+        /* Header rows */
+        thead tr th {
+            border: 1px solid #aaa;
+            padding: 5px 6px;
             vertical-align: middle;
             text-align: center;
+            background: #f7f7f7;
+            font-weight: 500;        /* lighter than bold - matches img 2 */
+            font-size: 11.5px;
+            line-height: 1.35;
+            color: #222;
         }
 
-        th {
-            background: #f2f2f2;
-            font-weight: 700;
-        }
-
-        td {
-            word-wrap: break-word;
-        }
-
-        .text-left {
-            text-align: left;
-        }
-
-        .text-right {
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        .text-center {
+        /* Data cells */
+        tbody td {
+            border: 1px solid #bbb;
+            padding: 4px 6px;
+            vertical-align: middle;
             text-align: center;
+            font-weight: 400;
+            font-size: 12px;
+            color: #1a1a1a;
         }
 
-        /* ================= FOOTER ================= */
-        .footer-section {
-            margin-top: 30px;
+        .text-left  { text-align: left !important; }
+        .text-right { text-align: right !important; white-space: nowrap; }
+        .text-center{ text-align: center !important; }
+
+        /* Total rows */
+        tr.total-row td {
+            font-weight: 500;
+            background: #f2f2f2;
         }
 
+        /* closing balance row */
+        tr.closing-row td {
+            text-align: right;
+            font-weight: 500;
+            font-size: 12.5px;
+            border: none;
+            padding: 4px 6px;
+            background: transparent;
+        }
+
+        /* ================= SECTION HEADINGS ================= */
+        .section-heading {
+            font-size: 13px;
+            font-weight: 500;
+            margin: 22px 0 8px 0;
+            color: #1a1a1a;
+        }
+
+        /* ================= FOOTER TABLES ================= */
         .footer-table {
             width: 100%;
-            font-size: 11px;
             border-collapse: collapse;
+            font-size: 12px;
         }
 
-        .footer-table th,
+        .footer-table th {
+            border: 1px solid #aaa;
+            padding: 5px 8px;
+            background: #f7f7f7;
+            font-weight: 500;
+            text-align: center;
+            color: #222;
+        }
+
         .footer-table td {
-            border: 1px solid #000;
-            padding: 5px;
+            border: 1px solid #bbb;
+            padding: 5px 8px;
+            font-weight: 400;
+            color: #1a1a1a;
         }
 
-        /* ================= PRINT (NO ROTATION FIX) ================= */
+        .footer-table tr.total-row td {
+            font-weight: 500;
+            background: #f2f2f2;
+        }
+
+        /* ================= PRINT ================= */
         @media print {
             body {
                 margin: 0;
-                padding: 0;
-                width: 100%;
+                padding: 8mm 10mm;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                font-size: 12px;
             }
 
             .table-wrapper {
                 overflow: visible !important;
-                width: 100%;
             }
 
             table {
                 width: 100% !important;
                 table-layout: auto;
-                page-break-inside: avoid;
             }
 
-            th,
-            td {
+            thead tr th {
+                font-size: 10.5px !important;
+                padding: 3px 5px !important;
+                font-weight: 500 !important;
+                background: #f7f7f7 !important;
+            }
+
+            tbody td {
                 font-size: 11px !important;
-                padding: 1px 2px !important;
-                line-height: 1.1;
-                word-break: break-word;
-                overflow-wrap: break-word;
-                white-space: normal;
-                min-width: 8px;
+                padding: 3px 5px !important;
+                font-weight: 400 !important;
             }
-            
-            /* 🔥 FIX: Prevent wrapping in amount columns */
-            td.text-right,
-            th.text-right {
+
+            td.text-right, th.text-right {
                 white-space: nowrap !important;
-                min-width: 45px !important;
-            }
-            
-            /* Give specific widths to critical columns */
-            td:first-child,
-            th:first-child {
-                min-width: 35px !important; /* Receipt number */
-            }
-
-            h3 {
-                font-size: 11px;
-                margin: 3px 0;
-            }
-
-            h4 {
-                font-size: 9px;
-                margin: 2px 0;
-            }
-
-            .footer-section {
-                margin-top: 10px;
             }
 
             .footer-table th,
             .footer-table td {
-                font-size: 12px;
-                padding: 2px;
+                font-size: 11px !important;
+                padding: 3px 6px !important;
             }
-            
-            .footer-table td.text-right {
-                white-space: nowrap !important;
+
+            .report-title   { font-size: 15px; }
+            .report-subtitle{ font-size: 11px; }
+            .report-info    { font-size: 12px; }
+            .section-heading{ font-size: 12px; margin: 14px 0 6px 0; }
+
+            tr.total-row td {
+                background: #f2f2f2 !important;
             }
 
             @page {
-                size: A4 landscape;
-                margin: 5mm;
+                size: A3 landscape;
+                margin: 8mm 10mm;
             }
         }
     </style>
-
 </head>
 
 <body>
 
-    <h3>
-        નમૂનો નં. ૫
-        <span class="underline">સામાન્ય રોકડમેળ</span>
-    </h3>
+    <!-- ================= HEADER ================= -->
+    <p class="report-title">નમૂનો નં. ૫ સામાન્ય રોકડમેળ</p>
+    <p class="report-subtitle">ગુજરાત રાજ્યના પંચાયતના સુધારેલા નિયમ ૫ મુજબ</p>
 
-    <h4>ગુજરાત રાજ્યના પંચાયતના સુધારેલા નિયમ ૫ મુજબ</h4>
-
-    <h3>
+    <p class="report-info">
         <span class="underline">{{taluko}}</span> : ગ્રામ પંચાયતનો
         સને <span class="underline">{{yearRange}}</span>
         ની તારીખ <span class="underline">{{dateRange}}</span>
         ના રોજ નો સામાન્ય રોકડમેળ
-    </h3>
+    </p>
 
-    <h4 style="text-align: right; margin-right: 20px;">ઉધાર</h4>
+    <p class="udhar-label">ઉધાર</p>
 
     <!-- ================= MAIN TABLE ================= -->
     <div class="table-wrapper">
         <table>
             <thead>
-
                 <!-- ROW 1 -->
                 <tr>
                     <th rowspan="3">પાવતી નં.</th>
@@ -200,7 +243,6 @@
                     <th rowspan="3">ખાતાનું મઠાડું</th>
                     <th rowspan="3" class="text-right">કુલ રકમ</th>
                 </tr>
-
                 <!-- ROW 2 -->
                 <tr>
                     <th rowspan="2">કોના તરફથી આવી</th>
@@ -208,63 +250,51 @@
                     <th rowspan="2">કોને આપ્યા</th>
                     <th rowspan="2">શા બાબતના આપ્યા</th>
                 </tr>
-
                 <!-- ROW 3 -->
                 <tr>
                     {{incomeHeaders}}
                 </tr>
-
             </thead>
-
             <tbody>
                 {{tableRows}}
             </tbody>
         </table>
     </div>
-    <!-- -----------------   ખાતા ફેરફાર  -->
 
-    <div class="footer-section">
-        <h3 style="text-align:left; margin: 20px 0 10px;">ખાતા ફેરફાર : -</h3>
-
-        <table class="footer-table">
-            <thead>
-                <tr>
-                    <th>અ. નં.</th>
-                    <th>આપનાર ખાતું </th>
-                    <th >લેનાર ખાતું </th>
-                    <th>વ્યવહાર બાબત ની વિગત </th>
-                    <th>રકમ </th>
-                
-                </tr>
-            </thead>
-          <tbody> 
-
+    <!-- ================= ખાતા ફેરફાર ================= -->
+    <p class="section-heading">ખાતા ફેરફાર : -</p>
+    <table class="footer-table">
+        <thead>
+            <tr>
+                <th>અ. નં.</th>
+                <th>આપનાર ખાતું</th>
+                <th>લેનાર ખાતું</th>
+                <th>વ્યવહાર બાબત ની વિગત</th>
+                <th>રકમ</th>
+            </tr>
+        </thead>
+        <tbody>
             {}
-          </tbody>
-        </table>
-    </div>
+        </tbody>
+    </table>
 
-    <!-- ================= SUMMARY ================= -->
-    <div class="footer-section">
-        <h3 style="text-align:left; margin: 20px 0 10px;">તપસીલ : -</h3>
-
-        <table class="footer-table">
-            <thead>
-                <tr>
-                    <th>અ. નં.</th>
-                    <th>ખાતા નું નામ</th>
-                    <th class="text-right">ઉઘડતી સિલક</th>
-                    <th class="text-right">આવક</th>
-                    <th class="text-right">જાવક</th>
-                    <th class="text-right">બંધ સિલક</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{accountTransferRows}}
-            </tbody>
-        </table>
-    </div>
+    <!-- ================= તપસીલ ================= -->
+    <p class="section-heading">તપસીલ : -</p>
+    <table class="footer-table">
+        <thead>
+            <tr>
+                <th>અ. નં.</th>
+                <th>ખાતા નું નામ</th>
+                <th class="text-right">ઉઘડતી સિલક</th>
+                <th class="text-right">આવક</th>
+                <th class="text-right">જાવક</th>
+                <th class="text-right">બંધ સિલક</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{accountTransferRows}}
+        </tbody>
+    </table>
 
 </body>
-
 </html>

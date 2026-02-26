@@ -1242,6 +1242,73 @@ export const uploadExcel = async (req, res, next) => {
   }
 };
 
+export const generateRojmelPDF = async (req, res, next) => {
+  try {
+    const { from, to, taluko, yearRange } = req.query;
+    const q = { isDeleted: false, panchayatId: req.user.gam };
+    if (from) q.date = { $gte: from };
+    if (to) q.date = q.date ? { ...q.date, $lte: to } : { $lte: to };
+
+    const rows = await CashMel.find(q).sort({ date: 1, receiptPaymentNo: 1 }).lean();
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const rojmelTemplatePath = path.join(__dirname, "..", "views", "rojmel.ejs");
+
+    // Prepare data for the template
+    const templateData = {
+      rows,
+      from,
+      to,
+      taluko: taluko || 'તાલુકો',
+      yearRange: yearRange || '2023-2024',
+      dateRange: from && to ? `${from} થી ${to}` : '01/04/2023 થી 31/03/2024',
+      totalIncomeCols: 8,
+      incomeColspan: 7,
+      accountTransfers: [], // You can populate this if you have account transfer data
+      accountSummary: [] // You can populate this if you have account summary data
+    };
+
+    const html = await ejs.renderFile(rojmelTemplatePath, templateData, { async: true });
+
+    // Launch puppeteer and render PDF
+    const browser = await puppeteer.launch({ 
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: true
+    });
+    const page = await browser.newPage();
+    
+    // Set content and wait for fonts to load
+    await page.setContent(html, { 
+      waitUntil: 'networkidle0',
+      timeout: 30000
+    });
+    
+    // Wait for fonts to be fully loaded
+    await page.waitForTimeout(5000);
+    
+    const pdfBuffer = await page.pdf({ 
+      format: 'A4', 
+      printBackground: true,
+      landscape: true,
+      margin: {
+        top: '5mm',
+        right: '5mm',
+        bottom: '5mm',
+        left: '5mm'
+      }
+    });
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="rojmel_${Date.now()}.pdf"`);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Error generating rojmel PDF:', err);
+    next(err);
+  }
+};
+
 export const generatePDFReport = async (req, res, next) => {
   try {
     const { type, from, to } = req.query;
