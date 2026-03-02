@@ -406,13 +406,13 @@ export default function Dashboard() {
           _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
            
           onClick={() => {
-            //  if (userStatus?.user?.modulesAccess?.jaminMehsul) {
-            //   window.location.href = 'http://magna.panchayat.shridaay.com/';
-            //  } else {
+             if (userStatus?.user?.modulesAccess?.jaminMehsul) {
+              window.location.href = 'http://magna.panchayat.shridaay.com/';
+             } else {
 
                handleModuleClick(null, "jaminMehsul");
 
-          //    }
+             }
            } 
           }
         >
