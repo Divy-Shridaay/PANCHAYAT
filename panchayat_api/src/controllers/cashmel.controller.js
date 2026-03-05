@@ -1090,9 +1090,9 @@ export const uploadExcel = async (req, res, next) => {
         if (!entry.bank?.trim()) {
           errorsForRow.push(`${fieldNamesGJ.bank || "બેંક"} જરૂરી છે (વ્યવહાર = bank)`);
         }
-        if (!entry.ddCheckNum?.trim()) {
-          errorsForRow.push(`${fieldNamesGJ.ddCheckNum || "ચેક નંબર"} જરૂરી છે (વ્યવહાર = bank)`);
-        }
+        // if (!entry.ddCheckNum?.trim()) {
+        //   errorsForRow.push(`${fieldNamesGJ.ddCheckNum || "ચેક નંબર"} જરૂરી છે (વ્યવહાર = bank)`);
+        // }
       }
 
       if (entry.paymentMethod === "rokad") {
@@ -1104,9 +1104,9 @@ export const uploadExcel = async (req, res, next) => {
         }
       }
 
-      if (!entry.remarks?.trim()) {
-        errorsForRow.push(`${fieldNamesGJ.remarks || "રીમાર્ક્સ"} જરૂરી છે`);
-      }
+      // if (!entry.remarks?.trim()) {
+      //   errorsForRow.push(`${fieldNamesGJ.remarks || "રીમાર્ક્સ"} જરૂરી છે`);
+      // }
 
       if (!entry.category?.trim()) {
         errorsForRow.push(`${fieldNamesGJ.category || "કેટેગરી"} ખૂટે છે`);
