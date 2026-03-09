@@ -855,7 +855,10 @@ export const uploadExcel = async (req, res, next) => {
 
         const entryDate = parseExcelDate(r.date);
         const name = String(r.name || "").trim();
-        const receiptPaymentNo = String(r.receiptPaymentNo || "").trim();
+     const receiptPaymentNo = (r.receiptPaymentNo !== null && r.receiptPaymentNo !== undefined && r.receiptPaymentNo !== "") 
+  ? String(r.receiptPaymentNo).trim() 
+  : "";
+
         const paymentMethod = mapPaymentMethod(r.paymentMethod);
         const bank = String(r.bank || "").trim();
         const ddCheckNum = String(r.ddCheckNum || "").trim();
@@ -974,7 +977,10 @@ export const uploadExcel = async (req, res, next) => {
 
         const entryDate = parseExcelDate(r.date);
         const name = String(r.name || "").trim();
-        const receiptPaymentNo = String(r.receiptPaymentNo || "").trim();
+   const receiptPaymentNo = (r.receiptPaymentNo !== null && r.receiptPaymentNo !== undefined && r.receiptPaymentNo !== "") 
+  ? String(r.receiptPaymentNo).trim() 
+  : "";
+
         const category = String(r.category || "").trim();
         const remarks = String(r.remarks || "").trim();
         const paymentMethod = mapPaymentMethod(r.paymentMethod);
