@@ -1383,3 +1383,26 @@ export const deleteByDate = async (req, res) => {
   }
 };
 
+// ============================================================
+// 8. DELETE ALL (CashMel) - Soft delete all records for the current panchayat
+// ============================================================
+export const deleteAllCashMel = async (req, res) => {
+  try {
+    let query = { isDeleted: false };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+
+    const result = await CashMel.updateMany(query, { isDeleted: true });
+
+    return res.json({
+      success: true,
+      message: `Deleted ${result.modifiedCount} records`,
+      deletedCount: result.modifiedCount,
+    });
+  } catch (err) {
+    console.log("DELETE ALL ERROR:", err);
+    res.status(500).json({ error: "Failed to delete records" });
+  }
+};
+

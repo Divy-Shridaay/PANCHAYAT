@@ -190,6 +190,47 @@ const sortEntries = (data) => {
     }
   };
 
+  const deleteAllRecords = async () => {
+    try {
+      const url = `${API_BASE}/delete-all`;
+      setDeleting(true);
+      const res = await authFetch(url, { method: "DELETE" });
+
+      if (!res.ok) {
+        let body = null;
+        try {
+          body = await res.json();
+        } catch {
+          body = await res.text();
+        }
+        throw new Error(body?.message || `Delete failed: ${res.status}`);
+      }
+
+      const result = await res.json();
+
+      toast({
+        title: `બધા ${result.deletedCount} રેકોર્ડ્સ સફળતાપૂર્વક કાઢી નાખ્યા`,
+        status: "success",
+        duration: 3000,
+        position: "top",
+      });
+
+      setAllEntries([]);
+      setFilteredEntries([]);
+      onClose();
+    } catch (err) {
+      console.error("Delete all error", err);
+      toast({
+        title: "બધા રેકોર્ડ્સ કાઢવામાં ભૂલ",
+        status: "error",
+        duration: 2000,
+        position: "top",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const paymentMethodGujarati = (method) => {
     if (!method) return "-";
     const value = method.toString().toLowerCase().trim();
@@ -226,9 +267,16 @@ const sortEntries = (data) => {
         })
         .then((data) => {
           const sorted = sortEntries(data.data || []);
-          console.log("✅ Sorted receipts:", sorted.map((x) => x.receiptPaymentNo));
-          setAllEntries(sorted);
-          setFilteredEntries(sorted);
+          // ✅ Hide bank deposit entries from the main cashmel list
+          const onlyCashmel = sorted.filter(
+            (entry) =>
+              entry.category !== "બેંક જમા" &&
+              entry.category?.toLowerCase().trim() !== "bank deposit" &&
+              entry.category?.toLowerCase().trim() !== "bank deposit "
+          );
+          console.log("✅ Sorted receipts:", onlyCashmel.map((x) => x.receiptPaymentNo));
+          setAllEntries(onlyCashmel);
+          setFilteredEntries(onlyCashmel);
         })
         .catch((err) => {
           console.error("Failed to load entries:", err);
@@ -379,13 +427,23 @@ const sortEntries = (data) => {
           </Heading>
 
           <HStack spacing={3}>
-                <Button
+            <Button
+              colorScheme="red"
+              variant="outline"
+              onClick={() => {
+                setDeleteMode('all');
+                onOpen();
+              }}
+            >
+              બધા કાઢો
+            </Button>
+            <Button
               colorScheme="blue"
               variant="outline"
               onClick={() => navigate("/cashmel/bank-deposits")}
             >
               જમા કરેલી બેંક જમા
-            </Button> 
+            </Button>
             <Button
               leftIcon={<FiArrowLeft />}
               colorScheme="green"
@@ -596,7 +654,11 @@ const sortEntries = (data) => {
               fontWeight="800"
               color="red.600"
             >
-              {deleteMode === 'date' ? 'તારીખ મુજબ કાઢવું' : t("deleteTitle")}
+              {deleteMode === 'date'
+                ? 'તારીખ મુજબ કાઢવું'
+                : deleteMode === 'all'
+                ? 'બધા કાઢવું'
+                : t("deleteTitle")}
             </ModalHeader>
 
             <ModalBody pb={6}>
@@ -607,10 +669,13 @@ const sortEntries = (data) => {
                 px={4}
                 lineHeight="1.7"
               >
-                {deleteMode === 'date' 
-                  ? `શું તમે ખરેખર તારીખ ${formatDateToGujarati(deleteDate)} ના બધા રેકોર્ડ્સ કાઢી નાખવા માંગો છો?`
-                  : t("deleteConfirmFull")
-                }
+                {deleteMode === 'date' ? (
+                  `શું તમે ખરેખર તારીખ ${formatDateToGujarati(deleteDate)} ના બધા રેકોર્ડ્સ કાઢી નાખવા માંગો છો?`
+                ) : deleteMode === 'all' ? (
+                  "શું તમે ખરેખર તમામ રેકોર્ડ્સ કાઢી નાખવા માંગો છો?" 
+                ) : (
+                  t("deleteConfirmFull")
+                )}
               </Text>
             </ModalBody>
 
@@ -629,11 +694,17 @@ const sortEntries = (data) => {
                 rounded="full"
                 px={8}
                 size="lg"
-                onClick={deleteMode === 'date' ? () => deleteRecordsByDate(deleteDate) : deleteRecord}
+                onClick={
+                  deleteMode === 'date'
+                    ? () => deleteRecordsByDate(deleteDate)
+                    : deleteMode === 'all'
+                    ? deleteAllRecords
+                    : deleteRecord
+                }
                 isLoading={deleting}
                 loadingText="Deleting"
               >
-                {deleteMode === 'date' ? 'બધા કાઢો' : t("delete")}
+                {deleteMode === 'date' || deleteMode === 'all' ? 'બધા કાઢો' : t("delete")}
               </Button>
             </ModalFooter>
           </ModalContent>
