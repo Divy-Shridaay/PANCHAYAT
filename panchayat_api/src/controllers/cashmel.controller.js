@@ -671,7 +671,14 @@ export const uploadExcel = async (req, res, next) => {
         message: "No file uploaded",
       });
     }
-    
+
+    // Allow long-running import requests (large files / many rows)
+    if (req.setTimeout) {
+      req.setTimeout(1000 * 60 * 5); // 5 minutes
+    }
+    if (res.setTimeout) {
+      res.setTimeout(1000 * 60 * 5); // 5 minutes
+    }
 
     const buffer = req.file.buffer;
     // ✅ Read WITHOUT cellDates first to see the raw values
@@ -1183,29 +1190,47 @@ function parseExcelDate(val) {
     }
 
     // ===============================
-    // 💾 SAVE TO DATABASE
+    // 💾 SAVE TO DATABASE (BULK + DEDUP)
     // ===============================
-    const saved = [];
+
+    // Increase timeout for large uploads (e.g., 2000+ rows)
+    if (req.setTimeout) {
+      req.setTimeout(1000 * 60 * 5); // 5 minutes
+    }
+
+    const signatureFor = (entry) =>
+      `${entry.date}|${entry.name}|${entry.receiptPaymentNo}|${entry.vyavharType}|${entry.category}|${entry.amount}`;
+
+    const uniqueDates = Array.from(new Set(entriesToCreate.map((e) => e.date)));
+
+    // Fetch existing entries in one query to avoid N+1 database calls
+    const existingDocs = await CashMel.find({
+      panchayatId: req.user.gam,
+      isDeleted: false,
+      date: { $in: uniqueDates },
+    })
+      .select("date name receiptPaymentNo vyavharType category amount")
+      .lean();
+
+    const existingSignatures = new Set(
+      existingDocs.map((doc) => signatureFor(doc))
+    );
+
+    const toInsert = [];
     const skipped = [];
 
     for (const entry of entriesToCreate) {
-      const exists = await CashMel.findOne({
-        panchayatId: req.user.gam,
-        date: entry.date,
-        name: entry.name,
-        receiptPaymentNo: entry.receiptPaymentNo,
-        vyavharType: entry.vyavharType,
-        category: entry.category,
-        amount: entry.amount,
-        isDeleted: false,
-      });
+      const sig = signatureFor(entry);
 
-      if (exists) {
+      if (existingSignatures.has(sig)) {
         skipped.push({ row: entry.rowNum, category: entry.category });
         continue;
       }
 
-      await CashMel.create({
+      // Prevent duplicates within the same upload
+      existingSignatures.add(sig);
+
+      toInsert.push({
         panchayatId: req.user.gam,
         date: entry.date,
         name: entry.name,
@@ -1219,16 +1244,27 @@ function parseExcelDate(val) {
         remarks: entry.remarks,
         isDeleted: false,
       });
-
-      saved.push(entry);
     }
 
-    const aavakSaved = saved.filter(e => e.vyavharType === "aavak").length;
-    const javakSaved = saved.filter(e => e.vyavharType === "javak").length;
+    let inserted = [];
+    if (toInsert.length > 0) {
+      try {
+        inserted = await CashMel.insertMany(toInsert, { ordered: false });
+      } catch (insertErr) {
+        console.warn("Bulk insert warning", insertErr);
+        // If insertMany fails due to duplicates or other reasons, we still want to return success for inserted docs.
+        if (insertErr.insertedDocs) {
+          inserted = insertErr.insertedDocs;
+        }
+      }
+    }
 
-    console.log(`\n✅ Saved: ${saved.length} (આવક: ${aavakSaved}, જાવક: ${javakSaved})`);
+    const aavakSaved = inserted.filter((e) => e.vyavharType === "aavak").length;
+    const javakSaved = inserted.filter((e) => e.vyavharType === "javak").length;
 
-    if (saved.length === 0 && skipped.length > 0) {
+    console.log(`\n✅ Saved: ${inserted.length} (આવક: ${aavakSaved}, જાવક: ${javakSaved})`);
+
+    if (inserted.length === 0 && skipped.length > 0) {
       return res.status(200).json({
         success: true,
         warning: true,
@@ -1236,17 +1272,17 @@ function parseExcelDate(val) {
         savedCount: 0,
         aavakCount: 0,
         javakCount: 0,
-        skippedCount: skipped.length
+        skippedCount: skipped.length,
       });
     }
 
     return res.json({
       success: true,
       message: "Excel સફળતાપૂર્વક અપલોડ થઈ ગયું!",
-      savedCount: saved.length,
+      savedCount: inserted.length,
       aavakCount: aavakSaved,
       javakCount: javakSaved,
-      skippedCount: skipped.length
+      skippedCount: skipped.length,
     });
   } catch (err) {
     console.error("❌ Upload Error:", err);
