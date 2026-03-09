@@ -725,76 +725,82 @@ export const uploadExcel = async (req, res, next) => {
     // ===============================
     // 📅 EXCEL DATE PARSER (RAW VALUES)
     // ===============================
-    function parseExcelDate(val) {
-      if (!val && val !== 0) return null;
-      
-      console.log(`   🔍 Raw value: ${val}, type: ${typeof val}`);
+function parseExcelDate(val) {
+  if (!val && val !== 0) return null;
 
-      // Case 1: String in DD/MM/YYYY format (e.g., "1/1/2010")
-      if (typeof val === "string") {
-        const trimmed = val.trim();
-        
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
-          const [d, m, y] = trimmed.split("/");
-          const day = parseInt(d, 10);
-          const month = parseInt(m, 10);
-          const year = parseInt(y, 10);
-          
-          const dt = new Date(year, month - 1, day, 0, 0, 0, 0);
-          console.log(`   ✅ Parsed string date: ${day}/${month}/${year} → ${dt.toISOString().split('T')[0]}`);
-          
-          if (isNaN(dt.getTime())) return null;
-          return dt;
-        }
-        
-        // Try parsing as ISO format
-        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-          const dt = new Date(trimmed + "T00:00:00");
-          if (!isNaN(dt.getTime())) return dt;
-        }
-        
-        return null;
-      }
-      
-      // Case 2: Excel serial number (NUMBER)
-      if (typeof val === "number") {
-        // Excel serial number to Date
-        // Jan 1, 1900 = serial 1
-        // But account for Excel's leap year bug
-        let serial = Math.floor(val); // Use integer part only
-        
-        console.log(`   🔢 Excel serial: ${serial}`);
-        
-        // Create date from serial
-        // Formula: (serial - 1) days + Jan 1, 1900
-        // But: Excel thinks 1900 is leap year, so dates after Feb 28, 1900 are off by 1
-        
-        let daysToAdd = serial - 1; // Jan 1, 1900 is serial 1
-        
-        // Bug fix: dates after Feb 28, 1900 (which is serial 60) need adjustment
-        if (serial > 60) {
-          daysToAdd -= 1;
-        }
-        
-        // Calculate from Jan 1, 1900
-        const baseDate = new Date(1900, 0, 1, 0, 0, 0, 0);
-        const resultMs = baseDate.getTime() + (daysToAdd * 86400000);
-        const result = new Date(resultMs);
-        
-        const resultStr = result.toISOString().split('T')[0];
-        console.log(`   ✅ Parsed serial ${serial}: ${resultStr}`);
-        
-        if (isNaN(result.getTime())) return null;
-        return result;
-      }
-      
-      // Case 3: Already a Date object (shouldn't happen with cellDates: false)
-      if (val instanceof Date && !isNaN(val.getTime())) {
-        return val;
-      }
-      
-      return null;
+  // ✅ Gujarati digits → English digits converter
+  const gujaratiToEnglish = (str) => {
+    const map = {
+      '૦':'0','૧':'1','૨':'2','૩':'3','૪':'4',
+      '૫':'5','૬':'6','૭':'7','૮':'8','૯':'9'
+    };
+    return String(str).replace(/[૦-૯]/g, d => map[d] || d);
+  };
+
+  // ✅ If string, convert Gujarati digits to English first
+  if (typeof val === "string") {
+    val = gujaratiToEnglish(val.trim());
+  }
+
+  console.log(`   🔍 Raw value: ${val}, type: ${typeof val}`);
+
+  // Case 1: String in DD/MM/YYYY format (e.g., "1/1/2010")
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+      const [d, m, y] = trimmed.split("/");
+      const day = parseInt(d, 10);
+      const month = parseInt(m, 10);
+      const year = parseInt(y, 10);
+
+      const dt = new Date(year, month - 1, day, 0, 0, 0, 0);
+      console.log(`   ✅ Parsed string date: ${day}/${month}/${year} → ${dt.toISOString().split('T')[0]}`);
+
+      if (isNaN(dt.getTime())) return null;
+      return dt;
     }
+
+    // Try parsing as ISO format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const dt = new Date(trimmed + "T00:00:00");
+      if (!isNaN(dt.getTime())) return dt;
+    }
+
+    return null;
+  }
+
+  // Case 2: Excel serial number (NUMBER)
+  if (typeof val === "number") {
+    let serial = Math.floor(val);
+
+    console.log(`   🔢 Excel serial: ${serial}`);
+
+    let daysToAdd = serial - 1;
+
+    // Bug fix: Excel's 1900 leap year bug
+    if (serial > 60) {
+      daysToAdd -= 1;
+    }
+
+    const baseDate = new Date(1900, 0, 1, 0, 0, 0, 0);
+    const resultMs = baseDate.getTime() + (daysToAdd * 86400000);
+    const result = new Date(resultMs);
+
+    const resultStr = result.toISOString().split('T')[0];
+    console.log(`   ✅ Parsed serial ${serial}: ${resultStr}`);
+
+    if (isNaN(result.getTime())) return null;
+    return result;
+  }
+
+  // Case 3: Already a Date object
+  if (val instanceof Date && !isNaN(val.getTime())) {
+    return val;
+  }
+
+  return null;
+}
 
     // ===============================
     // 📅 TIMEZONE-SAFE DATE TO STRING
