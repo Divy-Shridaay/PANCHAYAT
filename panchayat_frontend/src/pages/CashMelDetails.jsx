@@ -90,24 +90,38 @@ const CashMelDetails = () => {
     });
   };
 
-  // ✅ Sort helper
-// ✅ આ function બદલો — નવી date પહેલા, પછી receipt ascending
-const sortEntries = (data) => {
-  return [...data].sort((a, b) => {
-    // 1. Date DESCENDING (આજની/નવી date પહેલા)
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    if (dateA !== dateB) return dateB - dateA; // ← dateB - dateA = descending
+  // ✅ Sort: receiptPaymentNo=0 (ઉઘટી સિલક) always first, then ascending by receipt number
+  const sortEntries = (data) => {
+    return [...data].sort((a, b) => {
+      const rA = parseInt(String(a.receiptPaymentNo), 10);
+      const rB = parseInt(String(b.receiptPaymentNo), 10);
 
-    // 2. Same date → receipt number ASCENDING (3, 11, 11, 22)
-    const rA = parseInt(String(a.receiptPaymentNo), 10) || 0;
-    const rB = parseInt(String(b.receiptPaymentNo), 10) || 0;
-    if (rA !== rB) return rA - rB;
+      const isZeroA = rA === 0 || isNaN(rA);
+      const isZeroB = rB === 0 || isNaN(rB);
 
-    // 3. Same receipt → MongoDB _id sort
-    return String(a._id || "").localeCompare(String(b._id || ""));
-  });
-};
+      // 1. ઉઘટી સિલક (receiptPaymentNo = 0) always comes FIRST
+      if (isZeroA && !isZeroB) return -1;
+      if (!isZeroA && isZeroB) return 1;
+
+      // 2. Both are 0 → sort by date DESCENDING among themselves
+      if (isZeroA && isZeroB) {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA;
+      }
+
+      // 3. Both non-zero → sort by receipt number ASCENDING (1,2,2,2,3,4...)
+      if (rA !== rB) return rA - rB;
+
+      // 4. Same receipt number → sort by date DESCENDING
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+
+      // 5. Same receipt + same date → MongoDB _id sort
+      return String(a._id || "").localeCompare(String(b._id || ""));
+    });
+  };
 
   const deleteRecord = async () => {
     try {
@@ -165,7 +179,7 @@ const sortEntries = (data) => {
       }
 
       const result = await res.json();
-      
+
       toast({
         title: `તારીખ ${date} ના ${result.deletedCount} રેકોર્ડ્સ સફળતાપૂર્વક કાઢી નાખ્યા`,
         status: "success",
@@ -173,7 +187,6 @@ const sortEntries = (data) => {
         position: "top",
       });
 
-      // Remove deleted entries from state
       setAllEntries((prev) => prev.filter((x) => x.date !== date));
       setFilteredEntries((prev) => prev.filter((x) => x.date !== date));
       onClose();
@@ -267,7 +280,6 @@ const sortEntries = (data) => {
         })
         .then((data) => {
           const sorted = sortEntries(data.data || []);
-          // ✅ Hide bank deposit entries from the main cashmel list
           const onlyCashmel = sorted.filter(
             (entry) =>
               entry.category !== "બેંક જમા" &&
@@ -397,16 +409,11 @@ const sortEntries = (data) => {
 
   const toGujaratiDigits = (num) => {
     if (!num && num !== 0) return "";
-    
-    // Convert to number
-    const roundedNum = typeof num === 'number' ? num : parseFloat(num);
+    const roundedNum = typeof num === "number" ? num : parseFloat(num);
     if (isNaN(roundedNum)) return "";
-    
-    // Check if it's a whole number
-    const formattedNum = Number.isInteger(roundedNum) ? 
-        roundedNum.toString() : 
-        roundedNum.toFixed(2);
-    
+    const formattedNum = Number.isInteger(roundedNum)
+      ? roundedNum.toString()
+      : roundedNum.toFixed(2);
     const guj = ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"];
     return formattedNum.replace(/\d/g, (d) => guj[parseInt(d)]);
   };
@@ -431,7 +438,7 @@ const sortEntries = (data) => {
               colorScheme="red"
               variant="outline"
               onClick={() => {
-                setDeleteMode('all');
+                setDeleteMode("all");
                 onOpen();
               }}
             >
@@ -569,9 +576,14 @@ const sortEntries = (data) => {
                               navigate(`/cashmelform/${row._id}`);
                             }}
                           />
-                          
+
                           {/* Date-wise delete button - only show once per date */}
-                          {getPaginatedData().findIndex((r) => r.date === row.date) === getPaginatedData().findIndex((r) => r._id === row._id) && (
+                          {getPaginatedData().findIndex(
+                            (r) => r.date === row.date
+                          ) ===
+                            getPaginatedData().findIndex(
+                              (r) => r._id === row._id
+                            ) && (
                             <IconButton
                               size="sm"
                               icon={<CalendarIcon />}
@@ -581,13 +593,13 @@ const sortEntries = (data) => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setDeleteDate(row.date);
-                                setDeleteMode('date');
+                                setDeleteMode("date");
                                 onOpen();
                               }}
                               title={`તારીખ ${formatDateToGujarati(row.date)} ના બધા રેકોર્ડ્સ કાઢો`}
                             />
                           )}
-                          
+
                           <IconButton
                             size="sm"
                             icon={<DeleteIcon />}
@@ -597,7 +609,7 @@ const sortEntries = (data) => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeleteId(row._id);
-                              setDeleteMode('single');
+                              setDeleteMode("single");
                               onOpen();
                             }}
                           />
@@ -654,10 +666,10 @@ const sortEntries = (data) => {
               fontWeight="800"
               color="red.600"
             >
-              {deleteMode === 'date'
-                ? 'તારીખ મુજબ કાઢવું'
-                : deleteMode === 'all'
-                ? 'બધા કાઢવું'
+              {deleteMode === "date"
+                ? "તારીખ મુજબ કાઢવું"
+                : deleteMode === "all"
+                ? "બધા કાઢવું"
                 : t("deleteTitle")}
             </ModalHeader>
 
@@ -669,10 +681,10 @@ const sortEntries = (data) => {
                 px={4}
                 lineHeight="1.7"
               >
-                {deleteMode === 'date' ? (
+                {deleteMode === "date" ? (
                   `શું તમે ખરેખર તારીખ ${formatDateToGujarati(deleteDate)} ના બધા રેકોર્ડ્સ કાઢી નાખવા માંગો છો?`
-                ) : deleteMode === 'all' ? (
-                  "શું તમે ખરેખર તમામ રેકોર્ડ્સ કાઢી નાખવા માંગો છો?" 
+                ) : deleteMode === "all" ? (
+                  "શું તમે ખરેખર તમામ રેકોર્ડ્સ કાઢી નાખવા માંગો છો?"
                 ) : (
                   t("deleteConfirmFull")
                 )}
@@ -695,16 +707,18 @@ const sortEntries = (data) => {
                 px={8}
                 size="lg"
                 onClick={
-                  deleteMode === 'date'
+                  deleteMode === "date"
                     ? () => deleteRecordsByDate(deleteDate)
-                    : deleteMode === 'all'
+                    : deleteMode === "all"
                     ? deleteAllRecords
                     : deleteRecord
                 }
                 isLoading={deleting}
                 loadingText="Deleting"
               >
-                {deleteMode === 'date' || deleteMode === 'all' ? 'બધા કાઢો' : t("delete")}
+                {deleteMode === "date" || deleteMode === "all"
+                  ? "બધા કાઢો"
+                  : t("delete")}
               </Button>
             </ModalFooter>
           </ModalContent>
