@@ -205,9 +205,25 @@ const CashMelDetails = () => {
 
   const deleteAllRecords = async () => {
     try {
-      const url = `${API_BASE}/delete-all`;
+      const idsToDelete = filteredEntries.map((entry) => entry._id);
+      if (idsToDelete.length === 0) {
+        toast({
+          title: "કોઈ રેકોર્ડ મળી નહિ",
+          status: "info",
+          duration: 2000,
+          position: "top",
+        });
+        onClose();
+        return;
+      }
+
+      const url = `${API_BASE}/delete-multiple`;
       setDeleting(true);
-      const res = await authFetch(url, { method: "DELETE" });
+      const res = await authFetch(url, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: idsToDelete }),
+      });
 
       if (!res.ok) {
         let body = null;
@@ -228,8 +244,8 @@ const CashMelDetails = () => {
         position: "top",
       });
 
-      setAllEntries([]);
-      setFilteredEntries([]);
+      setAllEntries((prev) => prev.filter((x) => !idsToDelete.includes(x._id)));
+      setFilteredEntries((prev) => prev.filter((x) => !idsToDelete.includes(x._id)));
       onClose();
     } catch (err) {
       console.error("Delete all error", err);

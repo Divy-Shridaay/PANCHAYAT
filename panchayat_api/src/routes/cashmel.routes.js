@@ -12,6 +12,7 @@ import {
   updateEntry,
   softDeleteCashMel,
   deleteByDate,
+  deleteMultipleCashMel,
   deleteAllCashMel
 } from "../controllers/cashmel.controller.js";
 
@@ -52,6 +53,9 @@ router.get("/report/pdf", auth, generatePDFReport);
 // router.delete("/:id", softDeleteCashMel);
 
 router.delete("/delete/:id", auth, softDeleteCashMel);
+
+// Delete multiple specific records (soft delete)
+router.delete("/delete-multiple", auth, deleteMultipleCashMel);
 
 // Delete all records (soft delete)
 router.delete("/delete-all", auth, deleteAllCashMel);

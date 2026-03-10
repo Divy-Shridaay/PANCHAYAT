@@ -1420,6 +1420,34 @@ export const deleteByDate = async (req, res) => {
 };
 
 // ============================================================
+// 7.5 MULTIPLE DELETE (CashMel) - Soft delete multiple records by IDs
+// ============================================================
+export const deleteMultipleCashMel = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required" });
+    }
+
+    let query = { _id: { $in: ids }, isDeleted: false };
+    if (req.user.role !== 'admin') {
+      query.panchayatId = req.user.gam;
+    }
+
+    const result = await CashMel.updateMany(query, { isDeleted: true });
+
+    return res.json({
+      success: true,
+      message: `Deleted ${result.modifiedCount} records`,
+      deletedCount: result.modifiedCount,
+    });
+  } catch (err) {
+    console.log("MULTIPLE DELETE ERROR:", err);
+    res.status(500).json({ error: "Failed to delete records" });
+  }
+};
+
+// ============================================================
 // 8. DELETE ALL (CashMel) - Soft delete all records for the current panchayat
 // ============================================================
 export const deleteAllCashMel = async (req, res) => {
