@@ -66,7 +66,8 @@ const CashMelDetails = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteDate, setDeleteDate] = useState(null);
-  const [deleteMode, setDeleteMode] = useState(null); // 'single' or 'date'
+  const [deleteMode, setDeleteMode] = useState(null); // 'single' or 'date' or 'all'
+  const [deleteFilterType, setDeleteFilterType] = useState("all");
 
   const API_ROOT =
     typeof window !== "undefined" &&
@@ -205,10 +206,17 @@ const CashMelDetails = () => {
 
   const deleteAllRecords = async () => {
     try {
-      const idsToDelete = filteredEntries.map((entry) => entry._id);
+      const baseEntries = allEntries;
+      const toDelete = baseEntries.filter((entry) =>
+        deleteFilterType === "all"
+          ? true
+          : entry.vyavharType?.toLowerCase() === deleteFilterType
+      );
+
+      const idsToDelete = toDelete.map((entry) => entry._id);
       if (idsToDelete.length === 0) {
         toast({
-          title: "કોઈ રેકોર્ડ મળી નહિ",
+          title: "કોઈ રેકોર્ડ મળી નહી",
           status: "info",
           duration: 2000,
           position: "top",
@@ -455,6 +463,7 @@ const CashMelDetails = () => {
               variant="outline"
               onClick={() => {
                 setDeleteMode("all");
+                setDeleteFilterType(filterType);
                 onOpen();
               }}
             >
@@ -700,11 +709,34 @@ const CashMelDetails = () => {
                 {deleteMode === "date" ? (
                   `શું તમે ખરેખર તારીખ ${formatDateToGujarati(deleteDate)} ના બધા રેકોર્ડ્સ કાઢી નાખવા માંગો છો?`
                 ) : deleteMode === "all" ? (
-                  "શું તમે ખરેખર તમામ રેકોર્ડ્સ કાઢી નાખવા માંગો છો?"
+                  `શું તમે ખરેખર ${
+                    deleteFilterType === "all"
+                      ? "તમામ"
+                      : deleteFilterType === "aavak"
+                      ? "આવક"
+                      : "જાવક"
+                  } રેકોર્ડ્સ કાઢી નાખવા માંગો છો?`
                 ) : (
                   t("deleteConfirmFull")
                 )}
               </Text>
+
+              {deleteMode === "all" && (
+                <Box mt={4}>
+                  <Text fontWeight="600" mb={2} textAlign="center">
+                    પ્રવૃત્તિનો પ્રકાર પસંદ કરો (આવક/જાવક)
+                  </Text>
+                  <Select
+                    value={deleteFilterType}
+                    onChange={(e) => setDeleteFilterType(e.target.value)}
+                    bg="white"
+                  >
+                    <option value="all">બધા</option>
+                    <option value="aavak">આવક</option>
+                    <option value="javak">જાવક</option>
+                  </Select>
+                </Box>
+              )}
             </ModalBody>
 
             <ModalFooter justifyContent="center" gap={4} pb={6}>
