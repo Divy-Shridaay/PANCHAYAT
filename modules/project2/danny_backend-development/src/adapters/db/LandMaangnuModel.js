@@ -1,4 +1,5 @@
 const { default: mongoose } = require("mongoose");
+const { toPaisa, fromPaisa } = require("./currencyHelpers");
 
 const LandMaangnuSchema = new mongoose.Schema(
   {
@@ -16,20 +17,30 @@ const LandMaangnuSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 0,
+      set: toPaisa,
+      get: fromPaisa,
     },
     left: {
       type: Number,
       default: 0,
+      set: toPaisa,
+      get: fromPaisa,
     },
     sarkari: {
       type: Number,
+      set: toPaisa,
+      get: fromPaisa,
     },
     sivay: {
       type: Number,
+      set: toPaisa,
+      get: fromPaisa,
     },
     rotating: {
       type: Number,
       default: 0,
+      set: toPaisa,
+      get: fromPaisa,
     },
     financialYear: {
       type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +64,8 @@ const LandMaangnuSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 

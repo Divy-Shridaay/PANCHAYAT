@@ -1,4 +1,5 @@
 const { default: mongoose } = require("mongoose");
+const { toPaisa, fromPaisa } = require("./currencyHelpers");
 
 const LocalFundRevenueSchema = new mongoose.Schema(
   {
@@ -24,11 +25,11 @@ const LocalFundRevenueSchema = new mongoose.Schema(
       ref: "Villager",
       required: true,
     },
-    left: { type: Number, required: true },
-    pending: { type: Number, required: true },
-    spare: { type: Number, required: true, default: 0 },
-    rotating: { type: Number, required: true },
-    total: { type: Number, required: true },
+    left: { type: Number, required: true, set: toPaisa, get: fromPaisa },
+    pending: { type: Number, required: true, set: toPaisa, get: fromPaisa },
+    spare: { type: Number, required: true, default: 0, set: toPaisa, get: fromPaisa },
+    rotating: { type: Number, required: true, set: toPaisa, get: fromPaisa },
+    total: { type: Number, required: true, set: toPaisa, get: fromPaisa },
     word: { type: String },
     status: {
       type: Number,
@@ -51,6 +52,8 @@ const LocalFundRevenueSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { toPaisa, fromPaisa } = require("./currencyHelpers");
 
 const VillagerSchema = new mongoose.Schema(
   {
@@ -10,12 +11,12 @@ const VillagerSchema = new mongoose.Schema(
       required: true,
     },
     date: { type: String },
-    sarkari: { type: Number, default: 0 },
-    sivay: { type: Number, default: 0 },
-    j_a: { type: Number, default: 0 },
-    j_m: { type: Number, default: 0 },
-    l_m: { type: Number, default: 0 },
-    s_m: { type: Number, default: 0 },
+    sarkari: { type: Number, default: 0, set: toPaisa, get: fromPaisa },
+    sivay: { type: Number, default: 0, set: toPaisa, get: fromPaisa },
+    j_a: { type: Number, default: 0, set: toPaisa, get: fromPaisa },
+    j_m: { type: Number, default: 0, set: toPaisa, get: fromPaisa },
+    l_m: { type: Number, default: 0, set: toPaisa, get: fromPaisa },
+    s_m: { type: Number, default: 0, set: toPaisa, get: fromPaisa },
     status: {
       type: Number,
       enum: [0, 1, 2],
@@ -37,6 +38,8 @@ const VillagerSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 

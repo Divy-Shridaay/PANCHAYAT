@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { toPaisa, fromPaisa } = require("./currencyHelpers");
 
 const EducationRevenueSchema = new mongoose.Schema(
   {
@@ -24,11 +25,11 @@ const EducationRevenueSchema = new mongoose.Schema(
       ref: "Villager",
       required: true,
     },
-    spare: { type: Number, required: true, default: 0 },
-    left: { type: Number, required: true },
-    pending: { type: Number, required: true },
-    rotating: { type: Number, required: true },
-    total: { type: Number, required: true },
+    spare: { type: Number, required: true, default: 0, set: toPaisa, get: fromPaisa },
+    left: { type: Number, required: true, set: toPaisa, get: fromPaisa },
+    pending: { type: Number, required: true, set: toPaisa, get: fromPaisa },
+    rotating: { type: Number, required: true, set: toPaisa, get: fromPaisa },
+    total: { type: Number, required: true, set: toPaisa, get: fromPaisa },
     word: { type: String },
     status: {
       type: Number,
@@ -51,6 +52,8 @@ const EducationRevenueSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 

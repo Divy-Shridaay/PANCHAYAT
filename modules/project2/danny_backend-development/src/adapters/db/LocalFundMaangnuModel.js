@@ -1,4 +1,5 @@
 const { default: mongoose } = require("mongoose");
+const { toPaisa, fromPaisa } = require("./currencyHelpers");
 
 const LocalFundMaangnuSchema = new mongoose.Schema({
   villager: {
@@ -15,23 +16,33 @@ const LocalFundMaangnuSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 0,
+    set: toPaisa,
+    get: fromPaisa,
   },
   left: {
     type: Number,
     required: true,
     default: 0,
+    set: toPaisa,
+    get: fromPaisa,
   },
   sarkari: {
     type: Number,
+    set: toPaisa,
+    get: fromPaisa,
     // required: true,
   },
   sivay: {
     type: Number,
+    set: toPaisa,
+    get: fromPaisa,
     // required: true,
   },
   rotating: {
     type: Number,
     default: 0,
+    set: toPaisa,
+    get: fromPaisa,
   },
   financialYear: {
     type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +64,9 @@ const LocalFundMaangnuSchema = new mongoose.Schema({
     ref: "User",
   },
 });
+
+LocalFundMaangnuSchema.set("toJSON", { getters: true });
+LocalFundMaangnuSchema.set("toObject", { getters: true });
 
 const LocalFundMaangnu = mongoose.model(
   "LocalFundMaangnu",

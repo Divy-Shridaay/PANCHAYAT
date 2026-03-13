@@ -78,8 +78,9 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              fajal: { $toDouble: "$fajal" },
-              left: { $toDouble: "$left" },
+              // stored values are in paisa -> divide by 100 to get rupees
+              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
+              left: { $divide: [{ $toDouble: "$left" }, 100] },
               // sarkari: { $toDouble: "$sarkari" },
               // sivay: { $toDouble: "$sivay" },
             },
@@ -111,8 +112,8 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           },
           {
             $project: {
-              rotating: { $toDouble: "$rotating" },
-              total: { $toDouble: "$total" },
+              rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
+              total: { $divide: [{ $toDouble: "$total" }, 100] },
             },
           },
         ],
@@ -218,10 +219,11 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              fajal: { $toDouble: "$fajal" },
-              left: { $toDouble: "$left" },
-              sarkari: { $toDouble: "$sarkari" },
-              sivay: { $toDouble: "$sivay" },
+              // stored values are in paisa -> divide by 100 to get rupees
+              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
+              left: { $divide: [{ $toDouble: "$left" }, 100] },
+              sarkari: { $divide: [{ $toDouble: "$sarkari" }, 100] },
+              sivay: { $divide: [{ $toDouble: "$sivay" }, 100] },
             },
           },
         ],
@@ -247,8 +249,8 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           },
           {
             $project: {
-              rotating: { $toDouble: "$rotating" },
-              total: { $toDouble: "$total" },
+              rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
+              total: { $divide: [{ $toDouble: "$total" }, 100] },
             },
           },
         ],
@@ -347,10 +349,11 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              fajal: { $toDouble: "$fajal" },
-              left: { $toDouble: "$left" },
-              pending: { $toDouble: "$pending" },
-              rotating: { $toDouble: "$rotating" },
+              // stored values are in paisa -> divide by 100 to get rupees
+              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
+              left: { $divide: [{ $toDouble: "$left" }, 100] },
+              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
+              rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
             },
           },
         ],
@@ -377,9 +380,9 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           },
           {
             $project: {
-              rotating: { $toDouble: "$rotating" },
-              pending: { $toDouble: "$pending" },
-              left: { $toDouble: "$left" },
+              rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
+              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
+              left: { $divide: [{ $toDouble: "$left" }, 100] },
             },
           },
         ],
@@ -489,10 +492,11 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              fajal: { $toDouble: "$fajal" },
-              left: { $toDouble: "$left" },
-              pending: { $toDouble: "$pending" },
-              rotating: { $toDouble: "$rotating" },
+              // stored values are in paisa -> divide by 100 to get rupees
+              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
+              left: { $divide: [{ $toDouble: "$left" }, 100] },
+              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
+              rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
             },
           },
         ],
@@ -522,9 +526,9 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           },
           {
             $project: {
-              rotating: { $toDouble: "$rotating" },
-              pending: { $toDouble: "$pending" },
-              left: { $toDouble: "$left" },
+              rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
+              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
+              left: { $divide: [{ $toDouble: "$left" }, 100] },
             },
           },
         ],

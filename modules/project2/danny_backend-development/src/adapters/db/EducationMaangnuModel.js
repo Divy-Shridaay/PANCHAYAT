@@ -1,4 +1,5 @@
 const { default: mongoose } = require("mongoose");
+const { toPaisa, fromPaisa } = require("./currencyHelpers");
 
 const EducationMaangnuSchema = new mongoose.Schema({
   villager: {
@@ -15,23 +16,33 @@ const EducationMaangnuSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 0,
+    set: toPaisa,
+    get: fromPaisa,
   },
   left: {
     type: Number,
     required: true,
     default: 0,
+    set: toPaisa,
+    get: fromPaisa,
   },
   sarkari: {
     type: Number,
+    set: toPaisa,
+    get: fromPaisa,
     // required: true,
   },
   sivay: {
     type: Number,
+    set: toPaisa,
+    get: fromPaisa,
     // required: true,
   },
   rotating: {
     type: Number,
     default: 0,
+    set: toPaisa,
+    get: fromPaisa,
   },
   financialYear: {
     type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +64,9 @@ const EducationMaangnuSchema = new mongoose.Schema({
     ref: "User",
   },
 });
+
+EducationMaangnuSchema.set("toJSON", { getters: true });
+EducationMaangnuSchema.set("toObject", { getters: true });
 
 const EducationMaangnu = mongoose.model(
   "EducationMaangnu",

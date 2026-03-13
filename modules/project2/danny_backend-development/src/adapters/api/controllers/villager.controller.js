@@ -17,14 +17,9 @@ exports.fetchVillagerByAccountNo = asyncHandler(async (req, res, next) => {
     console.log("Filter:", { accountNo, village, financialYear });
 
     // 🟢 Utility to safely convert number to 2 decimals
-    const toFixed2 = (val) => {
-      const num = parseFloat(val || 0);
-
-      // Step 1: fix to 2 decimals
-      const fixed = parseFloat(num.toFixed(2));
-
-      // Step 2: round to nearest integer
-      return Math.round(fixed);
+    const formatRupee = (val) => {
+      const num = Number(val || 0);
+      return Number(num.toFixed(2));
     };
 
     // 🟢 Fetch master data
@@ -32,10 +27,10 @@ exports.fetchVillagerByAccountNo = asyncHandler(async (req, res, next) => {
     if (!master) return next(new Error("Active master record not found"));
 
     // 🟢 Get Village & Taluka info
-    const villageData = await Village.findById(village).lean();
+    const villageData = await Village.findById(village).lean({ getters: true });
     if (!villageData) return next(new Error("Village not found"));
 
-    const taluka = await Taluka.findById(villageData.taluka).lean();
+    const taluka = await Taluka.findById(villageData.taluka).lean({ getters: true });
     if (!taluka) return next(new Error("Taluka not found"));
 
     // 🟢 Determine locality
@@ -46,7 +41,7 @@ exports.fetchVillagerByAccountNo = asyncHandler(async (req, res, next) => {
     const villager = await Villager.findOne({
       accountNo: accountNo?.toString(),
       village,
-    }).lean();
+    }).lean({ getters: true });
 
     if (!villager) return next(new Error("Villager not found"));
 
@@ -76,15 +71,15 @@ exports.fetchVillagerByAccountNo = asyncHandler(async (req, res, next) => {
     // 🟢 Fetch all related maangnu data in parallel
     const [landMaangnu, localFundMaangnu, educationCessMaangnu] =
       await Promise.all([
-        LandMaangnu.findOne({ villager: villager._id, ...filterByYear }).lean(),
+        LandMaangnu.findOne({ villager: villager._id, ...filterByYear }).lean({ getters: true }),
         LocalFundMaangnu.findOne({
           villager: villager._id,
           ...filterByYear,
-        }).lean(),
+        }).lean({ getters: true }),
         EducationMaangnu.findOne({
           villager: villager._id,
           ...filterByYear,
-        }).lean(),
+        }).lean({ getters: true }),
       ]);
 
     // 🧩 Construct clean response

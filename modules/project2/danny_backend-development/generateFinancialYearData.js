@@ -312,7 +312,7 @@ const Village = require("./src/adapters/db/VillageModel");
 const Taluka = require("./src/adapters/db/TalukaModel");
 
 require("dotenv").config();
-const MONGO_URI = process.env.MONGO_URL;
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGO_URL;
 
 async function generateNewFinancialYearData(currentFYId, newFYId, villageId) {
   console.log("🧾 Starting financial year migration process");
@@ -355,6 +355,8 @@ async function generateNewFinancialYearData(currentFYId, newFYId, villageId) {
     const localBulkOps = [];
     const educationBulkOps = [];
 
+
+    const fix2 = (n) => parseFloat(parseFloat(n || 0).toFixed(2));
     for (const villager of villagers) {
       try {
         let local = 0;
@@ -480,8 +482,8 @@ async function generateNewFinancialYearData(currentFYId, newFYId, villageId) {
             document: {
               villager: villager._id,
               date: new Date().toLocaleDateString("en-CA"),
-              fajal: landDiff < 0 ? Math.abs(landDiff.toFixed(2)) : 0,
-              left: landDiff < 0 ? 0 : landDiff.toFixed(2),
+             fajal: landDiff < 0 ? parseFloat(Math.abs(landDiff).toFixed(2)) : 0,
+left: landDiff < 0 ? 0 : parseFloat(landDiff.toFixed(2)),
               financialYear: newFY._id,
               createdBy: villager.createdBy,
               updatedBy: villager.updatedBy,
@@ -531,30 +533,32 @@ async function generateNewFinancialYearData(currentFYId, newFYId, villageId) {
         });
 
         // --- Education Maangnu ---
-        const educationTotalCalculated =
-          educationRevenueLeft +
-          educationPending +
-          educationFajal +
-          educationRotating;
-        const educationTotalCalc =
-          educationLeft +
-          (sarkari * master.sSarkari) / 100 +
-          (sivay * master.sSivay) / 100 +
-          educationRotatingSum;
+       const educationTotalCalculated = fix2(
+  fix2(educationRevenueLeft) +
+  fix2(educationPending) +
+  fix2(educationFajal) +
+  fix2(educationRotating)
+);
+const educationTotalCalc = fix2(
+  fix2(educationLeft) +
+  fix2((sarkari * master.sSarkari) / 100) +
+  fix2((sivay * master.sSivay) / 100) +
+  fix2(educationRotatingSum)
+);
 
         educationBulkOps.push({
           insertOne: {
             document: {
               villager: villager._id,
               date: new Date().toLocaleDateString("en-CA"),
-              left:
-                educationTotalCalculated < educationTotalCalc
-                  ? parseFloat(educationTotalCalc - educationTotalCalculated)
-                  : 0,
-              fajal:
-                educationTotalCalculated > educationTotalCalc
-                  ? parseFloat(educationTotalCalculated - educationTotalCalc)
-                  : 0,
+             left:
+        educationTotalCalculated < educationTotalCalc
+          ? fix2(educationTotalCalc - educationTotalCalculated)
+          : 0,
+      fajal:
+        educationTotalCalculated > educationTotalCalc
+          ? fix2(educationTotalCalculated - educationTotalCalc)
+          : 0,
               financialYear: newFY._id,
               createdBy: villager.createdBy,
               updatedBy: villager.updatedBy,
@@ -600,7 +604,7 @@ module.exports = { generateNewFinancialYearData };
 // Example run
 const currentFYId = "685bc9436aa71784a244da71";
 const newFYId = "688c038812a9655720d2a291";
-const villageId = "685bd4b16aa71784a244db3e"; // not used strictly but okay
+const villageId = "69b17f7c5dffb46cf3882b3f" // not used strictly but okay
 
 generateNewFinancialYearData(currentFYId, newFYId, villageId)
   .then(() => console.log("✅ Financial year migration finished!"))
