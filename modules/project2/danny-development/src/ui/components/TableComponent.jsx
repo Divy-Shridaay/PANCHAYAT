@@ -134,7 +134,9 @@ const TableComponent = forwardRef(
             variant={"striped"}
             colorScheme="blackAlpha"
           >
-            {caption && <TableCaption>{caption}</TableCaption>}
+            {caption && <TableCaption> 
+              {/* {caption}  */}
+              </TableCaption>}
             <Thead>
               <Tr>
                 {columns?.map((column) => (
