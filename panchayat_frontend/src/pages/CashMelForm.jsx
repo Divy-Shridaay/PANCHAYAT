@@ -570,7 +570,7 @@ setOpeningForm({
     // };
   
     const submitOpeningToServer = async () => {
-      // Create opening balance entries (aavak) for rokad and all banks as provided
+      // Create opening balance entries (aavak) for  rokad and all banks as provided
       const rokad = openingForm.rokadAmount || "";
       const hasBankAmounts = openingForm.banks && openingForm.banks.length > 0 && openingForm.banks.some(b => b.amount && Number(b.amount) > 0);
       

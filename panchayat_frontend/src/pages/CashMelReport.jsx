@@ -142,6 +142,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         fy: "",
         selectedBank: "",
         selectedYear: "",
+        checkType: "javak",
         selectedMonth: "",
         selectedYear_aavak: "",
         // 🔥 NEW: rojmel ke liye month/year/fullYear fields
@@ -243,6 +244,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
                 updated.fy = "";
                 updated.selectedYear = "";
                 updated.selectedBank = "";
+                updated.checkType = "javak"; // default for Check Issue
                 updated.selectedMonth = "";
                 updated.selectedYear_aavak = "";
                 updated.rojmelMonth = "";
@@ -833,8 +835,12 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         }
         // Special validation for checkIssue
         else if (report.type === "checkIssue") {
+            if (!report.checkType) {
+                toast({ title: "ચેક પ્રકાર પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                return;
+            }
             if (!report.selectedBank) {
-                toast({ title: "બેંક પસંદ કરો", status: "error", duration: 2000, position: "top" });
+                toast({ title: "બેંક પસંદ करो", status: "error", duration: 2000, position: "top" });
                 return;
             }
             if (!report.selectedYear) {
@@ -936,7 +942,7 @@ setTimeout(() => {
                 const allRecords = Array.isArray(resJson.rows) ? resJson.rows : [];
 
                 const checkedRows = allRecords.filter(r =>
-                    r.vyavharType === "javak" &&
+                    r.vyavharType === report.checkType &&
                     r.paymentMethod === "bank" &&
                     r.bank === report.selectedBank
                 );
@@ -1408,6 +1414,15 @@ setTimeout(() => {
                 {/* Bank and Year Dropdowns - checkIssue only */}
                 {report.type === "checkIssue" && (
                     <>
+                        <Select
+                            width="160px"
+                            value={report.checkType}
+                            onChange={(e) => handleReportChange("checkType", e.target.value)}
+                        >
+                            <option value="javak">જાવક</option>
+                            <option value="aavak">આવક</option>
+                        </Select>
+
                         <Select
                             width="180px"
                             value={report.selectedBank}
