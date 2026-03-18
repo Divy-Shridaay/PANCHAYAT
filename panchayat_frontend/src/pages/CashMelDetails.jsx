@@ -91,35 +91,43 @@ const CashMelDetails = () => {
     });
   };
 
-  // ✅ Sort: receiptPaymentNo=0 (ઉઘટી સિલક) always first, then ascending by receipt number
+  // ✅ Sort: same receipt/pay number, opening slip first, then receipt nums 0,1,2...
   const sortEntries = (data) => {
+    const isOpeningSlip = (entry) => {
+      const category = (entry.category || "").toString().toLowerCase();
+      return (
+        category.includes("ઉઘડતી") ||
+        category.includes("ઉઘડતી સિલક") ||
+        category.includes("ugdati") ||
+        category.includes("opening")
+      );
+    };
+
+    const parseReceiptNo = (entry) => {
+      const raw = String(entry.receiptPaymentNo || "").trim();
+      const num = parseInt(raw, 10);
+      return Number.isNaN(num) ? 0 : num;
+    };
+
     return [...data].sort((a, b) => {
-      const rA = parseInt(String(a.receiptPaymentNo), 10);
-      const rB = parseInt(String(b.receiptPaymentNo), 10);
+      const rA = parseReceiptNo(a);
+      const rB = parseReceiptNo(b);
 
-      const isZeroA = rA === 0 || isNaN(rA);
-      const isZeroB = rB === 0 || isNaN(rB);
-
-      // 1. ઉઘટી સિલક (receiptPaymentNo = 0) always comes FIRST
-      if (isZeroA && !isZeroB) return -1;
-      if (!isZeroA && isZeroB) return 1;
-
-      // 2. Both are 0 → sort by date DESCENDING among themselves
-      if (isZeroA && isZeroB) {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        return dateB - dateA;
-      }
-
-      // 3. Both non-zero → sort by receipt number ASCENDING (1,2,2,2,3,4...)
+      // 1. Sort by receipt number ascending (0,1,2,...)
       if (rA !== rB) return rA - rB;
 
-      // 4. Same receipt number → sort by date DESCENDING
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
+      // 2. Same receipt number: opening slip should appear first
+      const openA = isOpeningSlip(a);
+      const openB = isOpeningSlip(b);
+      if (openA && !openB) return -1;
+      if (!openA && openB) return 1;
+
+      // 3. Same receipt+opening status: latest date first (இહ સરકારે previous behavior)
+      const dateA = new Date(a.date).getTime() || 0;
+      const dateB = new Date(b.date).getTime() || 0;
       if (dateA !== dateB) return dateB - dateA;
 
-      // 5. Same receipt + same date → MongoDB _id sort
+      // 4. Fallback stable sort by id
       return String(a._id || "").localeCompare(String(b._id || ""));
     });
   };

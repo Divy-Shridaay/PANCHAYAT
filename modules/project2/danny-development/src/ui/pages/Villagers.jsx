@@ -591,7 +591,7 @@ export default function Villagers() {
           isDelete={user?.role.permissions.includes("VILLAGERS_DELETE")}
         />
 
-        {/* {isOpen && (
+        {isOpen && (
           <VillagerCreateModal
             isOpen={isOpen}
             onClose={() => {
@@ -603,7 +603,7 @@ export default function Villagers() {
             mode={mode}
             id={id}
           />
-        )} */}
+        )}
 
         <>
           {/* Example button to open the dialog */}

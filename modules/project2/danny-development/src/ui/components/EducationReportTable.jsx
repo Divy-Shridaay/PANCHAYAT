@@ -19,6 +19,8 @@ import { formatToDDMMYYYY } from "dtf_package";
 import { CustomButton } from "component-library-iboon";
 import { useFinancialYear } from "../../ports/context/FinancialYearContext";
 import { useVillage } from "../../ports/context/VillageContext";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import { getEducationCessReport } from "../../adapters/ReportApiAdapter";
 import { fetchChallansPage } from "../../adapters/ChallanApiAdapter";
 import { convertEngToGujNumber } from "../../utils/convertEngToGujNumber";
@@ -47,6 +49,134 @@ const EducationReportTable = ({
   const handleLimitChange = (e) => {
     setLimit(Number(e.target.value));
     setPage(1); // reset page when limit changes
+  };
+
+  const createExcelFile = (fullData, challanData, remark) => {
+    const reportRows = fullData.map((item) => {
+      const sarkariAmt = parseFloat(item.sarkari || 0);
+      const sivayAmt = parseFloat(item.sivay || 0);
+      const maangnuLeft = parseFloat(item.maangnuLeft || 0);
+      const maangnuRotating = parseFloat(item.maangnuRotating || 0);
+      const left = parseFloat(item.left || 0);
+      const pending = parseFloat(item.pending || 0);
+      const rotating = parseFloat(item.rotating || 0);
+      const fajal = parseFloat(item.fajal || 0);
+
+      return {
+        "ખાતા નંબર": item.accountNo,
+        "નામ": item.name,
+        "પાછલી બાકી": maangnuLeft.toFixed(2),
+        "સરકારી": sarkariAmt.toFixed(2),
+        "ખેતી સિવાય": sivayAmt.toFixed(2),
+        "ફરતી": maangnuRotating.toFixed(2),
+        "કુલ એકંદર માંગણું": (maangnuLeft + sarkariAmt + sivayAmt + maangnuRotating).toFixed(2),
+        "પોહંચ નં.": item.billNo || "",
+        "તારીખ": item.billDate
+          ? convertSlashesToDashes(formatToDDMMYYYY(new Date(item.billDate)))
+          : "",
+        "પાછલી": left.toFixed(2),
+        "ચાલુ": pending.toFixed(2),
+        "ફરતી (વસુલાત)": rotating.toFixed(2),
+        "ગત સાલનું ફાજલ": fajal.toFixed(2),
+        "કુલ વસુલાત": (left + pending + rotating + fajal).toFixed(2),
+        "બિનહુકમ": (item.collumnFourteen || 0).toFixed(2),
+        "જાહેર વસુલ": (item.collumnFifteen || 0).toFixed(2),
+      };
+    });
+
+    const challanRows = challanData.map((item) => ({
+      "ચલન નં.": item.challanNo,
+      "તારીખ": item.date
+        ? convertSlashesToDashes(formatToDDMMYYYY(new Date(item.date)))
+        : "",
+      "પાછલી બાકી": parseFloat(item.left || 0).toFixed(2),
+      "ચાલુ બાકી": parseFloat(item.pending || 0).toFixed(2),
+      "ફરતી": parseFloat(item.rotating || 0).toFixed(2),
+      "કુલ": parseFloat(item.total || 0).toFixed(2),
+    }));
+
+    const totalChallanLeft = challanData.reduce(
+      (sum, item) => sum + parseFloat(item.left || 0),
+      0
+    );
+    const totalChallanPending = challanData.reduce(
+      (sum, item) => sum + parseFloat(item.pending || 0),
+      0
+    );
+    const totalChallanRotating = challanData.reduce(
+      (sum, item) => sum + parseFloat(item.rotating || 0),
+      0
+    );
+    const totalChallanTotal = challanData.reduce(
+      (sum, item) => sum + parseFloat(item.total || 0),
+      0
+    );
+
+    const summaryRows = [
+      { "વિવરણ": "ચલન ટોટલ પાછલી", "રકમ": totalChallanLeft.toFixed(2) },
+      { "વિવરણ": "ચલન ટોટલ ચાલુ", "રકમ": totalChallanPending.toFixed(2) },
+      { "વિવરણ": "ચલન ટોટલ ફરતી", "રકમ": totalChallanRotating.toFixed(2) },
+      { "વિવરણ": "ચલન ટોટલ કુલ", "રકમ": totalChallanTotal.toFixed(2) },
+      { "વિવરણ": "રિમાર્ક", "રકમ": remark || "" },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(reportRows);
+    const ws2 = XLSX.utils.json_to_sheet(summaryRows);
+    const ws3 = XLSX.utils.json_to_sheet(challanRows);
+
+    XLSX.utils.book_append_sheet(wb, ws1, "ReportData");
+    XLSX.utils.book_append_sheet(wb, ws2, "Summary");
+    XLSX.utils.book_append_sheet(wb, ws3, "ChallanData");
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(
+      blob,
+      `EducationReport_${villageName || "village"}_${financialYearName || "fy"}.xlsx`
+    );
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await getEducationCessReport(
+        1,
+        totalDocs,
+        village,
+        financialYear
+      );
+      const fullData = response?.data?.data || [];
+
+      const challanResponse = await fetchChallansPage(1, 10000, "", "", {
+        type: "Education",
+        village,
+        financialYear,
+      });
+      const challanData = challanResponse?.data?.data || [];
+
+      const filter = {
+        financialYear,
+        village,
+        type: "Education",
+      };
+      const remarkResponse = await fetchReportsRemarkPage(
+        1,
+        1,
+        "",
+        "",
+        filter,
+        1
+      );
+      const remark = remarkResponse?.data?.data[0]?.remark || "";
+
+      createExcelFile(fullData, challanData, remark);
+    } catch (error) {
+      console.error(error);
+      alert("Excel export failed. કૃપા કરીને ફરીથી પ્રયાસ કરો.");
+    }
   };
 
   const handlePrint = async () => {
@@ -101,8 +231,12 @@ const EducationReportTable = ({
         1
       );
       remark = remarkResponse?.data?.data[0]?.remark;
-    } catch (error) {
-      printWindow.document.body.innerHTML = "<p>ડેટા લાવતી વખતે ભૂલ આવી.</p>";
+
+      // Automatically generate Excel when printing (per requirement)
+      createExcelFile(fullData, challanData, remark);
+    } catch (err) {
+      console.error(err);
+      printWindow.document.body.innerHTML = "<p>ડેટા લાવતી સમયે ભૂલ આવી.</p>";
       return;
     }
 
@@ -1209,6 +1343,9 @@ const EducationReportTable = ({
         <HStack>
           <CustomButton onClick={handlePrint} colorScheme="teal">
             Print
+          </CustomButton>
+          <CustomButton onClick={handleExportExcel} colorScheme="blue">
+            {/* Export Excel */}
           </CustomButton>
           {user?.role.permissions.includes("REPORTS_REMARK_UPDATE") && (
             <CustomButton onClick={onOpen} colorScheme="teal">

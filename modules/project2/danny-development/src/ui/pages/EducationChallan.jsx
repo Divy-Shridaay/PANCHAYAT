@@ -15,13 +15,13 @@ import { formatToDDMMYYYY } from "dtf_package";
 import { convertToCurrencyWords } from "../../utils/convertToCurrencyWords";
 import { convertSlashesToDashes } from "../../utils/dateFunction";
 import { convertEngToGujNumber } from "../../utils/convertEngToGujNumber";
-// import { useUser } from "../../ports/context/UserContext";
+import { useUser } from "../../ports/context/UserContext";
 
 export default function EducationChallan() {
   const { t } = useTranslation();
   const { village, villageName, talukaName, districtName } = useVillage();
   const { financialYear, financialYearName } = useFinancialYear();
-  // const { user } = useUser();
+  const { user } = useUser();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [educationChallans, setEducationChallans] = useState({});
   const [page, setPage] = useState(1);
@@ -246,9 +246,9 @@ export default function EducationChallan() {
             fetchEducationChallan();
           }}
           handleLandTenClick={handleLandTenClick}
-          isCreate={user?.role.permissions.includes("CHALLAN_CREATE")}
-          isUpdate={user?.role.permissions.includes("CHALLAN_UPDATE")}
-          isDelete={user?.role.permissions.includes("CHALLAN_DELETE")}
+          isCreate={user?.role?.permissions?.includes("CHALLAN_CREATE")}
+          isUpdate={user?.role?.permissions?.includes("CHALLAN_UPDATE")}
+          isDelete={user?.role?.permissions?.includes("CHALLAN_DELETE")}
         />
         {isOpen && (
           <ChallanCreateModal
