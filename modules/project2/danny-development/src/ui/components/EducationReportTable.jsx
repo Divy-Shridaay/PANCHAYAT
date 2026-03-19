@@ -1345,7 +1345,7 @@ const EducationReportTable = ({
             Print
           </CustomButton>
           <CustomButton onClick={handleExportExcel} colorScheme="blue">
-            {/* Export Excel */}
+            Export Excel
           </CustomButton>
           {user?.role.permissions.includes("REPORTS_REMARK_UPDATE") && (
             <CustomButton onClick={onOpen} colorScheme="teal">
