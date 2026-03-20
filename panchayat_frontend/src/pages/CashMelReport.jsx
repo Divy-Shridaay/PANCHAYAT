@@ -610,7 +610,20 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 </tr>`;
 
             const openingAccounts = accountBalancesBeforeDate[dateISO] || { cash: 0 };
-            const cashOpening = openingAccounts.cash || 0;
+
+            // Add当天 પાસે આવેલા ઉઘડતી સિલક entries to opening accounts in tapsil
+            const openingSilakByAccount = dayRecords.reduce((acc, r) => {
+                if (r.category === "ઉઘડતી સિલક" && r.vyavharType === "aavak") {
+                    if (r.paymentMethod === "bank" && r.bank) {
+                        acc.bank[r.bank] = (acc.bank[r.bank] || 0) + (Number(r.amount) || 0);
+                    } else {
+                        acc.cash += (Number(r.amount) || 0);
+                    }
+                }
+                return acc;
+            }, { cash: 0, bank: {} });
+
+            const cashOpening = (openingAccounts.cash || 0) + openingSilakByAccount.cash;
             const { income: cashIncome, expense: cashExpense } = (() => {
                 let income = 0;
                 let expense = 0;
@@ -644,7 +657,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
 </tr>`;
 
             for (const bankName of uniqueBanks) {
-                const bankOpening = openingAccounts[bankName] || 0;
+                const bankOpening = (openingAccounts[bankName] || 0) + (openingSilakByAccount.bank[bankName] || 0);
                 const { income: bankIncome, expense: bankExpense } = (() => {
                     let income = 0;
                     let expense = 0;
