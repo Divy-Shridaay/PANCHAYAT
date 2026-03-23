@@ -97,103 +97,98 @@ const CashMelDetails = () => {
   };
 
   // ✅ FIXED: Fetch minus silak dates - only cash (રોકડ) row
-  const fetchMinusSilakDates = async () => {
-    try {
-      setLoadingMinusDates(true);
-      const token = localStorage.getItem("token");
-      
-      // Get current financial year
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth() + 1;
-      const fyStartYear = currentMonth < 4 ? currentYear - 1 : currentYear;
-      const fromDate = `${fyStartYear}-04-01`;
-      const toDate = `${fyStartYear + 1}-03-31`;
-      
-      const res = await fetch(`${API_BASE}/report?from=${fromDate}&to=${toDate}`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        }
-      });
-      
-      if (!res.ok) throw new Error("Failed to fetch records");
-      const data = await res.json();
-      const records = Array.isArray(data.rows) ? data.rows : [];
-      
-      // Group records by date
-      const recordsByDate = {};
-      records.forEach(r => {
-        if (!r.date) return;
-        const d = r.date.slice(0, 10);
-        if (!recordsByDate[d]) recordsByDate[d] = [];
-        recordsByDate[d].push(r);
-      });
-      
-      // ✅ Calculate CASH (રોકડ) bandh silak for each date
-      const minusDates = [];
-      let runningCashClosing = 0;
+  // ✅ UPDATED fetchMinusSilakDates - Same logic as rojmel report
+const fetchMinusSilakDates = async () => {
+  try {
+    setLoadingMinusDates(true);
+    const token = localStorage.getItem("token");
+    
+    // Get current financial year
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    const fyStartYear = currentMonth < 4 ? currentYear - 1 : currentYear;
+    const fromDate = `${fyStartYear}-04-01`;
+    const toDate = `${fyStartYear + 1}-03-31`;
+    
+    const res = await fetch(`${API_BASE}/report?from=${fromDate}&to=${toDate}`, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      }
+    });
+    
+    if (!res.ok) throw new Error("Failed to fetch records");
+    const data = await res.json();
+    const records = Array.isArray(data.rows) ? data.rows : [];
+    
+    // Group records by date
+    const recordsByDate = {};
+    records.forEach(r => {
+      if (!r.date) return;
+      const d = r.date.slice(0, 10);
+      if (!recordsByDate[d]) recordsByDate[d] = [];
+      recordsByDate[d].push(r);
+    });
+    
+    // ✅ EXACT SAME LOGIC AS ROJMEL REPORT
+    const minusDates = [];
+    let runningCashClosing = 0;
 
-      Object.keys(recordsByDate).sort().forEach(date => {
-        const dayRecords = recordsByDate[date];
+    Object.keys(recordsByDate).sort().forEach(date => {
+      const dayRecords = recordsByDate[date];
 
-        // ✅ 1. Cash Opening = Previous day closing + Opening silak (cash only)
-        const openingAdd = dayRecords
-          .filter(r => 
-            r.vyavharType === "aavak" && 
-            r.category === "ઉઘડતી સિલક" && 
-            r.paymentMethod !== "bank"
-          )
-          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      // ✅ Step 1: Opening Add (ઉઘડતી સિલક entries for this day - cash only)
+      const openingAdd = dayRecords
+        .filter(r => r.vyavharType === "aavak" && r.category === "ઉઘડતી સિલક")
+        .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
-        const cashOpening = runningCashClosing + openingAdd;
+      const cashOpening = runningCashClosing + openingAdd;
 
-        // ✅ 2. Cash Income (excluding opening silak, excluding bank)
-        const cashIncome = dayRecords
-          .filter(r => 
-            r.vyavharType === "aavak" && 
-            r.category !== "ઉઘડતી સિલક" && 
-            r.paymentMethod !== "bank"
-          )
-          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      // ✅ Step 2: Cash Income (excluding ઉઘડતી સિલક, excluding bank)
+      const cashIncome = dayRecords
+        .filter(r => 
+          !(r.vyavharType === "aavak" && r.category === "ઉઘડતી સિલક") && 
+          r.paymentMethod !== "bank"
+        )
+        .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
-        // ✅ 3. Cash Expense (excluding bank)
-        const cashExpense = dayRecords
-          .filter(r => 
-            r.vyavharType === "javak" && 
-            r.paymentMethod !== "bank"
-          )
-          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      // ✅ Step 3: Cash Expense (excluding bank)
+      const cashExpense = dayRecords
+        .filter(r => r.vyavharType === "javak" && r.paymentMethod !== "bank")
+        .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
-        // ✅ 4. Cash Closing Balance
-        const cashClosing = cashOpening + cashIncome - cashExpense;
+      // ✅ Step 4: Calculate Cash Closing
+      const cashClosing = cashOpening + cashIncome - cashExpense;
 
-        // ✅ 5. If cash closing is NEGATIVE, add this date
-        if (cashClosing < 0) {
-          minusDates.push({
-            date: date,
-            cashOpening: cashOpening,
-            cashIncome: cashIncome,
-            cashExpense: cashExpense,
-            cashClosing: cashClosing
-          });
-        }
+      // ✅ Step 5: If negative, add to list
+      if (cashClosing < 0) {
+        minusDates.push({
+          date: date,
+          cashOpening: cashOpening,
+          cashIncome: cashIncome,
+          cashExpense: cashExpense,
+          cashClosing: cashClosing
+        });
+      }
 
-        // Update running balance for next day
-        runningCashClosing = cashClosing;
-      });
-      
-      setMinusSilakDates(minusDates);
-      setShowMinusDatesModal(true);
-    } catch (err) {
-      console.error(err);
-      toast({ 
-        title: "માઈનસ સિલક તારીખો લોડ કરવામાં ભૂલ", 
-        status: "error", 
-        duration: 2000 
-      });
-    } finally {
-      setLoadingMinusDates(false);
-    }
-  };
+      // Update running balance
+      runningCashClosing = cashClosing;
+    });
+    
+    console.log("✅ Found minus dates:", minusDates); // Debug log
+    
+    setMinusSilakDates(minusDates);
+    setShowMinusDatesModal(true);
+  } catch (err) {
+    console.error(err);
+    toast({ 
+      title: "માઈનસ સિલક તારીખો લોડ કરવામાં ભૂલ", 
+      status: "error", 
+      duration: 2000 
+    });
+  } finally {
+    setLoadingMinusDates(false);
+  }
+};
 
   // ✅ Sort: same receipt/pay number, opening slip first, then receipt nums 0,1,2...
   const sortEntries = (data) => {
@@ -583,14 +578,14 @@ const CashMelDetails = () => {
             >
               જમા કરેલી બેંક જમા
             </Button>
-            <Button
+            {/* <Button
               colorScheme="orange"
               variant="outline"
               onClick={fetchMinusSilakDates}
               isLoading={loadingMinusDates}
             >
               માઈનસ સિલક તારીખો
-            </Button>
+            </Button> */}
             <Button
               leftIcon={<FiArrowLeft />}
               colorScheme="green"
