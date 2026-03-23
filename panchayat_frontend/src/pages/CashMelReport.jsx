@@ -428,9 +428,6 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             let dayJavakSum = 0;
 
             dayRecords.forEach(r => {
-                // Skip opening balance entry to avoid double counting in running totals.
-                if (r.category === "ઉઘડતી સિલક") return;
-
                 const amt = Number(r.amount || 0);
                 if (r.vyavharType === "aavak") {
                     dayAavakSum += amt;
@@ -582,12 +579,13 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     <td>${j?.category || ""}</td>
     <td class="text-right">${j ? guj(j.amount || 0) : ""}</td>
 </tr>`;
-            }
 
-            // Update running opening balance once per day, not per row (avoid huge compound error)
-            const dayAavak = day.aavak.reduce((sum, a) => sum + (a.totalAmount || a.amount || 0), 0);
-            const dayJavak = day.javak.reduce((sum, j) => sum + (j.amount || 0), 0);
-            currentOpeningBalance = currentOpeningBalance + dayAavak - dayJavak;
+                let dayAavak = 0;
+                let dayJavak = 0;
+                day.aavak.forEach(a => dayAavak += a.totalAmount || a.amount || 0);
+                day.javak.forEach(j => dayJavak += j.amount || 0);
+                currentOpeningBalance = currentOpeningBalance + dayAavak - dayJavak;
+            }
 
             const totalCategoryCells = allAavakCategories.map(cat =>
                 `<td class="text-right"><b>${guj(categoryTotals[cat])}</b></td>`
