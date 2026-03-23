@@ -462,6 +462,7 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
         ];
 
         let allPagesHTML = "";
+        let negativeClosingDates = [];
 
         for (let i = 0; i < datesWithRecords.length; i++) {
             const dateISO = datesWithRecords[i];
@@ -646,8 +647,12 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             let totalExpense = cashExpense;
             let totalClosing = cashClosing;
 
+            if (cashClosing < 0) {
+                negativeClosingDates.push(dateISO);
+            }
+            const cashRowStyle = cashClosing < 0 ? 'style="color:#b71c1c;font-weight:700;"' : '';
             accountTransferRows += `
-<tr>
+<tr ${cashRowStyle}>
     <td>${guj(srNo++)}</td>
     <td>રોકડ</td>
     <td class="text-right">${guj(cashOpening)}</td>
@@ -700,7 +705,9 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             let khataFerfarRows = "";
             let khataSerialNo = 1;
             dayRecords.forEach(r => {
-                if (r.vyavharType === 'aavak' && r.paymentMethod === 'bank' && r.category !== "ઉઘડતી સિલક") {
+                // Only include explicit cash-to-bank transfers (bank deposit entries)
+                // to avoid showing regular bank-based income categories as account transfer.
+                if (r.vyavharType === 'aavak' && r.paymentMethod === 'bank' && r.category === "બેંક જમા") {
                     const key = `${r.date}-${r.amount}-${r.bank}-${r.remarks}`;
                     if (khataRowsSet.has(key)) return;
                     khataRowsSet.add(key);
@@ -747,6 +754,18 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             }
 
             allPagesHTML += `<div class="rojmel-page-wrapper${i > 0 ? ' rojmel-new-page' : ''}">${htmlTemplate}</div>`;
+        }
+
+        if (negativeClosingDates.length > 0) {
+            const uniqueDates = [...new Set(negativeClosingDates)];
+            const formattedDates = uniqueDates
+                .map(d => Date_To_Gujarati(d))
+                .join(", ");
+            const warningHTML = `
+<div style="margin-bottom: 12px; padding: 10px; border: 1px dashed #b71c1c; background: #ffebee; color: #b71c1c; font-weight: 700;">
+  માઈનસ બંધ સિલક તારીખો: ${formattedDates}
+</div>`;
+            allPagesHTML = warningHTML + allPagesHTML;
         }
 
         return allPagesHTML;

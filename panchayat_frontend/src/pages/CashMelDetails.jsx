@@ -66,7 +66,7 @@ const CashMelDetails = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteDate, setDeleteDate] = useState(null);
-  const [deleteMode, setDeleteMode] = useState(null); // 'single' or 'date' or 'all'
+  const [deleteMode, setDeleteMode] = useState(null);
   const [deleteFilterType, setDeleteFilterType] = useState("all");
 
   // Minus silak dates state
@@ -96,6 +96,7 @@ const CashMelDetails = () => {
     });
   };
 
+  // ✅ FIXED: Fetch minus silak dates - only cash (રોકડ) row
   const fetchMinusSilakDates = async () => {
     try {
       setLoadingMinusDates(true);
@@ -113,6 +114,7 @@ const CashMelDetails = () => {
           ...(token && { Authorization: `Bearer ${token}` }),
         }
       });
+      
       if (!res.ok) throw new Error("Failed to fetch records");
       const data = await res.json();
       const records = Array.isArray(data.rows) ? data.rows : [];
@@ -126,33 +128,68 @@ const CashMelDetails = () => {
         recordsByDate[d].push(r);
       });
       
-      // Calculate bandh silak for each date
+      // ✅ Calculate CASH (રોકડ) bandh silak for each date
       const minusDates = [];
+      let runningCashClosing = 0;
+
       Object.keys(recordsByDate).sort().forEach(date => {
         const dayRecords = recordsByDate[date];
-        let totalAavak = 0;
-        let totalJavak = 0;
-        
-        dayRecords.forEach(r => {
-          const amt = Number(r.amount || 0);
-          if (r.vyavharType === "aavak") {
-            totalAavak += amt;
-          } else if (r.vyavharType === "javak") {
-            totalJavak += amt;
-          }
-        });
-        
-        const bandhSilak = totalAavak - totalJavak;
-        if (bandhSilak < 0) {
-          minusDates.push(date);
+
+        // ✅ 1. Cash Opening = Previous day closing + Opening silak (cash only)
+        const openingAdd = dayRecords
+          .filter(r => 
+            r.vyavharType === "aavak" && 
+            r.category === "ઉઘડતી સિલક" && 
+            r.paymentMethod !== "bank"
+          )
+          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+        const cashOpening = runningCashClosing + openingAdd;
+
+        // ✅ 2. Cash Income (excluding opening silak, excluding bank)
+        const cashIncome = dayRecords
+          .filter(r => 
+            r.vyavharType === "aavak" && 
+            r.category !== "ઉઘડતી સિલક" && 
+            r.paymentMethod !== "bank"
+          )
+          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+        // ✅ 3. Cash Expense (excluding bank)
+        const cashExpense = dayRecords
+          .filter(r => 
+            r.vyavharType === "javak" && 
+            r.paymentMethod !== "bank"
+          )
+          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+        // ✅ 4. Cash Closing Balance
+        const cashClosing = cashOpening + cashIncome - cashExpense;
+
+        // ✅ 5. If cash closing is NEGATIVE, add this date
+        if (cashClosing < 0) {
+          minusDates.push({
+            date: date,
+            cashOpening: cashOpening,
+            cashIncome: cashIncome,
+            cashExpense: cashExpense,
+            cashClosing: cashClosing
+          });
         }
+
+        // Update running balance for next day
+        runningCashClosing = cashClosing;
       });
       
       setMinusSilakDates(minusDates);
       setShowMinusDatesModal(true);
     } catch (err) {
       console.error(err);
-      toast({ title: "માઈનસ સિલક તારીખો લોડ કરવામાં ભૂલ", status: "error", duration: 2000 });
+      toast({ 
+        title: "માઈનસ સિલક તારીખો લોડ કરવામાં ભૂલ", 
+        status: "error", 
+        duration: 2000 
+      });
     } finally {
       setLoadingMinusDates(false);
     }
@@ -180,21 +217,17 @@ const CashMelDetails = () => {
       const rA = parseReceiptNo(a);
       const rB = parseReceiptNo(b);
 
-      // 1. Sort by receipt number ascending (0,1,2,...)
       if (rA !== rB) return rA - rB;
 
-      // 2. Same receipt number: opening slip should appear first
       const openA = isOpeningSlip(a);
       const openB = isOpeningSlip(b);
       if (openA && !openB) return -1;
       if (!openA && openB) return 1;
 
-      // 3. Same receipt+opening status: latest date first (இહ સરકારે previous behavior)
       const dateA = new Date(a.date).getTime() || 0;
       const dateB = new Date(b.date).getTime() || 0;
       if (dateA !== dateB) return dateB - dateA;
 
-      // 4. Fallback stable sort by id
       return String(a._id || "").localeCompare(String(b._id || ""));
     });
   };
@@ -425,7 +458,6 @@ const CashMelDetails = () => {
         );
       }
 
-      // ✅ After filter, re-sort to maintain order
       const sorted = sortEntries(filtered);
       setFilteredEntries(sorted);
       setTotalPages(Math.ceil(sorted.length / itemsPerPage));
@@ -685,7 +717,6 @@ const CashMelDetails = () => {
                             }}
                           />
 
-                          {/* Date-wise delete button - only show once per date */}
                           {getPaginatedData().findIndex(
                             (r) => r.date === row.date
                           ) ===
@@ -855,33 +886,85 @@ const CashMelDetails = () => {
           </ModalContent>
         </Modal>
 
-        {/* Minus Silak Dates Modal */}
-        <Modal isOpen={showMinusDatesModal} onClose={() => setShowMinusDatesModal(false)} size="md">
+        {/* ✅ FIXED: Minus Silak Dates Modal */}
+        <Modal 
+          isOpen={showMinusDatesModal} 
+          onClose={() => setShowMinusDatesModal(false)} 
+          size="lg"
+        >
           <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>માઈનસ બંધ સિલક તારીખો</ModalHeader>
+          <ModalContent maxH="80vh" overflowY="auto">
+            <ModalHeader>માઈનસ રોકડ બંધ સિલક તારીખો</ModalHeader>
             <ModalCloseButton />
-            <ModalBody>
+            <ModalBody pb={6}>
               {minusSilakDates.length === 0 ? (
-                <Text>કોઈ માઈનસ બંધ સિલક તારીખો નથી.</Text>
+                <Box textAlign="center" py={8}>
+                  <Text fontSize="3xl" mb={2}>✅</Text>
+                  <Text color="green.600" fontWeight="600" fontSize="lg">
+                    કોઈ માઈનસ બંધ સિલક તારીખો નથી.
+                  </Text>
+                </Box>
               ) : (
-                <VStack spacing={2} align="stretch">
-                  {minusSilakDates.map((date, idx) => (
-                    <Box key={idx} p={2} bg="red.50" rounded="md">
-                      <Text fontWeight="600" color="red.600">
-                        {new Date(date).toLocaleDateString('gu-IN', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </Text>
+                <VStack spacing={3} align="stretch">
+                  {minusSilakDates.map((item, idx) => (
+                    <Box 
+                      key={idx} 
+                      p={4} 
+                      bg="red.50" 
+                      rounded="lg" 
+                      borderLeft="4px solid"
+                      borderColor="red.500"
+                      shadow="sm"
+                    >
+                      <HStack justify="space-between" mb={3}>
+                        <Text fontWeight="700" color="red.700" fontSize="lg">
+                          📅 તારીખ {formatDateToGujarati(item.date)}
+                        </Text>
+                        <Badge 
+                          colorScheme="red" 
+                          fontSize="md" 
+                          px={3} 
+                          py={1}
+                          rounded="full"
+                        >
+                          બંધ સિલક: {toGujaratiDigits(item.cashClosing)}
+                        </Badge>
+                      </HStack>
+                      
+                      <VStack align="stretch" spacing={2} fontSize="sm" pl={4}>
+                        <HStack justify="space-between">
+                          <Text fontWeight="600">ઉઘડતી સિલક (રોકડ):</Text>
+                          <Text>{toGujaratiDigits(item.cashOpening)}</Text>
+                        </HStack>
+                        <HStack justify="space-between" color="green.700">
+                          <Text fontWeight="600">આવક (રોકડ):</Text>
+                          <Text>+ {toGujaratiDigits(item.cashIncome)}</Text>
+                        </HStack>
+                        <HStack justify="space-between" color="red.700">
+                          <Text fontWeight="600">જાવક (રોકડ):</Text>
+                          <Text>- {toGujaratiDigits(item.cashExpense)}</Text>
+                        </HStack>
+                        <Box 
+                          mt={2} 
+                          pt={2} 
+                          borderTop="1px dashed" 
+                          borderColor="red.300"
+                        >
+                          <HStack justify="space-between" fontWeight="700">
+                            <Text color="red.600">બંધ સિલક (રોકડ):</Text>
+                            <Text color="red.600" fontSize="md">
+                              {toGujaratiDigits(item.cashClosing)}
+                            </Text>
+                          </HStack>
+                        </Box>
+                      </VStack>
                     </Box>
                   ))}
                 </VStack>
               )}
             </ModalBody>
             <ModalFooter>
-              <Button onClick={() => setShowMinusDatesModal(false)}>
+              <Button colorScheme="green" onClick={() => setShowMinusDatesModal(false)}>
                 બંધ કરો
               </Button>
             </ModalFooter>
