@@ -17,6 +17,7 @@ import {
   FiLogOut,
   FiSettings,
   FiTrendingUp,
+  FiUsers,  // ← Pe-Roll mate icon
 } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { HiOutlineDocumentCurrencyRupee } from "react-icons/hi2";
@@ -32,8 +33,6 @@ export default function Dashboard() {
   const apiFetch = useApiFetch();
 
   const [user, setUser] = useState(null);
-  // console.log("User object:", user);
-  // console.log("Gam:", user?.gam);
   const [userStatus, setUserStatus] = useState({
     canAccessModules: true,
   });
@@ -98,9 +97,6 @@ export default function Dashboard() {
 
       if (response.ok) {
         setUserStatus(data);
-        
-        // data example:
-        // { canAccessModules: false }
       } else {
         toast({
           title: "ભૂલ",
@@ -120,11 +116,9 @@ export default function Dashboard() {
   ======================= */
   const handleModuleClick = async (route, moduleName) => {
     try {
-      // 1. Check if this specific module is already active
       const moduleAccess = userStatus?.user?.modulesAccess?.[moduleName] ?? false;
       const isPending = userStatus?.user?.pendingModules?.[moduleName] ?? false;
 
-      // 2. If it's pending AND not active, block with verification toast
       if (isPending && !moduleAccess) {
         toast({
           title: "ચકાસણી પેન્ડિંગ",
@@ -137,14 +131,12 @@ export default function Dashboard() {
         return;
       }
 
-      // 3. If it's NOT active (and not pending), show payment popup
       if (!moduleAccess) {
         setPopupType("module");
         setShowPaymentPopup(true);
         return;
       }
 
-      // 4. If active, navigate
       navigate(route);
     } catch (err) {
       console.error(err);
@@ -160,7 +152,6 @@ export default function Dashboard() {
     fetchUsers();
     fetchUserStatus();
 
-    // Check for trial welcome popup
     const welcomeFlag = localStorage.getItem("showTrialWelcome");
     if (welcomeFlag === "true") {
       setShowTrialWelcome(true);
@@ -201,6 +192,7 @@ export default function Dashboard() {
         pedhinamu: t("pedhinamu"),
         rojmel: t("rojmel"),
         jaminMehsul: "જમીન મહેસુલ",
+        peRoll: "પે-રોલ",
       };
 
       Object.entries(expiryDays).forEach(([key, days]) => {
@@ -215,14 +207,12 @@ export default function Dashboard() {
     } else {
       setExpiryAlerts([]);
     }
-  }, [userStatus, t]); // Add t dependency
+  }, [userStatus, t]);
 
-  // Helper to dismiss alert
   const dismissAlert = (key) => {
     sessionStorage.setItem(`expiryBannerDismissed_${key}`, "true");
     setExpiryAlerts(prev => prev.filter(a => a.key !== key));
   };
-
 
   return (
     <Box bg="#F8FAF9" minH="100vh" p={10}>
@@ -299,9 +289,7 @@ export default function Dashboard() {
       <Flex justify="space-between" align="center" mb={10}>
         <Heading size="lg" color="#1E4D2B" fontWeight="700">
           🏛️ {user ? user.gam : t("appName")} ગ્રામ પંચાયત
-
         </Heading>
-
 
         <Flex gap={4}>
           <Button
@@ -363,8 +351,6 @@ export default function Dashboard() {
           </Text>
         </Box>
 
-
-
         {/* Cashmel */}
         <Box
           bg="white"
@@ -377,10 +363,7 @@ export default function Dashboard() {
           opacity={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? 0.6 : 1}
           filter={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? "grayscale(40%)" : "none"}
           _hover={(userStatus?.user?.pendingModules?.rojmel && !userStatus?.user?.modulesAccess?.rojmel) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
-          
-          onClick={() => handleModuleClick( 
-            "/cashmelform",
-             "rojmel")}
+          onClick={() => handleModuleClick("/cashmelform", "rojmel")}
         >
           <FiTrendingUp size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">
@@ -391,7 +374,7 @@ export default function Dashboard() {
           </Text>
         </Box>
 
-        {/* project2 */}
+        {/* Jamin Mehsul */}
         <Box
           bg="white"
           p={8}
@@ -399,22 +382,17 @@ export default function Dashboard() {
           shadow="lg"
           border="1px solid #E3EDE8"
           textAlign="center"
-
           cursor={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "not-allowed" : "pointer"}
           opacity={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? 0.6 : 1}
           filter={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? "grayscale(40%)" : "none"}
           _hover={(userStatus?.user?.pendingModules?.jaminMehsul && !userStatus?.user?.modulesAccess?.jaminMehsul) ? {} : { transform: "scale(1.05)", transition: "0.2s" }}
-           
           onClick={() => {
-             if (userStatus?.user?.modulesAccess?.jaminMehsul) {
+            if (userStatus?.user?.modulesAccess?.jaminMehsul) {
               window.location.href = 'http://magna.panchayat.shridaay.com/';
-             } else {
-
-               handleModuleClick(null, "jaminMehsul");
-
-             }
-           } 
-          }
+            } else {
+              handleModuleClick(null, "jaminMehsul");
+            }
+          }}
         >
           <HiOutlineDocumentCurrencyRupee size={40} color="#2A7F62" />
           <Heading size="md" mt={4} color="#1E4D2B">
@@ -425,6 +403,26 @@ export default function Dashboard() {
           </Text>
         </Box>
 
+        {/* 🆕 PE-ROLL CARD */}
+        <Box
+          bg="white"
+          p={8}
+          rounded="2xl"
+          shadow="lg"
+          border="1px solid #E3EDE8"
+          textAlign="center"
+          cursor="pointer"
+          _hover={{ transform: "scale(1.05)", transition: "0.2s" }}
+          onClick={() => navigate("/pe-roll")}
+        >
+          <FiUsers size={40} color="#2A7F62" />
+          <Heading size="md" mt={4} color="#1E4D2B">
+            પે-રોલ
+          </Heading>
+          <Text mt={2} color="gray.600">
+            કર્મચારી વ્યવસ્થાપન પ્રક્રિયા અહીં થી શરૂ કરો
+          </Text>
+        </Box>
 
         {/* Settings */}
         <Box
@@ -446,10 +444,7 @@ export default function Dashboard() {
             {t("cardSettingsText")}
           </Text>
         </Box>
-
       </SimpleGrid>
-
-
 
       {/* PAYMENT POPUP */}
       <PaymentPopup
@@ -463,6 +458,6 @@ export default function Dashboard() {
         isOpen={showTrialWelcome}
         onClose={() => setShowTrialWelcome(false)}
       />
-    </Box >
+    </Box>
   );
 }
