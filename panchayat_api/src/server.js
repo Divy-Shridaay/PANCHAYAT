@@ -1,16 +1,15 @@
 import dotenv from "dotenv";
 dotenv.config();
-// import defaultCategories from "./utils/defaultCategories.js";
 
 import { connectDB } from "./config/db.js";
 import app from "./app.js";
 import defaultCategories from "./utils/defaultCategories.js";
 import Category from "./models/Category.js";
 import User from "./models/User.js";
-
+import employeeRoutes from "./routes/employee.routes.js"; // Add this line
 
 connectDB().then(async () => {
-  await seedDefaultCategories(); // ⭐ IMPORTANT
+  await seedDefaultCategories();
 
   // Ensure username index is unique but sparse so null values don't conflict
   try {
@@ -33,6 +32,8 @@ connectDB().then(async () => {
   }
 });
 
+// Add employee routes to your app
+app.use("/api/employee", employeeRoutes); // Add this line
 
 app.listen(process.env.PORT, () =>
   console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)
@@ -46,6 +47,5 @@ const seedDefaultCategories = async () => {
       { upsert: true, new: true }
     );
   }
-
   console.log("✅ Default categories ensured and protected");
 };
