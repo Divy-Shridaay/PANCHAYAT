@@ -69,6 +69,11 @@ const CashMelDetails = () => {
   const [deleteMode, setDeleteMode] = useState(null); // 'single' or 'date' or 'all'
   const [deleteFilterType, setDeleteFilterType] = useState("all");
 
+  // Minus silak dates state
+  const [minusSilakDates, setMinusSilakDates] = useState([]);
+  const [showMinusDatesModal, setShowMinusDatesModal] = useState(false);
+  const [loadingMinusDates, setLoadingMinusDates] = useState(false);
+
   const API_ROOT =
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" ||
@@ -89,6 +94,68 @@ const CashMelDetails = () => {
         Authorization: `Bearer ${token}`,
       },
     });
+  };
+
+  const fetchMinusSilakDates = async () => {
+    try {
+      setLoadingMinusDates(true);
+      const token = localStorage.getItem("token");
+      
+      // Get current financial year
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const fyStartYear = currentMonth < 4 ? currentYear - 1 : currentYear;
+      const fromDate = `${fyStartYear}-04-01`;
+      const toDate = `${fyStartYear + 1}-03-31`;
+      
+      const res = await fetch(`${API_BASE}/report?from=${fromDate}&to=${toDate}`, {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        }
+      });
+      if (!res.ok) throw new Error("Failed to fetch records");
+      const data = await res.json();
+      const records = Array.isArray(data.rows) ? data.rows : [];
+      
+      // Group records by date
+      const recordsByDate = {};
+      records.forEach(r => {
+        if (!r.date) return;
+        const d = r.date.slice(0, 10);
+        if (!recordsByDate[d]) recordsByDate[d] = [];
+        recordsByDate[d].push(r);
+      });
+      
+      // Calculate bandh silak for each date
+      const minusDates = [];
+      Object.keys(recordsByDate).sort().forEach(date => {
+        const dayRecords = recordsByDate[date];
+        let totalAavak = 0;
+        let totalJavak = 0;
+        
+        dayRecords.forEach(r => {
+          const amt = Number(r.amount || 0);
+          if (r.vyavharType === "aavak") {
+            totalAavak += amt;
+          } else if (r.vyavharType === "javak") {
+            totalJavak += amt;
+          }
+        });
+        
+        const bandhSilak = totalAavak - totalJavak;
+        if (bandhSilak < 0) {
+          minusDates.push(date);
+        }
+      });
+      
+      setMinusSilakDates(minusDates);
+      setShowMinusDatesModal(true);
+    } catch (err) {
+      console.error(err);
+      toast({ title: "માઈનસ સિલક તારીખો લોડ કરવામાં ભૂલ", status: "error", duration: 2000 });
+    } finally {
+      setLoadingMinusDates(false);
+    }
   };
 
   // ✅ Sort: same receipt/pay number, opening slip first, then receipt nums 0,1,2...
@@ -485,6 +552,14 @@ const CashMelDetails = () => {
               જમા કરેલી બેંક જમા
             </Button>
             <Button
+              colorScheme="orange"
+              variant="outline"
+              onClick={fetchMinusSilakDates}
+              isLoading={loadingMinusDates}
+            >
+              માઈનસ સિલક તારીખો
+            </Button>
+            <Button
               leftIcon={<FiArrowLeft />}
               colorScheme="green"
               variant="outline"
@@ -775,6 +850,39 @@ const CashMelDetails = () => {
                 {deleteMode === "date" || deleteMode === "all"
                   ? "બધા કાઢો"
                   : t("delete")}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        {/* Minus Silak Dates Modal */}
+        <Modal isOpen={showMinusDatesModal} onClose={() => setShowMinusDatesModal(false)} size="md">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>માઈનસ બંધ સિલક તારીખો</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {minusSilakDates.length === 0 ? (
+                <Text>કોઈ માઈનસ બંધ સિલક તારીખો નથી.</Text>
+              ) : (
+                <VStack spacing={2} align="stretch">
+                  {minusSilakDates.map((date, idx) => (
+                    <Box key={idx} p={2} bg="red.50" rounded="md">
+                      <Text fontWeight="600" color="red.600">
+                        {new Date(date).toLocaleDateString('gu-IN', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </Text>
+                    </Box>
+                  ))}
+                </VStack>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={() => setShowMinusDatesModal(false)}>
+                બંધ કરો
               </Button>
             </ModalFooter>
           </ModalContent>
