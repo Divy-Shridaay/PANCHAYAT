@@ -404,7 +404,7 @@ export default function Dashboard() {
         </Box>
 
         {/* 🆕 PE-ROLL CARD */}
-        <Box
+        {/* <Box
           bg="white"
           p={8}
           rounded="2xl"
@@ -422,7 +422,7 @@ export default function Dashboard() {
           <Text mt={2} color="gray.600">
             કર્મચારી વ્યવસ્થાપન પ્રક્રિયા અહીં થી શરૂ કરો
           </Text>
-        </Box>
+        </Box> */}
 
         {/* Settings */}
         <Box
