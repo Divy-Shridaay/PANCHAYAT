@@ -75,6 +75,15 @@ export const updateEntry = async (req, res, next) => {
     const id = req.params.id;
     if (!id) return res.status(400).json({ success: false, message: 'Missing id' });
     const { date, name, receiptPaymentNo, vyavharType, category, amount, paymentMethod, bank, ddCheckNum, remarks } = req.body;
+    
+    // Get the current entry to check if it's a bank deposit
+    let getQuery = { _id: id, isDeleted: false };
+    if (req.user.role !== 'admin') {
+      getQuery.panchayatId = req.user.gam;
+    }
+    const currentEntry = await CashMel.findOne(getQuery).lean();
+    if (!currentEntry) return res.status(404).json({ success: false, message: 'Not found' });
+
     const update = { date, name, receiptPaymentNo, vyavharType, category, paymentMethod, bank, ddCheckNum, remarks };
     if (typeof amount !== 'undefined') update.amount = Number(amount);
 
@@ -82,8 +91,42 @@ export const updateEntry = async (req, res, next) => {
     if (req.user.role !== 'admin') {
       query.panchayatId = req.user.gam;
     }
+    
     const updated = await CashMel.findOneAndUpdate(query, update, { new: true }).lean();
     if (!updated) return res.status(404).json({ success: false, message: 'Not found' });
+
+    // ✅ If this is a Bank Deposit (બેંક જમા), also update the paired entry
+    if (category === 'બેંક જમા' || currentEntry.category === 'બેંક જમા') {
+      // Find the paired entry (opposite vyavharType with same date and remarks)
+      const currentVyavharType = vyavharType || currentEntry.vyavharType;
+      const pairedVyavharType = currentVyavharType === 'javak' ? 'aavak' : 'javak';
+      const pairedDate = date || currentEntry.date;
+      const pairedRemarks = remarks || currentEntry.remarks;
+
+      // Query paired entry by date, remarks, and vyavharType (NOT by amount - that can change)
+      let pairQuery = {
+        panchayatId: currentEntry.panchayatId,
+        vyavharType: pairedVyavharType,
+        category: 'બેંક જમા',
+        date: pairedDate,
+        remarks: pairedRemarks,
+        isDeleted: false,
+        _id: { $ne: id } // Exclude current entry
+      };
+
+      // Prepare paired update (mirror the changes)
+      const pairedUpdate = {};
+      if (date) pairedUpdate.date = date;
+      if (typeof amount !== 'undefined') pairedUpdate.amount = Number(amount);
+      if (remarks) pairedUpdate.remarks = remarks;
+      if (name) pairedUpdate.name = name;
+      if (ddCheckNum !== undefined) pairedUpdate.ddCheckNum = ddCheckNum;
+      if (bank) pairedUpdate.bank = bank;
+      if (paymentMethod) pairedUpdate.paymentMethod = paymentMethod;
+
+      await CashMel.updateMany(pairQuery, pairedUpdate).lean();
+    }
+
     return res.json({ success: true, data: updated });
   } catch (err) {
     next(err);

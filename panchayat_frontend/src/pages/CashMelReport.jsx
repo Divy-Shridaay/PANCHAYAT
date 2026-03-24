@@ -625,18 +625,20 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             }, { cash: 0, bank: {} });
 
             const cashOpening = (openingAccounts.cash || 0) + openingSilakByAccount.cash;
-           // ✅ FIXED CODE:
-const { income: cashIncome, expense: cashExpense } = (() => {
+           const { income: cashIncome, expense: cashExpense } = (() => {
     let income = 0;
     let expense = 0;
     dayRecords.forEach(r => {
-        // Skip opening silak (regardless of vyavharType to prevent data errors)
-        if (r.category === "ઉઘડતી સિલક") return;
-        
-        // ✅ FIX: Skip bank deposit entries (they're shown in khata ferfar table, regardless of vyavharType)
-        if (r.category === "બેંક જમા") return;
-        
-        // Only cash transactions
+        if (r.category === "ઉઘડતી સિલક" && r.vyavharType === "aavak") return;
+
+        if (r.category === "બેંક જમા") {
+            // ✅ SIRF JAVAK (rokad) entry count karo, AAVAK ignore karo
+            if (r.vyavharType === "javak" && r.paymentMethod === "rokad") {
+                expense += r.amount || 0;
+            }
+            return;
+        }
+
         const match = r.paymentMethod !== "bank";
         if (match) {
             if (r.vyavharType === "aavak") income += r.amount || 0;
@@ -645,6 +647,7 @@ const { income: cashIncome, expense: cashExpense } = (() => {
     });
     return { income, expense };
 })();
+
             const cashClosing = cashOpening + cashIncome - cashExpense;
 
             let accountTransferRows = "";
@@ -674,10 +677,7 @@ const { income: cashIncome, expense: cashExpense } = (() => {
                     let income = 0;
                     let expense = 0;
                     dayRecords.forEach(r => {
-                        // Skip opening silak regardless of vyavharType
-                        if (r.category === "ઉઘડતી સિલક") return;
-                        // Skip bank deposit entries
-                        if (r.category === "બેંક જમા") return;
+                        if (r.category === "ઉઘડતી સિલક" && r.vyavharType === "aavak") return;
                         const match = r.paymentMethod === "bank" && r.bank === bankName;
                         if (match) {
                             if (r.vyavharType === "aavak") income += r.amount || 0;

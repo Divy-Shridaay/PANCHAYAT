@@ -510,7 +510,7 @@ setOpeningForm({
     const editBankDeposit = (deposit) => {
         const dateParts = deposit.date ? deposit.date.split("-") : [];
         const displayDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : "";
-        setModalForm({
+        setBankDepositForm({
             date: deposit.date || "",
             dateDisplay: displayDate,
             bank: deposit.bank || "",
