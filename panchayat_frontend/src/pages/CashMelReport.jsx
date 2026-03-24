@@ -764,6 +764,11 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
             }
 
             allPagesHTML += `<div class="rojmel-page-wrapper${i > 0 ? ' rojmel-new-page' : ''}">${htmlTemplate}</div>`;
+
+            // Add page break after each date (except the last one)
+            if (i < datesWithRecords.length - 1) {
+                allPagesHTML += `<div style="page-break-after: always;"></div>`;
+            }
         }
 
         if (negativeClosingDates.length > 0) {
@@ -816,6 +821,14 @@ const CashMelReport = ({ apiBase, customCategories, banks, user }) => {
     tr {
         page-break-inside: avoid;
         page-break-after: auto;
+    }
+    /* 🔥 FIX: Each new date starts on a fresh page */
+    .rojmel-new-page {
+        page-break-before: always !important;
+        break-before: page !important;
+    }
+    .rojmel-date-separator {
+        display: none;
     }
 }
 </style>`;

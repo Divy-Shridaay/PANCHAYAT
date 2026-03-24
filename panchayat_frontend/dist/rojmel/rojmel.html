@@ -75,6 +75,28 @@ td {
     padding: 5px;
 }
 
+/* ===== NEW PAGE PER DATE ===== */
+.rojmel-page-wrapper {
+    page-break-inside: avoid;
+}
+
+.rojmel-new-page {
+    page-break-before: always;
+    break-before: page;           /* modern browsers */
+    -webkit-column-break-before: always;  /* webkit fallback */
+}
+
+.rojmel-date-separator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0 6px;
+    font-family: "Noto Sans Gujarati", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1565c0;
+}
+
 /* ================= PRINT (NO ROTATION FIX) ================= */
 @media print {
   body {
@@ -126,6 +148,14 @@ td {
   .footer-table td {
     font-size: 8px;  /* Adjusted for better look */
     padding: 2px;
+  }
+  
+  .rojmel-date-separator {
+    display: none;  /* hide separator divs on print, page breaks handle separation */
+  }
+  .rojmel-new-page {
+    page-break-before: always;
+    break-before: page;
   }
   
   @page {
