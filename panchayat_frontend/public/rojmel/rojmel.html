@@ -73,7 +73,7 @@
             border: 1px solid #000;
         }
 
-        /* ===== HEADER COLORS matching image 2 (light gray) ===== */
+        /* ===== HEADER COLORS ===== */
         thead tr th {
             border: 1px solid #000;
             padding: 5px 6px;
@@ -98,7 +98,6 @@
             background: #ffffff;
         }
 
-        /* Alternating row color (subtle) */
         tbody tr:nth-child(even) td {
             background: #f5f5f5;
         }
@@ -256,23 +255,20 @@
             .rojmel-date-separator { display: none !important; }
             .rojmel-page-wrapper   { page-break-inside: avoid; }
 
-            .page-number {
-                position: fixed;
-                right: 8mm;
-                bottom: 8mm;
-                font-family: Arial, "Arial Unicode MS", sans-serif;
-                font-size: 16px;
-                color: #333;
-                z-index: 9999;
-            }
-
-            .page-number:after {
-                content: "પાના  નં. " counter(page);
-            }
+            /* Remove old fixed page number — not needed anymore */
+            .page-number { display: none !important; }
 
             @page {
                 size: A3 landscape;
-                margin: 8mm 10mm;
+                /* Bottom-right margin area mein page number */
+                margin: 8mm 10mm 18mm 10mm;
+
+                @bottom-right {
+                    content: "પાના નં. " counter(page);
+                    font-family: Arial, "Arial Unicode MS", sans-serif;
+                    font-size: 14pt;
+                    color: #333;
+                }
             }
         }
     </style>
