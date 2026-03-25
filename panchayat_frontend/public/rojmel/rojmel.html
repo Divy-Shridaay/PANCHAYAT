@@ -256,15 +256,23 @@
             .rojmel-date-separator { display: none !important; }
             .rojmel-page-wrapper   { page-break-inside: avoid; }
 
+            .page-number {
+                position: fixed;
+                right: 8mm;
+                bottom: 8mm;
+                font-family: Arial, "Arial Unicode MS", sans-serif;
+                font-size: 16px;
+                color: #333;
+                z-index: 9999;
+            }
+
+            .page-number:after {
+                content: "પાના  નં. " counter(page);
+            }
+
             @page {
                 size: A3 landscape;
                 margin: 8mm 10mm;
-                @bottom-center {
-                    content: "પાના નં. " counter(page);
-                    font-family: Arial, "Arial Unicode MS", sans-serif;
-                    font-size: 10px;
-                    color: #333;
-                }
             }
         }
     </style>
