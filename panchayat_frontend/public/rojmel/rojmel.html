@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <title>નમૂનો નં. ૫ સામાન્ય રોકડમેળ</title>
 
-    <style>
+   <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@300;400;500;600&display=swap');
 
         /* ================= BASE ================= */
@@ -74,20 +74,18 @@
             font-weight: 400;
         }
 
-        /* Header rows */
         thead tr th {
             border: 1px solid #aaa;
             padding: 5px 6px;
             vertical-align: middle;
             text-align: center;
             background: #f7f7f7;
-            font-weight: 500;        /* lighter than bold - matches img 2 */
+            font-weight: 500;
             font-size: 11.5px;
             line-height: 1.35;
             color: #222;
         }
 
-        /* Data cells */
         tbody td {
             border: 1px solid #bbb;
             padding: 4px 6px;
@@ -102,13 +100,11 @@
         .text-right { text-align: right !important; white-space: nowrap; }
         .text-center{ text-align: center !important; }
 
-        /* Total rows */
         tr.total-row td {
             font-weight: 500;
             background: #f2f2f2;
         }
 
-        /* closing balance row */
         tr.closing-row td {
             text-align: right;
             font-weight: 500;
@@ -152,6 +148,49 @@
         .footer-table tr.total-row td {
             font-weight: 500;
             background: #f2f2f2;
+        }
+
+        /* ===== NEW PAGE PER DATE ===== */
+        .rojmel-page-wrapper {
+            page-break-inside: avoid;
+            position: relative;
+        }
+
+        .rojmel-new-page {
+            page-break-before: always !important;
+            break-before: page !important;
+            -webkit-column-break-before: always;
+        }
+
+        .rojmel-date-separator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0 8px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            border-radius: 6px;
+            font-family: "Noto Sans Gujarati", sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .date-badge {
+            font-size: 20px;
+        }
+
+        .date-label {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .date-line {
+            flex-grow: 1;
+            height: 2px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 1px;
         }
 
         /* ================= PRINT ================= */
@@ -203,6 +242,21 @@
 
             tr.total-row td {
                 background: #f2f2f2 !important;
+            }
+
+            /* ✅ Page break for each new date */
+            .rojmel-new-page {
+                page-break-before: always !important;
+                break-before: page !important;
+                display: block;
+            }
+
+            .rojmel-date-separator {
+                display: none !important;
+            }
+
+            .rojmel-page-wrapper {
+                page-break-inside: avoid;
             }
 
             @page {
