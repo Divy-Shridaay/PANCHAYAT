@@ -16,23 +16,79 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
   }
 
   const villageData = await Village.findById(village);
-
   const taluka = await Taluka.findById(villageData.taluka);
 
   let isLocal = false;
-
   if (["માણસા", "વિજાપુર"].includes(taluka.name.trim())) {
     isLocal = true;
   }
 
+  // Get total count
   const totalDocs = await Villager.countDocuments({ village });
-  const villagers = await Villager.find({ village })
-    .sort({ createdAt : 1 , accountNo: 1 })
-    .skip((page - 1) * limit)
-    .limit(parseInt(limit));
 
+  // Convert to ObjectIds for aggregation
+  const villageObjectId = new mongoose.Types.ObjectId(village);
+  const financialYearObjectId = new mongoose.Types.ObjectId(financialYear);
+
+  // Single aggregation pipeline with $lookup - eliminates N+1 queries
+  const villagers = await Villager.aggregate([
+    // Match village
+    { $match: { village: villageObjectId } },
+    
+    // Join with LandMaangnu
+    {
+      $lookup: {
+        from: "landmaangnus",
+        let: { villager_id: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$villager", "$$villager_id"] },
+                  { $eq: ["$financialYear", financialYearObjectId] },
+                ],
+              },
+            },
+          },
+          { $sort: { updatedAt: -1 } },
+          { $limit: 1 },
+        ],
+        as: "landMaangnu",
+      },
+    },
+    
+    // Join with LandRevenue
+    {
+      $lookup: {
+        from: "landrevenues",
+        let: { villager_id: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$villager", "$$villager_id"] },
+                  { $eq: ["$financialYear", financialYearObjectId] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "landRevenue",
+      },
+    },
+    
+    // Sort
+    { $sort: { accountNo: 1, createdAt: 1 } },
+    
+    // Pagination
+    { $skip: (parseInt(page) - 1) * parseInt(limit) },
+    { $limit: parseInt(limit) },
+  ]);
+
+  // Calculate totals using map
   const totals = {
-    // Enriched fields
     left: 0,
     sarkari: 0,
     sivay: 0,
@@ -41,7 +97,6 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     fajal: 0,
     total: 0,
     local: 0,
-    // Schema fields
     j_a: 0,
     j_m: 0,
     l_m: 0,
@@ -53,126 +108,90 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     collumnSevenTeen: 0,
   };
 
-  await Promise.all(
-    villagers.map(async (villager) => {
-      // --- Aggregate pre-existing schema fields ---
-      let local = 0;
-      if (isLocal && !["વિજાપુર"].includes(taluka.name.trim())) {
-        local = parseFloat(villager.sarkari * 2 + villager.sivay * 2);
-        villager._doc.local = local;
-        totals.local += parseFloat(local || 0);
-      }
+  villagers.forEach((villager) => {
+    // Local fund calculation
+    let local = 0;
+    if (isLocal && !["વિજાપુર"].includes(taluka.name.trim())) {
+      local = parseFloat(villager.sarkari * 2 + villager.sivay * 2);
+    } else if (isLocal && ["વિજાપુર"].includes(taluka.name.trim())) {
+      local = parseFloat(villager.sarkari / 2 + villager.sivay / 2);
+    }
+    villager.local = local;
+    totals.local += parseFloat(local || 0);
 
-      if (isLocal && ["વિજાપુર"].includes(taluka.name.trim())) {
-        local = parseFloat(villager.sarkari / 2 + villager.sivay / 2);
-        villager._doc.local = local;
-        totals.local += parseFloat(local || 0);
-      }
+    // Base values
+    totals.baseSarkari += parseFloat(villager.sarkari || 0);
+    totals.baseSivay += parseFloat(villager.sivay || 0);
+    totals.j_a += parseFloat(villager.j_a || 0);
+    totals.j_m += parseFloat(villager.j_m || 0);
+    totals.l_m += parseFloat(villager.l_m || 0);
+    totals.s_m += parseFloat(villager.s_m || 0);
 
-      totals.baseSarkari += parseFloat(villager.sarkari || 0);
-      totals.baseSivay += parseFloat(villager.sivay || 0);
-      totals.j_a += parseFloat(villager.j_a || 0);
-      totals.j_m += parseFloat(villager.j_m || 0);
-      totals.l_m += parseFloat(villager.l_m || 0);
-      totals.s_m += parseFloat(villager.s_m || 0);
+    // Extract landMaangnu (always array with 0 or 1 element due to pipeline)
+    const landMaangnu = villager.landMaangnu?.[0];
 
-      // --- Attach dynamic fields ---
-      const landMaangnu = await LandMaangnu.findOne({
-        villager: villager._id,
-        financialYear: new mongoose.Types.ObjectId(financialYear),
-      }).sort({ updatedAt: -1 });
+    // Calculate rotating and total
+    if (Array.isArray(villager.landRevenue) && villager.landRevenue.length > 0) {
+      const rotatingSum = villager.landRevenue.reduce(
+        (sum, x) => sum + parseFloat(x.rotating || 0),
+        0
+      );
+      const totalSum = villager.landRevenue.reduce(
+        (sum, x) => sum + parseFloat(x.total || 0),
+        0
+      );
+      const fajal = landMaangnu ? parseFloat(landMaangnu.fajal || 0) : 0;
 
-      const landRevenue = await LandRevenue.find({
-        villager: villager._id,
-        financialYear,
-      });
+      villager.rotating = landMaangnu ? parseFloat(landMaangnu.rotating || 0) : 0;
+      villager.total = totalSum + fajal;
+    } else {
+      villager.rotating = landMaangnu ? parseFloat(landMaangnu.rotating || 0) : 0;
+      villager.total = landMaangnu ? parseFloat(landMaangnu.fajal || 0) : 0;
+    }
 
-      if (Array.isArray(landRevenue) && landRevenue.length > 0) {
-        const rotatingSum = landRevenue.reduce(
-          (sum, x) => sum + parseFloat(x.rotating || 0),
-          0
-        );
-        const totalSum = landRevenue.reduce(
-          (sum, x) => sum + parseFloat(x.total || 0),
-          0
-        );
-        const fajal = landMaangnu ? parseFloat(landMaangnu.fajal || 0) : 0;
+    // Set maangnu values
+    if (landMaangnu) {
+      villager.pending = landMaangnu.pending || 0;
+      villager.left = landMaangnu.left || 0;
+      villager.fajal = landMaangnu.fajal || 0;
+    } else {
+      villager.pending = 0;
+      villager.left = 0;
+      villager.fajal = 0;
+    }
 
-        villager._doc.rotating = landMaangnu
-          ? parseFloat(landMaangnu.rotating || 0)
-          : 0;
+    // Calculate totals for aggregation
+    const left = parseFloat(villager.left || 0);
+    const sivay = parseFloat(villager.sivay || 0);
+    const sarkari = parseFloat(villager.sarkari || 0);
+    const rotating = parseFloat(villager.rotating || 0);
+    const total = parseFloat(villager.total || 0);
 
-        villager._doc.total = totalSum + fajal;
-      } else {
-        villager._doc.rotating = landMaangnu ? parseFloat(landMaangnu.rotating || 0) : 0;
-        villager._doc.total = landMaangnu
-          ? parseFloat(landMaangnu.fajal || 0)
-          : 0;
-      }
+    let totalCalculated = left + sivay + sarkari + rotating;
+    if (isLocal) {
+      totalCalculated = left + sivay + sarkari + rotating + local;
+    }
 
-      if (landMaangnu) {
-        // villager._doc.rotating = landMaangnu.rotating || 0;
-        villager._doc.pending = landMaangnu.pending || 0;
-        villager._doc.left = landMaangnu.left || 0;
-        villager._doc.fajal = landMaangnu.fajal || 0;
-      } else {
-        // villager._doc.rotating = 0;
-        villager._doc.pending = 0;
-        villager._doc.left = 0;
-        villager._doc.fajal = 0;
-      }
+    const difference = totalCalculated - total - sarkari;
+    villager.collumnTwentyTwo = difference < 0 ? parseFloat(difference) : 0;
+    villager.collumnTwentyOne = difference > 0 ? parseFloat(difference) : 0;
+    villager.collumnSevenTeen = totalCalculated;
 
-      const left = parseFloat(villager._doc.left || 0);
-      const sivay = parseFloat(villager.sivay || 0);
-      const sarkari = parseFloat(villager.sarkari || 0);
-      const rotating = parseFloat(villager._doc.rotating || 0);
-      const total = parseFloat(villager._doc.total || 0);
-      const sarkari2 = parseFloat(villager._doc.sarkari || 0); // if needed separately
-
-      let totalCalculated = left + sivay + sarkari + rotating;
-
-      if (isLocal) {
-        totalCalculated = left + sivay + sarkari + rotating + local;
-      } else {
-        totalCalculated = left + sivay + sarkari + rotating;
-      }
-
-      // You want: (totalCalculated - total) - sarkari2
-      const difference = totalCalculated - total - sarkari2;
-
-      villager._doc.collumnTwentyTwo =
-        difference < 0 ? parseFloat(difference) : 0;
-      villager._doc.collumnTwentyOne =
-        difference > 0 ? parseFloat(difference) : 0;
-
-      villager._doc.collumnSevenTeen = totalCalculated;
-
-      // --- Aggregate enriched values ---
-      totals.left += parseFloat(villager._doc.left || 0);
-      totals.sarkari += parseFloat(villager.sarkari || 0);
-      totals.sivay += parseFloat(villager.sivay || 0);
-      totals.rotating += parseFloat(villager._doc.rotating || 0);
-      totals.pending += parseFloat(villager.pending || 0);
-      totals.fajal += parseFloat(villager._doc.fajal || 0);
-      totals.total += parseFloat(villager._doc.total || 0);
-
-      totals.collumnTwentyTwo += parseFloat(villager._doc.collumnTwentyTwo);
-      totals.collumnTwentyOne += parseFloat(villager._doc.collumnTwentyOne);
-      totals.collumnSevenTeen += parseFloat(villager._doc.collumnSevenTeen);
-    })
-  );
-
-  villagers.sort((a, b) => {
-    const na = parseInt(a.accountNo, 10);
-    const nb = parseInt(b.accountNo, 10);
-
-    const va = Number.isNaN(na) ? Number.POSITIVE_INFINITY : na;
-    const vb = Number.isNaN(nb) ? Number.POSITIVE_INFINITY : nb;
-    return va - vb;
+    // Accumulate totals
+    totals.left += left;
+    totals.sarkari += sarkari;
+    totals.sivay += sivay;
+    totals.rotating += rotating;
+    totals.pending += parseFloat(villager.pending || 0);
+    totals.fajal += parseFloat(villager.fajal || 0);
+    totals.total += total;
+    totals.collumnTwentyTwo += parseFloat(villager.collumnTwentyTwo);
+    totals.collumnTwentyOne += parseFloat(villager.collumnTwentyOne);
+    totals.collumnSevenTeen += totalCalculated;
   });
 
-  const lastPage = Math.ceil(totalDocs / limit);
-
+  // Add totals row
+  const lastPage = Math.ceil(totalDocs / parseInt(limit));
   villagers.push({
     isTotalRow: true,
     accountNo: "કુલ",
@@ -184,8 +203,6 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     pending: totals.pending,
     fajal: totals.fajal,
     total: totals.total,
-
-    // Original schema totals
     j_a: totals.j_a.toFixed(2),
     j_m: totals.j_m.toFixed(2),
     l_m: totals.l_m.toFixed(2),

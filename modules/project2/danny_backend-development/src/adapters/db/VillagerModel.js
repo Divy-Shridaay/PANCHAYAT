@@ -45,7 +45,8 @@ const VillagerSchema = new mongoose.Schema(
 
 // � Composite Unique Constraint
 VillagerSchema.index({ accountNo: 1, village: 1 }, { unique: true });
-
+// 📊 Single field index for better query performance
+VillagerSchema.index({ village: 1 }, { name: "idx_village" });
 // 🚫 Prevent auto indexes being created
 mongoose.set("autoIndex", false);
 

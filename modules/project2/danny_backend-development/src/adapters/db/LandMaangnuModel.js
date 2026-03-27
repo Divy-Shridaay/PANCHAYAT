@@ -69,6 +69,10 @@ const LandMaangnuSchema = new mongoose.Schema(
   }
 );
 
+// Add indexes for better query performance
+LandMaangnuSchema.index({ villager: 1, financialYear: 1 }, { name: "idx_villager_financialYear" });
+LandMaangnuSchema.index({ financialYear: 1 }, { name: "idx_financialYear" });
+
 const LandMaangnu = mongoose.model(
   "LandMaangnu",
   LandMaangnuSchema,

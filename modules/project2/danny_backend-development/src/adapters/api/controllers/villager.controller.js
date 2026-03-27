@@ -22,6 +22,9 @@ exports.fetchVillagerByAccountNo = asyncHandler(async (req, res, next) => {
       return Number(num.toFixed(2));
     };
 
+    // compatibility alias used elsewhere in this handler
+    const toFixed2 = formatRupee;
+
     // 🟢 Fetch master data
     const master = await Master.findOne({ status: 1 });
     if (!master) return next(new Error("Active master record not found"));

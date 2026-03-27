@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   Table,
   Thead,
@@ -46,6 +46,7 @@ const EducationReportTable = ({
   const { financialYear, financialYearName } = useFinancialYear();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user } = useUser();
+  const [isExporting, setIsExporting] = useState(false);
   const handleLimitChange = (e) => {
     setLimit(Number(e.target.value));
     setPage(1); // reset page when limit changes
@@ -141,16 +142,19 @@ const EducationReportTable = ({
   };
 
   const handleExportExcel = async () => {
+    setIsExporting(true);
     try {
+      // Limit export to 1000 records for faster performance
+      const exportLimit = Math.min(totalDocs, 1000);
       const response = await getEducationCessReport(
         1,
-        totalDocs,
+        exportLimit,
         village,
         financialYear
       );
       const fullData = response?.data?.data || [];
 
-      const challanResponse = await fetchChallansPage(1, 10000, "", "", {
+      const challanResponse = await fetchChallansPage(1, 1000, "", "", {
         type: "Education",
         village,
         financialYear,
@@ -176,6 +180,8 @@ const EducationReportTable = ({
     } catch (error) {
       console.error(error);
       alert("Excel export failed. કૃપા કરીને ફરીથી પ્રયાસ કરો.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -1344,7 +1350,7 @@ const EducationReportTable = ({
           <CustomButton onClick={handlePrint} colorScheme="teal">
             Print
           </CustomButton>
-          <CustomButton onClick={handleExportExcel} colorScheme="blue">
+          <CustomButton onClick={handleExportExcel} colorScheme="blue" isLoading={isExporting} loadingText="Exporting..." isDisabled={isExporting}>
             Export Excel
           </CustomButton>
           {user?.role.permissions.includes("REPORTS_REMARK_UPDATE") && (

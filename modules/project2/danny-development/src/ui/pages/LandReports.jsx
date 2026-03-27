@@ -13,7 +13,7 @@ export default function LandReports() {
   const { financialYear } = useFinancialYear();
   const [selectedOption, setSelectedOption] = useState("option1");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(100000);
+  const [limit, setLimit] = useState(50);
   const [tableData, setTableData] = useState({});
 
   const handleChange = (event) => {

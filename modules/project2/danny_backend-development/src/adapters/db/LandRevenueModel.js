@@ -57,6 +57,10 @@ const LandRevenueSchema = new mongoose.Schema(
   }
 );
 
+// Add indexes for better query performance
+LandRevenueSchema.index({ villager: 1, financialYear: 1 }, { name: "idx_villager_financialYear" });
+LandRevenueSchema.index({ financialYear: 1 }, { name: "idx_financialYear" });
+
 const LandRevenue = mongoose.model(
   "LandRevenue",
   LandRevenueSchema,

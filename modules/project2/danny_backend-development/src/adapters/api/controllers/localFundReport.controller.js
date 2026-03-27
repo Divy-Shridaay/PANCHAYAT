@@ -14,9 +14,10 @@ exports.getLocalFundReport = asyncHandler(async (req, res) => {
 
   const totalDocs = await Villager.countDocuments({ village });
   const villagers = await Villager.find({ village })
-    .sort({ createdAt : 1 , accountNo: 1 })
+    .sort({ createdAt: 1, accountNo: 1 })
     .skip((page - 1) * limit)
-    .limit(parseInt(limit));
+    .limit(parseInt(limit))
+    .lean();
 
   const totals = {
     maangnuLeft: 0,
@@ -31,131 +32,126 @@ exports.getLocalFundReport = asyncHandler(async (req, res) => {
     collumnFifteen: 0,
   };
 
-  const master = await Master.findOne({ status: 1 });
+  const master = await Master.findOne({ status: 1 }).lean();
 
-  await Promise.all(
-    villagers.map(async (villager) => {
-      let maangnuData = {
-        rotating: 0,
-        pending: 0,
-        maangnuLeft: 0,
-        fajal: 0,
-      };
-      let revenueData = {
+  const villagerIds = villagers.map((v) => v._id);
+
+  const [localMaangnus, localRevenues] = await Promise.all([
+    LocalFundMaangnu.find({
+      villager: { $in: villagerIds },
+      financialYear,
+    })
+      .sort({ updatedAt: -1 })
+      .lean(),
+    LocalFundRevenue.find({
+      villager: { $in: villagerIds },
+      financialYear,
+    }).lean(),
+  ]);
+
+  const localMaangnuMap = new Map();
+  for (const doc of localMaangnus) {
+    const id = doc.villager.toString();
+    if (!localMaangnuMap.has(id)) localMaangnuMap.set(id, doc);
+  }
+
+  const localRevenueMap = new Map();
+  for (const doc of localRevenues) {
+    const id = doc.villager.toString();
+    let agg = localRevenueMap.get(id);
+    if (!agg) {
+      agg = {
         rotating: 0,
         pending: 0,
         left: 0,
-        billNo: "",
-        billDate: "",
+        billNo: doc.billNo || "",
+        billDate: doc.billDate || "",
       };
+      localRevenueMap.set(id, agg);
+    }
+    agg.rotating += parseFloat(doc.rotating || 0);
+    agg.pending += parseFloat(doc.pending || 0);
+    agg.left += parseFloat(doc.left || 0);
+  }
 
-      const localMaangnu = await LocalFundMaangnu.findOne({
-        villager: villager._id,
-        financialYear,
-      }).sort({ updatedAt: -1 });
+  for (const villager of villagers) {
+    const id = villager._id.toString();
+    const localMaangnu = localMaangnuMap.get(id);
+    const revenueAgg = localRevenueMap.get(id);
 
-      if (localMaangnu) {
-        maangnuData = {
+    const maangnuData = localMaangnu
+      ? {
           rotating: parseFloat(localMaangnu.rotating || 0),
           pending: parseFloat(localMaangnu.pending || 0),
           maangnuLeft: parseFloat(localMaangnu.left || 0),
           fajal: parseFloat(localMaangnu.fajal || 0),
+        }
+      : {
+          rotating: 0,
+          pending: 0,
+          maangnuLeft: 0,
+          fajal: 0,
         };
-      }
 
-      const localRevenue = await LocalFundRevenue.find({
-        villager: villager._id,
-        financialYear,
-      });
-
-      if (Array.isArray(localRevenue) && localRevenue.length > 0) {
-        revenueData = {
-          rotating: localRevenue.reduce(
-            (sum, x) => sum + parseFloat(x.rotating || 0),
-            0
-          ),
-          pending: localRevenue.reduce(
-            (sum, x) => sum + parseFloat(x.pending || 0),
-            0
-          ),
-          left: localRevenue.reduce(
-            (sum, x) => sum + parseFloat(x.left || 0),
-            0
-          ),
-          billNo: localRevenue[0].billNo || "",
-          billDate: localRevenue[0].billDate || "",
+    const revenueData = revenueAgg
+      ? {
+          rotating: revenueAgg.rotating,
+          pending: revenueAgg.pending,
+          left: revenueAgg.left,
+          billNo: revenueAgg.billNo,
+          billDate: revenueAgg.billDate,
+        }
+      : {
+          rotating: 0,
+          pending: 0,
+          left: 0,
+          billNo: "",
+          billDate: "",
         };
-      }
 
-      // Attach to villager object
-      villager._doc.maangnuLeft = maangnuData.maangnuLeft;
-      villager._doc.fajal = maangnuData.fajal;
-      villager._doc.maangnuRotating = maangnuData.rotating
-      villager._doc.billNo = revenueData.billNo;
-      villager._doc.billDate = revenueData.billDate;
-      villager._doc.rotating = revenueData.rotating;
-      villager._doc.pending = revenueData.pending;
-      villager._doc.left = revenueData.left;
-      villager._doc.sarkari = ((villager.sarkari || 0) * master.lSarkari) / 100;
-      villager._doc.sivay = ((villager.sivay || 0) * master.lSivay) / 100;
+    // Attach to villager object
+    villager.maangnuLeft = maangnuData.maangnuLeft;
+    villager.fajal = maangnuData.fajal;
+    villager.maangnuRotating = maangnuData.rotating;
+    villager.billNo = revenueData.billNo;
+    villager.billDate = revenueData.billDate;
+    villager.rotating = revenueData.rotating;
+    villager.pending = revenueData.pending;
+    villager.left = revenueData.left;
+    villager.sarkari = ((villager.sarkari || 0) * master.lSarkari) / 100;
+    villager.sivay = ((villager.sivay || 0) * master.lSivay) / 100;
 
-      const totalCalculated =
-        revenueData.left + revenueData.pending + maangnuData.fajal + maangnuData.rotating;
-        
-      const totalCalc =
-        maangnuData.maangnuLeft +
-        villager._doc.sarkari +
-        villager._doc.sivay +
-        revenueData.rotating;
+    const totalCalculated =
+      revenueData.left +
+      revenueData.pending +
+      maangnuData.fajal +
+      maangnuData.rotating;
 
-        
-      // villager._doc.collumnFourteen =
-      //   totalCalculated < totalCalc
-      //     ? parseFloat((totalCalc - totalCalculated).toFixed(2))
-      //     : 0;
-      // villager._doc.collumnFifteen =
-      //   totalCalculated > totalCalc
-      //     ? parseFloat((totalCalculated - totalCalc).toFixed(2))
-      //     : 0;
-      villager._doc.collumnFourteen =
-        totalCalculated < totalCalc
-          ? parseFloat(totalCalc - totalCalculated)
-          : 0;
-      villager._doc.collumnFifteen =
-        totalCalculated > totalCalc
-          ? parseFloat(totalCalculated - totalCalc)
-          : 0;
+    const totalCalc =
+      maangnuData.maangnuLeft +
+      villager.sarkari +
+      villager.sivay +
+      revenueData.rotating;
 
-          console.log("parseFloat(totalCalc - totalCalculated)" , parseFloat(totalCalc - totalCalculated));
-          
-      // Add to totals
-      totals.maangnuLeft += maangnuData.maangnuLeft;
-      totals.maangnuRotating += maangnuData.rotating; 
-      totals.fajal += maangnuData.fajal;
-      totals.rotating += revenueData.rotating;
-      totals.pending += revenueData.pending;
-      totals.left += revenueData.left;
-      totals.sarkari += villager._doc.sarkari;
-      totals.sivay += villager._doc.sivay;
+    villager.collumnFourteen =
+      totalCalculated < totalCalc ? parseFloat(totalCalc - totalCalculated) : 0;
+    villager.collumnFifteen =
+      totalCalculated > totalCalc ? parseFloat(totalCalculated - totalCalc) : 0;
 
-      // totals.collumnFourteen +=
-      //   totalCalculated < totalCalc
-      //     ? parseFloat((totalCalc - totalCalculated).toFixed(2))
-      //     : 0;
-      // totals.collumnFifteen +=
-      //   totalCalculated > totalCalc
-      //     ? parseFloat((totalCalculated - totalCalc).toFixed(2))
-      //     : 0;
-        totals.collumnFourteen +=
-        totalCalculated < totalCalc
-          ? parseFloat((totalCalc - totalCalculated))
-          : 0;
-      totals.collumnFifteen +=
-        totalCalculated > totalCalc
-          ? parseFloat((totalCalculated - totalCalc))
-          : 0;
-    })
-  );
+    // Add to totals
+    totals.maangnuLeft += maangnuData.maangnuLeft;
+    totals.maangnuRotating += maangnuData.rotating;
+    totals.fajal += maangnuData.fajal;
+    totals.rotating += revenueData.rotating;
+    totals.pending += revenueData.pending;
+    totals.left += revenueData.left;
+    totals.sarkari += villager.sarkari;
+    totals.sivay += villager.sivay;
+    totals.collumnFourteen +=
+      totalCalculated < totalCalc ? parseFloat(totalCalc - totalCalculated) : 0;
+    totals.collumnFifteen +=
+      totalCalculated > totalCalc ? parseFloat(totalCalculated - totalCalc) : 0;
+  }
 
   villagers.sort((a, b) => {
   const na = parseInt(a.accountNo, 10);
