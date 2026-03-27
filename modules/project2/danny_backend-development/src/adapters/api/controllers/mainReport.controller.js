@@ -650,6 +650,7 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         financialYear: 1,
         sarkari: 1,
         sivay: 1,
+        left: { $multiply: ["$left", 100] },  // ✅ backend fix: convert 17.4057 to 1740.57
         landData: {
           collumnTwentyOne: "$collumnTwentyOne",
           rotating: "$rotating",
