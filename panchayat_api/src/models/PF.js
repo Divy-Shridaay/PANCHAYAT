@@ -50,6 +50,25 @@ const PFSchema = new mongoose.Schema({
     },
     remarks: {
         type: String
+    },
+    // 🆕 Additional fields for display
+    transactionType: {
+        type: String,
+        enum: ['debit', 'credit'],
+        default: 'credit'
+    },
+    transactionSubType: {
+        type: String,
+        default: 'salary_contribution'
+    },
+    employeeName: {
+        type: String
+    },
+    employeeGroup: {
+        type: String
+    },
+    employeePosition: {
+        type: String
     }
 }, {
     timestamps: true

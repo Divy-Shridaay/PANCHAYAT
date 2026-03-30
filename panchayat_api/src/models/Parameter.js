@@ -4,11 +4,11 @@ const ParameterSchema = new mongoose.Schema({
     examName: {
         type: String,
         required: true,
-        unique: true  // ← ADD THIS LINE
+        unique: true
     },
     parameterType: {
         type: String,
-        enum: ['education', 'budget', 'description', 'agreement', 'prakar', 'pf', 'fund'],
+        enum: ['education', 'budget', 'description', 'agreement', 'prakar', 'pf', 'fund', 'allowance'],
         required: true
     },
     value: {

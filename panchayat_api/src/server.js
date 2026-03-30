@@ -6,7 +6,7 @@ import app from "./app.js";
 import defaultCategories from "./utils/defaultCategories.js";
 import Category from "./models/Category.js";
 import User from "./models/User.js";
-import employeeRoutes from "./routes/employee.routes.js"; // Add this line
+// import employeeRoutes from "./routes/employee.routes.js"; // Add this line
 
 connectDB().then(async () => {
   await seedDefaultCategories();
@@ -33,7 +33,7 @@ connectDB().then(async () => {
 });
 
 // Add employee routes to your app
-app.use("/api/employee", employeeRoutes); // Add this line
+
 
 app.listen(process.env.PORT, () =>
   console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)

@@ -1,3 +1,4 @@
+// routes/qualification.routes.js
 import express from "express";
 import Qualification from "../models/Qualification.js";
 
@@ -14,7 +15,7 @@ router.get("/", async (req, res) => {
         if (status) query.status = status;
         
         const qualifications = await Qualification.find(query)
-            .populate("employeeId", "firstName lastName employeeCode department")
+            .populate("employeeId", "employeeName employeeNameEnglish employeeGroup employeePositionGujarati employeePositionEnglish")
             .sort({ createdAt: -1 });
         
         res.json(qualifications);
@@ -27,7 +28,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
     try {
         const qualification = await Qualification.findById(req.params.id)
-            .populate("employeeId", "firstName lastName employeeCode");
+            .populate("employeeId", "employeeName employeeNameEnglish employeeGroup employeePositionGujarati");
         if (!qualification) return res.status(404).json({ message: "Qualification not found" });
         res.json(qualification);
     } catch (err) {
@@ -40,7 +41,7 @@ router.post("/", async (req, res) => {
     try {
         const qualification = new Qualification(req.body);
         const savedQualification = await qualification.save();
-        await savedQualification.populate("employeeId", "firstName lastName employeeCode");
+        await savedQualification.populate("employeeId", "employeeName employeeNameEnglish employeeGroup employeePositionGujarati");
         res.status(201).json(savedQualification);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -54,7 +55,7 @@ router.put("/:id", async (req, res) => {
             req.params.id,
             { ...req.body, updatedAt: Date.now() },
             { new: true }
-        ).populate("employeeId", "firstName lastName employeeCode");
+        ).populate("employeeId", "employeeName employeeNameEnglish employeeGroup employeePositionGujarati");
         res.json(qualification);
     } catch (err) {
         res.status(400).json({ message: err.message });

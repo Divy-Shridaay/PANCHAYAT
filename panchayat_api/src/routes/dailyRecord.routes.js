@@ -1,3 +1,4 @@
+// routes/dailyrecord.route.js
 import express from "express";
 import DailyRecord from "../models/DailyRecord.js";
 
@@ -21,7 +22,7 @@ router.get("/", async (req, res) => {
         }
         
         const records = await DailyRecord.find(query)
-            .populate("employeeId", "firstName lastName employeeCode department")
+            .populate("employeeId", "employeeName employeeNameEnglish employeeCode employeeGroup employeePositionGujarati employeePositionEnglish isActive")  // ← FIXED: Added correct fields
             .sort({ recordDate: -1 });
         
         res.json(records);
@@ -35,7 +36,7 @@ router.post("/", async (req, res) => {
     try {
         const record = new DailyRecord(req.body);
         const savedRecord = await record.save();
-        await savedRecord.populate("employeeId", "firstName lastName employeeCode");
+        await savedRecord.populate("employeeId", "employeeName employeeNameEnglish employeeCode employeeGroup");  // ← FIXED
         res.status(201).json(savedRecord);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -49,7 +50,7 @@ router.put("/:id", async (req, res) => {
             req.params.id,
             { ...req.body, updatedAt: Date.now() },
             { new: true }
-        ).populate("employeeId", "firstName lastName employeeCode");
+        ).populate("employeeId", "employeeName employeeNameEnglish employeeCode employeeGroup");  // ← FIXED
         res.json(record);
     } catch (err) {
         res.status(400).json({ message: err.message });

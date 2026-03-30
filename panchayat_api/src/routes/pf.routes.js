@@ -4,7 +4,6 @@ import PF from "../models/PF.js";
 const router = express.Router();
 
 // ===================== GET ALL PF RECORDS =====================
-// Query params: ?month=1&year=2024&employeeId=...
 router.get("/", async (req, res) => {
   try {
     const { month, year, employeeId, status } = req.query;
@@ -16,7 +15,7 @@ router.get("/", async (req, res) => {
     if (status) query.status = status;
     
     const pfRecords = await PF.find(query)
-      .populate("employeeId", "firstName lastName employeeCode department")
+      .populate("employeeId", "firstName lastName employeeCode department employeeGroup employeePositionGujarati employeeName")
       .sort({ year: -1, month: -1, createdAt: -1 });
     
     res.json(pfRecords);
@@ -30,7 +29,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const pfRecord = await PF.findById(req.params.id)
-      .populate("employeeId", "firstName lastName employeeCode department");
+      .populate("employeeId", "firstName lastName employeeCode department employeeGroup employeePositionGujarati employeeName");
     
     if (!pfRecord) {
       return res.status(404).json({ message: "PF record not found" });
@@ -61,7 +60,7 @@ router.post("/", async (req, res) => {
     
     const pfRecord = new PF(req.body);
     const savedRecord = await pfRecord.save();
-    await savedRecord.populate("employeeId", "firstName lastName employeeCode");
+    await savedRecord.populate("employeeId", "firstName lastName employeeCode department employeeGroup employeePositionGujarati employeeName");
     
     res.status(201).json(savedRecord);
   } catch (err) {
@@ -77,7 +76,7 @@ router.put("/:id", async (req, res) => {
       req.params.id,
       { ...req.body, updatedAt: Date.now() },
       { new: true, runValidators: true }
-    ).populate("employeeId", "firstName lastName employeeCode");
+    ).populate("employeeId", "firstName lastName employeeCode department employeeGroup employeePositionGujarati employeeName");
     
     if (!pfRecord) {
       return res.status(404).json({ message: "PF record not found" });

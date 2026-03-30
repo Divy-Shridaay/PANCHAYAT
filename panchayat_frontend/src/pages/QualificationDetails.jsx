@@ -1,424 +1,1031 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import LoaderSpinner from '../components/LoaderSpinner';
+// QualificationDetails.jsx
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  Flex,
+  Input,
+  useToast,
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
+  Grid,
+  Spinner,
+  SimpleGrid,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useDisclosure,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  IconButton,
+  Badge,
+  Select,
+  Card,
+  CardBody,
+  CardHeader,
+  Textarea,
+} from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import { ViewIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
+
+import Pagination from "../components/Pagination";
+import {
+  FiArrowLeft,
+  FiSave,
+  FiCheck,
+  FiEye,
+  FiChevronLeft,
+  FiChevronRight,
+  FiPlus,
+  FiX,
+  FiEdit2,
+  FiTrash2,
+  FiCalendar,
+} from "react-icons/fi";
+import axios from "axios";
 
 const QualificationDetails = () => {
-    const [qualifications, setQualifications] = useState([]);
-    const [employees, setEmployees] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState('');
-    const [showForm, setShowForm] = useState(false);
-    const [editingId, setEditingId] = useState(null);
-    const [formData, setFormData] = useState({
-        employeeId: '',
-        qualificationName: '',
-        qualificationType: 'education',
-        category: 'graduate',
-        institutionName: '',
-        amount: '',
-        description: '',
-        degreeName: '',
-        board: '',
-        passingYear: '',
-        percentage: '',
-        grade: '',
-        specialization: '',
-        trainingDuration: '',
-        startDate: '',
-        endDate: '',
-        certificateNumber: '',
-        validUntil: ''
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure();
+  const { isOpen: isSuccessOpen, onOpen: onSuccessOpen, onClose: onSuccessClose } = useDisclosure();
+  const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
+
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [qualifications, setQualifications] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [viewingQualification, setViewingQualification] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Filter states
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState("");
+
+  // Withdrawal type options
+  const withdrawalTypes = [
+    { value: "festival_with_deduction", label: "ફેસ્ટીવલ (કપાત સાથે)" },
+    { value: "festival_without_deduction", label: "ફેસ્ટીવલ (કપાત વગર)" },
+    { value: "advance_salary", label: "એડવાન્સ સેલરી" },
+    { value: "loan", label: "લોન" },
+    { value: "other", label: "અન્ય" },
+  ];
+
+  const [formData, setFormData] = useState({
+    withdrawalDate: "",
+    employeeId: "",
+    employeeName: "",
+    employeeGroup: "",
+    employeePosition: "",
+    withdrawalType: "",
+    amount: "",
+    remarks: "",
+    qualificationName: "",
+    qualificationType: "withdrawal",
+    institutionName: "",
+    category: "other",
+  });
+
+  // Get max date for date picker (today's date in yyyy-mm-dd format)
+  const getMaxDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to convert yyyy-mm-dd to dd/mm/yyyy for display
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return "-";
+    try {
+      // If it's ISO string with time
+      let date;
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } else {
+        // If it's yyyy-mm-dd format
+        const parts = dateString.split('-');
+        date = new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      if (isNaN(date.getTime())) return "-";
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return "-";
+    }
+  };
+
+  // Helper function to convert yyyy-mm-dd to dd/mm/yyyy for input
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    try {
+      let date;
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } else if (dateString.includes('-')) {
+        const parts = dateString.split('-');
+        date = new Date(parts[0], parts[1] - 1, parts[2]);
+      } else {
+        return "";
+      }
+      if (isNaN(date.getTime())) return "";
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return " ";
+    }
+  };
+
+  // Convert yyyy-mm-dd to dd/mm/yyyy
+  const convertToDisplayFormat = (dateString) => {
+    if (!dateString) return "";
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateString;
+  };
+
+  // Convert dd/mm/yyyy to yyyy-mm-dd for API
+  const convertToAPIFormat = (dateString) => {
+    if (!dateString) return "";
+    if (dateString.includes('-')) return dateString;
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    return dateString;
+  };
+
+  // Validation function to check if date is not future
+  const validateNotFutureDate = (dateValue) => {
+    if (!dateValue) return true;
+    
+    // Get the selected date
+    let selectedDate;
+    if (dateValue.includes('-')) {
+      const parts = dateValue.split('-');
+      selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    } else if (dateValue.includes('/')) {
+      const parts = dateValue.split('/');
+      selectedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    } else {
+      return true;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    return selectedDate <= today;
+  };
+
+  // Fetch qualifications and employees on load
+  useEffect(() => {
+    fetchQualifications();
+    fetchEmployees();
+  }, [selectedEmployeeFilter]);
+
+  const fetchQualifications = async () => {
+    setLoading(true);
+    try {
+      const url = selectedEmployeeFilter
+        ? `http://localhost:5000/api/qualification?employeeId=${selectedEmployeeFilter}`
+        : "http://localhost:5000/api/qualification";
+      const response = await axios.get(url);
+      setQualifications(response.data);
+    } catch (error) {
+      console.error("Error fetching qualifications:", error);
+      toast({
+        title: "ભૂલ",
+        description: "વિગત લોડ કરવામાં નિષ્ફળ",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/employee");
+      setEmployees(response.data);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
+  // Handle employee selection - auto fill group and position
+  const handleEmployeeChange = (e) => {
+    const employeeId = e.target.value;
+    const employee = employees.find(emp => emp._id === employeeId);
+    
+    // Clear errors for employee field when changed
+    setFieldErrors(prev => ({ ...prev, employeeId: false }));
+    
+    if (employee) {
+      setFormData({
+        ...formData,
+        employeeId: employeeId,
+        employeeName: employee.employeeName || employee.employeeNameEnglish || "",
+        employeeGroup: employee.employeeGroup || "",
+        employeePosition: employee.employeePositionGujarati || employee.employeePositionEnglish || "",
+      });
+    } else {
+      setFormData({
+        ...formData,
+        employeeId: "",
+        employeeName: "",
+        employeeGroup: "",
+        employeePosition: "",
+      });
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear error for this field when user types
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: false }));
+    }
+  };
+
+  // Handle date change from calendar
+  const handleDateChange = (e) => {
+    const selectedDate = e.target.value; // This will be in yyyy-mm-dd format
+    setFormData({ 
+      ...formData, 
+      withdrawalDate: selectedDate 
     });
+    
+    // Clear error for date field
+    if (fieldErrors.withdrawalDate) {
+      setFieldErrors(prev => ({ ...prev, withdrawalDate: false }));
+    }
+  };
 
-    useEffect(() => {
+  const resetForm = () => {
+    setEditingId(null);
+    setFieldErrors({});
+    setFormData({
+      withdrawalDate: "",
+      employeeId: "",
+      employeeName: "",
+      employeeGroup: "",
+      employeePosition: "",
+      withdrawalType: "",
+      amount: "",
+      remarks: "",
+      qualificationName: "",
+      qualificationType: "withdrawal",
+      institutionName: "",
+      category: "other",
+    });
+  };
+
+  // Comprehensive validation before save
+  const validateForm = () => {
+    const errors = {};
+
+    // Validate withdrawal date
+    if (isEmpty(formData.withdrawalDate)) {
+      errors.withdrawalDate = "ઉપાડની તારીખ ભરવી ફરજિયાત છે";
+    } else {
+      // Check if date is in yyyy-mm-dd format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(formData.withdrawalDate)) {
+        errors.withdrawalDate = "તારીખનું ફોર્મેટ યોગ્ય નથી";
+      } else {
+        const parts = formData.withdrawalDate.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+        
+        // Validate day, month, year ranges
+        if (day < 1 || day > 31) {
+          errors.withdrawalDate = "દિવસ 1-31 ની વચ્ચે હોવો જોઈએ";
+        } else if (month < 1 || month > 12) {
+          errors.withdrawalDate = "મહિનો 1-12 ની વચ્ચે હોવો જોઈએ";
+        } else if (year < 1900 || year > new Date().getFullYear()) {
+          errors.withdrawalDate = `વર્ષ 1900-${new Date().getFullYear()} ની વચ્ચે હોવું જોઈએ`;
+        } else if (!validateNotFutureDate(formData.withdrawalDate)) {
+          errors.withdrawalDate = "ઉપાડની તારીખ આજની અથવા ભૂતકાળની હોવી જોઈએ (ભવિષ્યની તારીખ પસંદ કરી શકાતી નથી)";
+        }
+      }
+    }
+
+    // Validate employee selection
+    if (isEmpty(formData.employeeId)) {
+      errors.employeeId = "કર્મચારી પસંદ કરવો ફરજિયાત છે";
+    }
+
+    // Validate withdrawal type
+    if (isEmpty(formData.withdrawalType)) {
+      errors.withdrawalType = "ઉપાડનો પ્રકાર પસંદ કરવો ફરજિયાત છે";
+    }
+
+    // Validate amount - improved validation
+    const amountStr = String(formData.amount).trim();
+    if (isEmpty(amountStr)) {
+      errors.amount = "ઉપાડની રકમ ભરવી ફરજિયાત છે";
+    } else {
+      const amountNum = parseFloat(amountStr);
+      if (isNaN(amountNum)) {
+        errors.amount = "માન્ય રકમ દાખલ કરો (ફક્ત નંબર)";
+      } else if (amountNum <= 0) {
+        errors.amount = "રકમ 0 કરતા વધારે હોવી જોઈએ";
+      } else if (amountNum > 1000000) {
+        errors.amount = "મહત્તમ રકમ ₹10,00,000 છે";
+      }
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0; // Return true if no errors
+  };
+
+  const isEmpty = (v) => v === "" || v === null || v === undefined;
+
+  const handleSave = async () => {
+    // Validate form and get result directly
+    const isValid = validateForm();
+    
+    if (!isValid) {
+      toast({
+        title: "ભૂલ",
+        description: "કૃપા કરીને બધી ફરજિયાત માહિતી યોગ્ય રીતે ભરો",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Get the withdrawal type label for qualificationName
+      const withdrawalTypeLabel = withdrawalTypes.find(t => t.value === formData.withdrawalType)?.label || formData.withdrawalType;
+      
+      // Convert date from yyyy-mm-dd to ISO format
+      const withdrawalDate = new Date(formData.withdrawalDate);
+      // Set to midnight UTC to avoid timezone shifts
+      withdrawalDate.setUTCHours(0, 0, 0, 0);
+      
+      const payload = {
+        employeeId: formData.employeeId,
+        employeeName: formData.employeeName,
+        employeeGroup: formData.employeeGroup,
+        employeePosition: formData.employeePosition,
+        withdrawalDate: withdrawalDate.toISOString(), // Store as ISO string
+        withdrawalType: formData.withdrawalType,
+        amount: parseFloat(formData.amount),
+        remarks: formData.remarks,
+        qualificationName: `${withdrawalTypeLabel} - ${formatDateForDisplay(formData.withdrawalDate)}`,
+        qualificationType: "withdrawal",
+        institutionName: "ઉપાડણી વિગત",
+        category: "other",
+      };
+
+      if (editingId) {
+        await axios.put(`http://localhost:5000/api/qualification/${editingId}`, payload);
+        toast({
+          title: "સફળ",
+          description: "વિગત સફળતાપૂર્વક અપડેટ થઈ",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        await axios.post("http://localhost:5000/api/qualification", payload);
+        toast({
+          title: "સફળ",
+          description: "નવી વિગત સફળતાપૂર્વક ઉમેરાઈ",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+      
+      onSuccessOpen();
+      await fetchQualifications();
+      resetForm();
+      onFormClose();
+    } catch (error) {
+      console.error("Error saving:", error);
+      toast({
+        title: "ભૂલ",
+        description: error.response?.data?.message || "વિગત સેવ કરવામાં નિષ્ફળ",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (qual) => {
+    setEditingId(qual._id);
+    setFieldErrors({});
+    
+    // Convert ISO date to yyyy-mm-dd for the date picker
+    let dateValue = "";
+    if (qual.withdrawalDate) {
+      const date = new Date(qual.withdrawalDate);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        dateValue = `${year}-${month}-${day}`;
+      }
+    }
+    
+    setFormData({
+      withdrawalDate: dateValue,
+      employeeId: qual.employeeId?._id || "",
+      employeeName: qual.employeeName || "",
+      employeeGroup: qual.employeeGroup || "",
+      employeePosition: qual.employeePosition || "",
+      withdrawalType: qual.withdrawalType || "",
+      amount: qual.amount || "",
+      remarks: qual.remarks || "",
+      qualificationName: qual.qualificationName || "",
+      qualificationType: qual.qualificationType || "withdrawal",
+      institutionName: qual.institutionName || "",
+      category: qual.category || "other",
+    });
+    onFormOpen();
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("શું તમે આ વિગત ડિલીટ કરવા માંગો છો?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/qualification/${id}`);
+        toast({
+          title: "સફળ",
+          description: "વિગત ડિલીટ થઈ",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
         fetchQualifications();
-        fetchEmployees();
-    }, [selectedEmployee]);
-
-    const fetchQualifications = async () => {
-        setLoading(true);
-        try {
-            const url = selectedEmployee 
-                ? `http://localhost:5000/api/qualification?employeeId=${selectedEmployee}`
-                : 'http://localhost:5000/api/qualification';
-            const response = await axios.get(url);
-            setQualifications(response.data);
-        } catch (error) {
-            console.error('Error fetching qualifications:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchEmployees = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/employee');
-            setEmployees(response.data);
-        } catch (error) {
-            console.error('Error fetching employees:', error);
-        }
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            if (editingId) {
-                await axios.put(`http://localhost:5000/api/qualification/${editingId}`, formData);
-            } else {
-                await axios.post('http://localhost:5000/api/qualification', formData);
-            }
-            fetchQualifications();
-            resetForm();
-            setShowForm(false);
-        } catch (error) {
-            console.error('Error saving qualification:', error);
-            alert('શિક્ષણ વિગત સેવ કરવામાં ભૂલ');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const resetForm = () => {
-        setEditingId(null);
-        setFormData({
-            employeeId: '',
-            qualificationName: '',
-            qualificationType: 'education',
-            category: 'graduate',
-            institutionName: '',
-            amount: '',
-            description: '',
-            degreeName: '',
-            board: '',
-            passingYear: '',
-            percentage: '',
-            grade: '',
-            specialization: '',
-            trainingDuration: '',
-            startDate: '',
-            endDate: '',
-            certificateNumber: '',
-            validUntil: ''
+      } catch (error) {
+        console.error("Error deleting:", error);
+        toast({
+          title: "ભૂલ",
+          description: "વિગત ડિલીટ કરવામાં નિષ્ફળ",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
         });
-    };
+      }
+    }
+  };
 
-    const handleEdit = (qual) => {
-        setEditingId(qual._id);
-        setFormData({
-            employeeId: qual.employeeId._id,
-            qualificationName: qual.qualificationName,
-            qualificationType: qual.qualificationType,
-            category: qual.category,
-            institutionName: qual.institutionName,
-            amount: qual.amount || '',
-            description: qual.description || '',
-            degreeName: qual.degreeName || '',
-            board: qual.board || '',
-            passingYear: qual.passingYear || '',
-            percentage: qual.percentage || '',
-            grade: qual.grade || '',
-            specialization: qual.specialization || '',
-            trainingDuration: qual.trainingDuration || '',
-            startDate: qual.startDate ? qual.startDate.split('T')[0] : '',
-            endDate: qual.endDate ? qual.endDate.split('T')[0] : '',
-            certificateNumber: qual.certificateNumber || '',
-            validUntil: qual.validUntil ? qual.validUntil.split('T')[0] : ''
-        });
-        setShowForm(true);
-    };
+  const handleView = (qual) => {
+    setViewingQualification(qual);
+    onViewOpen();
+  };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('શું તમે આ શિક્ષણ વિગત ડિલીટ કરવા માંગો છો?')) {
-            try {
-                await axios.delete(`http://localhost:5000/api/qualification/${id}`);
-                fetchQualifications();
-            } catch (error) {
-                console.error('Error deleting qualification:', error);
-            }
-        }
-    };
+  const handleVerify = async (id, status) => {
+    try {
+      await axios.put(`http://localhost:5000/api/qualification/${id}/verify`, {
+        status,
+        verifiedBy: "Admin",
+      });
+      fetchQualifications();
+      toast({
+        title: "સફળ",
+        description: `વિગત ${status === 'verified' ? 'ચકાસાયેલ' : status === 'rejected' ? 'નામંજૂર' : 'બાકી'} કરી`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Error verifying:", error);
+      toast({
+        title: "ભૂલ",
+        description: "સ્થિતિ અપડેટ કરવામાં નિષ્ફળ",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
-    const verifyQualification = async (id, status) => {
-        try {
-            await axios.put(`http://localhost:5000/api/qualification/${id}/verify`, {
-                status,
-                verifiedBy: 'Admin',
-                verifiedAt: new Date()
-            });
-            fetchQualifications();
-        } catch (error) {
-            console.error('Error verifying qualification:', error);
-        }
-    };
+  const getWithdrawalTypeLabel = (type) => {
+    const found = withdrawalTypes.find(t => t.value === type);
+    return found ? found.label : type;
+  };
 
-    const getCategoryLabel = (category) => {
-        const categories = {
-            primary: 'પ્રાથમિક',
-            secondary: 'માધ્યમિક',
-            higher_secondary: 'ઉચ્ચતર માધ્યમિક',
-            graduate: 'સ્નાતક',
-            post_graduate: 'અનુસ્નાતક',
-            diploma: 'ડિપ્લોમા',
-            certificate: 'પ્રમાણપત્ર',
-            professional: 'વ્યવસાયિક',
-            vocational: 'વ્યાવસાયિક',
-            other: 'અન્ય'
-        };
-        return categories[category] || category;
-    };
+  // Format date for display in table and view modal
+  const formatDate = (dateString) => {
+    return formatDateForDisplay(dateString);
+  };
 
-    const getTypeLabel = (type) => {
-        const types = {
-            education: 'શિક્ષણ',
-            training: 'તાલીમ',
-            certification: 'પ્રમાણપત્ર',
-            skill: 'કૌશલ્ય',
-            workshop: 'વર્કશોપ'
-        };
-        return types[type] || type;
-    };
+  // Filter only withdrawal records (where qualificationType is "withdrawal")
+  const withdrawalRecords = qualifications.filter(q => q.qualificationType === "withdrawal" && q.withdrawalDate);
 
-    return (
-        <div className="p-6">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">ઉપાડણી વિગત (Qualification Details)</h1>
-                <p className="text-gray-600 mt-1">કર્મચારીઓની શિક્ષણ અને તાલીમ વિગતો</p>
-            </div>
+  // Pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = withdrawalRecords.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(withdrawalRecords.length / itemsPerPage);
 
-            {/* Filters */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                    <label className="font-medium text-gray-700">કર્મચારી:</label>
-                    <select
-                        value={selectedEmployee}
-                        onChange={(e) => setSelectedEmployee(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-md w-64"
-                    >
-                        <option value="">બધા કર્મચારીઓ</option>
-                        {employees.map(emp => (
-                            <option key={emp._id} value={emp._id}>
-                                {emp.employeeCode} - {emp.firstName} {emp.lastName}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <button
-                    onClick={() => {
-                        resetForm();
-                        setShowForm(!showForm);
-                    }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                    {showForm ? 'ફોર્મ બંધ કરો' : '+ નવી વિગત ઉમેરો'}
-                </button>
-            </div>
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
-            {/* Add/Edit Form */}
-            {showForm && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                        {editingId ? 'વિગત સુધારો' : 'નવી શિક્ષણ/તાલીમ વિગત'}
-                    </h2>
-                    <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">કર્મચારી *</label>
-                                <select name="employeeId" value={formData.employeeId} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" required>
-                                    <option value="">કર્મચારી પસંદ કરો</option>
-                                    {employees.map(emp => (
-                                        <option key={emp._id} value={emp._id}>
-                                            {emp.employeeCode} - {emp.firstName} {emp.lastName}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">સમ્મેલિનુ નામ *</label>
-                                <input type="text" name="qualificationName" value={formData.qualificationName} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">સમ્મેલિનુ જ્વલ (Type) *</label>
-                                <select name="qualificationType" value={formData.qualificationType} onChange={handleChange} className="w-full px-3 py-2 border rounded-md">
-                                    <option value="education">શિક્ષણ</option>
-                                    <option value="training">તાલીમ</option>
-                                    <option value="certification">પ્રમાણપત્ર</option>
-                                    <option value="skill">કૌશલ્ય</option>
-                                    <option value="workshop">વર્કશોપ</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">સમ્મેલીના કાંઠી (Category) *</label>
-                                <select name="category" value={formData.category} onChange={handleChange} className="w-full px-3 py-2 border rounded-md">
-                                    <option value="primary">પ્રાથમિક શિક્ષણ</option>
-                                    <option value="secondary">માધ્યમિક શિક્ષણ</option>
-                                    <option value="higher_secondary">ઉચ્ચતર માધ્યમિક</option>
-                                    <option value="graduate">સ્નાતક</option>
-                                    <option value="post_graduate">અનુસ્નાતક</option>
-                                    <option value="diploma">ડિપ્લોમા</option>
-                                    <option value="certificate">પ્રમાણપત્ર</option>
-                                    <option value="professional">વ્યવસાયિક</option>
-                                    <option value="vocational">વ્યાવસાયિક</option>
-                                    <option value="other">અન્ય</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">ગૃહીતની ફાર (Institution) *</label>
-                                <input type="text" name="institutionName" value={formData.institutionName} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">ગૃહીતની રમ (Amount) ₹</label>
-                                <input type="number" name="amount" value={formData.amount} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                            </div>
-                        </div>
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
 
-                        {/* Education Specific Fields */}
-                        {formData.qualificationType === 'education' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">ડિગ્રીનું નામ</label>
-                                    <input type="text" name="degreeName" value={formData.degreeName} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">બોર્ડ/યુનિવર્સિટી</label>
-                                    <input type="text" name="board" value={formData.board} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">પાસિંગ વર્ષ</label>
-                                    <input type="number" name="passingYear" value={formData.passingYear} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">પર્સેન્ટેજ (%)</label>
-                                    <input type="number" name="percentage" value={formData.percentage} onChange={handleChange} step="0.01" className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">ગ્રેડ</label>
-                                    <input type="text" name="grade" value={formData.grade} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">વિશેષતા</label>
-                                    <input type="text" name="specialization" value={formData.specialization} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                            </div>
-                        )}
+  // Calculate total amount
+  const totalAmount = withdrawalRecords.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+  const verifiedAmount = withdrawalRecords
+    .filter(w => w.status === "verified")
+    .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
 
-                        {/* Training Specific Fields */}
-                        {(formData.qualificationType === 'training' || formData.qualificationType === 'certification') && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">તાલીમ અવધિ (દિવસો)</label>
-                                    <input type="number" name="trainingDuration" value={formData.trainingDuration} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">પ્રારંભ તારીખ</label>
-                                    <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">સમાપ્તિ તારીખ</label>
-                                    <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">પ્રમાણપત્ર નંબર</label>
-                                    <input type="text" name="certificateNumber" value={formData.certificateNumber} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">માન્યતા સુધી</label>
-                                    <input type="date" name="validUntil" value={formData.validUntil} onChange={handleChange} className="w-full px-3 py-2 border rounded-md" />
-                                </div>
-                            </div>
-                        )}
+  return (
+    <Box bg="#F8FAF9" minH="100vh" p={6}>
+      {/* Header */}
+      <Flex align="center" mb={6}>
+        <Box width="180px">
+          <Button
+            leftIcon={<FiArrowLeft />}
+            colorScheme="green"
+            variant="outline"
+            onClick={() => navigate("/pe-roll")}
+          >
+            પાછા જાવ
+          </Button>
+        </Box>
+        <Heading flex="1" textAlign="center" size="lg" color="green.700">
+          ઉપાડણી વિગત
+        </Heading>
+        <Box width="180px">
+          <Button
+            leftIcon={<FiPlus />}
+            colorScheme="green"
+            onClick={() => {
+              resetForm();
+              onFormOpen();
+            }}
+            rounded="xl"
+            fontWeight="600"
+          >
+            નવી ઉપાડણી
+          </Button>
+        </Box>
+      </Flex>
 
-                        <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">વિશ્વો (Description)</label>
-                            <textarea name="description" value={formData.description} onChange={handleChange} rows="2" className="w-full px-3 py-2 border rounded-md"></textarea>
-                        </div>
+      {/* Statistics Cards */}
+      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} mb={6}>
+        <Card rounded="xl" shadow="sm">
+          <CardBody textAlign="center" p={4}>
+            <Text fontSize="sm" color="gray.500">કુલ ઉપાડણી</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="gray.800">{withdrawalRecords.length}</Text>
+          </CardBody>
+        </Card>
+        <Card rounded="xl" shadow="sm">
+          <CardBody textAlign="center" p={4}>
+            <Text fontSize="sm" color="gray.500">કુલ રકમ</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="purple.600">₹{totalAmount.toLocaleString()}</Text>
+          </CardBody>
+        </Card>
+        <Card rounded="xl" shadow="sm">
+          <CardBody textAlign="center" p={4}>
+            <Text fontSize="sm" color="gray.500">ચકાસાયેલ રકમ</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="green.600">₹{verifiedAmount.toLocaleString()}</Text>
+          </CardBody>
+        </Card>
+        <Card rounded="xl" shadow="sm">
+          <CardBody textAlign="center" p={4}>
+            <Text fontSize="sm" color="gray.500">બાકી ચકાસણી</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="orange.600">
+              {withdrawalRecords.filter(w => w.status === "pending").length}
+            </Text>
+          </CardBody>
+        </Card>
+      </SimpleGrid>
 
-                        <div className="mt-4 flex gap-2">
-                            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                {loading ? <LoaderSpinner /> : (editingId ? 'અપડેટ કરો' : 'સેવ કરો')}
-                            </button>
-                            <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
-                                રદ કરો
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+      {/* Filter Section */}
+      <Card rounded="2xl" shadow="lg" mb={6}>
+        <CardBody>
+          <Flex gap={4} align="center" flexWrap="wrap">
+            <Box flex="1" minW="200px">
+              <FormLabel mb={1} fontSize="sm" fontWeight="600">કર્મચારી ફિલ્ટર</FormLabel>
+              <Select
+                value={selectedEmployeeFilter}
+                onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
+                placeholder="બધા કર્મચારીઓ"
+              >
+                {employees.map(emp => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.employeeName || emp.employeeNameEnglish || "કર્મચારી"}
+                  </option>
+                ))}
+              </Select>
+            </Box>
+          </Flex>
+        </CardBody>
+      </Card>
 
-            {/* Qualifications Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {loading && qualifications.length === 0 ? (
-                    <div className="col-span-full text-center py-10"><LoaderSpinner /></div>
-                ) : qualifications.length === 0 ? (
-                    <div className="col-span-full text-center py-10 text-gray-500">કોઈ શિક્ષણ/તાલીમ વિગત નથી</div>
-                ) : (
-                    qualifications.map(qual => (
-                        <div key={qual._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-                            <div className={`p-4 ${qual.qualificationType === 'education' ? 'bg-blue-600' : 'bg-green-600'} text-white`}>
-                                <div className="flex justify-between items-start">
-                                    <h3 className="font-semibold text-lg">{qual.qualificationName}</h3>
-                                    <span className="px-2 py-1 text-xs bg-white bg-opacity-20 rounded-full">
-                                        {getTypeLabel(qual.qualificationType)}
-                                    </span>
-                                </div>
-                                <p className="text-sm mt-1 opacity-90">{qual.employeeId?.firstName} {qual.employeeId?.lastName}</p>
-                            </div>
-                            <div className="p-4">
-                                <div className="space-y-2 text-sm">
-                                    <p><strong>સમ્મેલીના કાંઠી:</strong> {getCategoryLabel(qual.category)}</p>
-                                    <p><strong>ગૃહીતની ફાર:</strong> {qual.institutionName}</p>
-                                    {qual.degreeName && <p><strong>ડિગ્રી:</strong> {qual.degreeName}</p>}
-                                    {qual.passingYear && <p><strong>પાસિંગ વર્ષ:</strong> {qual.passingYear} {qual.percentage && `| ${qual.percentage}%`}</p>}
-                                    {qual.amount > 0 && <p><strong>ગૃહીતની રમ:</strong> ₹{qual.amount.toLocaleString()}</p>}
-                                    {qual.description && <p><strong>વિશ્વો:</strong> <span className="text-gray-600">{qual.description}</span></p>}
-                                </div>
-                                <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                                    <select
-                                        value={qual.status}
-                                        onChange={(e) => verifyQualification(qual._id, e.target.value)}
-                                        className={`px-2 py-1 text-xs rounded border ${qual.status === 'verified' ? 'bg-green-100 text-green-800' : qual.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}
-                                    >
-                                        <option value="pending">⏳ બાકી</option>
-                                        <option value="verified">✓ ચકાસાયેલ</option>
-                                        <option value="rejected">✗ નામંજૂર</option>
-                                    </select>
-                                    <div>
-                                        <button onClick={() => handleEdit(qual)} className="text-blue-600 hover:text-blue-900 mr-2">✏️</button>
-                                        <button onClick={() => handleDelete(qual._id)} className="text-red-600 hover:text-red-900">🗑️</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))
+      {/* Withdrawals List Table */}
+      <Card rounded="2xl" shadow="lg" overflow="hidden">
+        <CardBody p={0}>
+          {loading ? (
+            <Box textAlign="center" py={10}>
+              <Spinner size="xl" color="green.500" />
+              <Text mt={4}>વિગતો લોડ થઈ રહી છે...</Text>
+            </Box>
+          ) : (
+            <>
+              <Box overflowX="auto">
+                <Table variant="simple">
+                  <Thead bg="#E8F3EC">
+                    <Tr>
+                      <Th>ક્રમાંક</Th>
+                      <Th>તારીખ</Th>
+                      <Th>કર્મચારી નામ</Th>
+                      <Th>ગ્રુપ</Th>
+                      <Th>હોદ્દો</Th>
+                      <Th>ઉપાડનો પ્રકાર</Th>
+                      <Th isNumeric>રકમ (₹)</Th>
+                      <Th>સ્થિતિ</Th>
+                      <Th>ક્રિયા</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {currentItems.length === 0 ? (
+                      <Tr>
+                        <Td colSpan={9} textAlign="center" py={10} color="gray.500">
+                          કોઈ ઉપાડણી વિગત નથી. નવી ઉમેરવા માટે "નવી ઉપાડણી" બટન દબાવો.
+                        </Td>
+                      </Tr>
+                    ) : (
+                      currentItems.map((withdrawal, index) => (
+                        <Tr key={withdrawal._id} _hover={{ bg: "gray.50" }}>
+                          <Td fontWeight="medium">{indexOfFirstItem + index + 1}</Td>
+                          <Td>{formatDate(withdrawal.withdrawalDate)}</Td>
+                          <Td>
+                            <Text fontWeight="500">
+                              {withdrawal.employeeId?.employeeName || 
+                               withdrawal.employeeId?.employeeNameEnglish || 
+                               withdrawal.employeeName || "-"}
+                            </Text>
+                          </Td>
+                          <Td>
+                            <Badge colorScheme="blue">
+                              {withdrawal.employeeId?.employeeGroup || withdrawal.employeeGroup || "-"}
+                            </Badge>
+                          </Td>
+                          <Td>{withdrawal.employeeId?.employeePositionGujarati || withdrawal.employeePosition || "-"}</Td>
+                          <Td>
+                            <Badge colorScheme="orange" variant="subtle">
+                              {getWithdrawalTypeLabel(withdrawal.withdrawalType)}
+                            </Badge>
+                          </Td>
+                          <Td isNumeric fontWeight="bold" color="green.600">
+                            ₹{parseFloat(withdrawal.amount || 0).toLocaleString()}
+                          </Td>
+                          <Td>
+                            <Select
+                              value={withdrawal.status || "pending"}
+                              onChange={(e) => handleVerify(withdrawal._id, e.target.value)}
+                              size="sm"
+                              w="110px"
+                              rounded="md"
+                              bg={withdrawal.status === "verified" ? "green.50" : withdrawal.status === "rejected" ? "red.50" : "yellow.50"}
+                              color={withdrawal.status === "verified" ? "green.600" : withdrawal.status === "rejected" ? "red.600" : "orange.600"}
+                              fontWeight="medium"
+                            >
+                              <option value="pending">⏳ બાકી</option>
+                              <option value="verified">✓ ચકાસાયેલ</option>
+                              <option value="rejected">✗ નામંજૂર</option>
+                            </Select>
+                          </Td>
+                          <Td>
+                            <Flex gap={2}>
+                              <IconButton
+                                icon={<ViewIcon />}
+                                size="sm"
+                                colorScheme="green"
+                                variant="ghost"
+                                onClick={() => handleView(withdrawal)}
+                                aria-label="View"
+                              />
+                              <IconButton
+                                icon={<EditIcon />}
+                                size="sm"
+                                colorScheme="green"
+                                variant="ghost"
+                                onClick={() => handleEdit(withdrawal)}
+                                aria-label="Edit"
+                              />
+                              <IconButton
+                                icon={<DeleteIcon />}
+                                size="sm"
+                                colorScheme="red"
+                                variant="ghost"
+                                onClick={() => handleDelete(withdrawal._id)}
+                                aria-label="Delete"
+                              />
+                            </Flex>
+                          </Td>
+                        </Tr>
+                      ))
+                    )}
+                  </Tbody>
+                </Table>
+              </Box>
+            </>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* ✅ Pagination Component with Show per page dropdown */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={handleItemsPerPageChange}
+      />
+
+      {/* Add/Edit Form Modal */}
+      <Modal isOpen={isFormOpen} onClose={onFormClose} size="xl" motionPreset="slideInBottom">
+        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
+        <ModalContent borderRadius="2xl">
+          <ModalHeader bg="#307644" color="white" borderTopRadius="2xl">
+            <Flex justify="space-between" align="center">
+              <Heading size="md">
+                {editingId ? "ઉપાડણી વિગત સુધારો" : "નવી ઉપાડણી વિગત"}
+              </Heading>
+              <IconButton
+                icon={<FiX />}
+                variant="ghost"
+                color="white"
+                onClick={onFormClose}
+                aria-label="Close"
+                _hover={{ bg: "whiteAlpha.200" }}
+              />
+            </Flex>
+          </ModalHeader>
+          
+          <ModalBody p={6}>
+            <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap={5}>
+              {/* Withdrawal Date - with calendar picker */}
+              <FormControl isRequired isInvalid={!!fieldErrors.withdrawalDate}>
+                <FormLabel fontSize="sm" fontWeight="600">ઉપાડની તારીખ</FormLabel>
+                <Input
+                  type="date"
+                  name="withdrawalDate"
+                  value={formData.withdrawalDate}
+                  onChange={handleDateChange}
+                  max={getMaxDate()}
+                  bg="gray.50"
+                  icon={<FiCalendar />}
+                />
+                {fieldErrors.withdrawalDate && (
+                  <FormErrorMessage>{fieldErrors.withdrawalDate}</FormErrorMessage>
                 )}
-            </div>
+              </FormControl>
 
-            {/* Statistics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-sm text-gray-500">કુલ વિગતો</h3>
-                    <p className="text-2xl font-bold text-gray-800">{qualifications.length}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-sm text-gray-500">શિક્ષણ</h3>
-                    <p className="text-2xl font-bold text-blue-600">{qualifications.filter(q => q.qualificationType === 'education').length}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-sm text-gray-500">તાલીમ/પ્રમાણપત્ર</h3>
-                    <p className="text-2xl font-bold text-green-600">{qualifications.filter(q => q.qualificationType === 'training' || q.qualificationType === 'certification').length}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                    <h3 className="text-sm text-gray-500">ચકાસાયેલ</h3>
-                    <p className="text-2xl font-bold text-green-600">{qualifications.filter(q => q.status === 'verified').length}</p>
-                </div>
-            </div>
-        </div>
-    );
+              {/* Employee Name Dropdown */}
+              <FormControl isRequired isInvalid={!!fieldErrors.employeeId}>
+                <FormLabel fontSize="sm" fontWeight="600">કર્મચારીનું નામ</FormLabel>
+                <Select
+                  name="employeeId"
+                  value={formData.employeeId}
+                  onChange={handleEmployeeChange}
+                  placeholder="કર્મચારી પસંદ કરો"
+                  bg="gray.50"
+                >
+                  {employees.map(emp => (
+                    <option key={emp._id} value={emp._id}>
+                      {emp.employeeName || emp.employeeNameEnglish || "કર્મચારી"}
+                    </option>
+                  ))}
+                </Select>
+                {fieldErrors.employeeId && (
+                  <FormErrorMessage>{fieldErrors.employeeId}</FormErrorMessage>
+                )}
+              </FormControl>
+
+              {/* Employee Group - Auto-filled */}
+              <FormControl>
+                <FormLabel fontSize="sm" fontWeight="600">કર્મચારીનું ગ્રુપ</FormLabel>
+                <Input
+                  name="employeeGroup"
+                  value={formData.employeeGroup}
+                  isReadOnly
+                  bg="gray.100"
+                  placeholder="કર્મચારી પસંદ કરતાં આપોઆપ ભરાશે"
+                />
+              </FormControl>
+
+              {/* Employee Position - Auto-filled */}
+              <FormControl>
+                <FormLabel fontSize="sm" fontWeight="600">કર્મચારીનો હોદ્દો</FormLabel>
+                <Input
+                  name="employeePosition"
+                  value={formData.employeePosition}
+                  isReadOnly
+                  bg="gray.100"
+                  placeholder="કર્મચારી પસંદ કરતાં આપોઆપ ભરાશે"
+                />
+              </FormControl>
+
+              {/* Withdrawal Type */}
+              <FormControl isRequired isInvalid={!!fieldErrors.withdrawalType}>
+                <FormLabel fontSize="sm" fontWeight="600">ઉપાડનો પ્રકાર</FormLabel>
+                <Select
+                  name="withdrawalType"
+                  value={formData.withdrawalType}
+                  onChange={handleChange}
+                  placeholder="પ્રકાર પસંદ કરો"
+                  bg="gray.50"
+                >
+                  {withdrawalTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </Select>
+                {fieldErrors.withdrawalType && (
+                  <FormErrorMessage>{fieldErrors.withdrawalType}</FormErrorMessage>
+                )}
+              </FormControl>
+
+              {/* Amount */}
+              <FormControl isRequired isInvalid={!!fieldErrors.amount}>
+                <FormLabel fontSize="sm" fontWeight="600">ઉપાડની રકમ (₹)</FormLabel>
+                <Input
+                  type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  bg="gray.50"
+                  step="0.01"
+                  min="0.01"
+                  max="1000000"
+                />
+                {fieldErrors.amount && (
+                  <FormErrorMessage>{fieldErrors.amount}</FormErrorMessage>
+                )}
+              </FormControl>
+
+              {/* Remarks - Full width */}
+              <FormControl gridColumn="span 2">
+                <FormLabel fontSize="sm" fontWeight="600">રીમાર્ક</FormLabel>
+                <Textarea
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                  placeholder="વધારાની વિગત કે નોંધ અહીં લખો..."
+                  rows={3}
+                  bg="gray.50"
+                />
+              </FormControl>
+            </Grid>
+          </ModalBody>
+
+          <ModalFooter borderTop="1px solid" borderColor="gray.200" gap={4}>
+            <Button 
+              variant="outline" 
+              colorScheme="red" 
+              onClick={() => {
+                resetForm();
+                onFormClose();
+              }} 
+              size="lg" 
+              px={8} 
+              rounded="xl"
+            >
+              રદ કરો
+            </Button>
+            <Button
+              colorScheme="green"
+              onClick={handleSave}
+              isLoading={saving}
+              leftIcon={<FiSave />}
+              size="lg"
+              px={8}
+              rounded="xl"
+              fontWeight="600"
+            >
+              {editingId ? "અપડેટ કરો" : "સેવ કરો"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* View Modal */}
+      <Modal isOpen={isViewOpen} onClose={onViewClose} size="lg" isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="2xl">
+          <ModalHeader bg="#1E4D2B" color="white" borderTopRadius="2xl">
+            ઉપાડણી વિગત
+          </ModalHeader>
+          <ModalCloseButton color="white" />
+          <ModalBody py={6}>
+            {viewingQualification && (
+              <SimpleGrid columns={2} spacing={4}>
+                <Text fontWeight="bold" color="gray.600">ઉપાડની તારીખ:</Text>
+                <Text>{formatDate(viewingQualification.withdrawalDate)}</Text>
+                
+                <Text fontWeight="bold" color="gray.600">કર્મચારી નામ:</Text>
+                <Text>
+                  {viewingQualification.employeeId?.employeeName || 
+                   viewingQualification.employeeId?.employeeNameEnglish || 
+                   viewingQualification.employeeName || "-"}
+                </Text>
+                
+                <Text fontWeight="bold" color="gray.600">કર્મચારી ગ્રુપ:</Text>
+                <Text>{viewingQualification.employeeId?.employeeGroup || viewingQualification.employeeGroup || "-"}</Text>
+                
+                <Text fontWeight="bold" color="gray.600">કર્મચારી હોદ્દો:</Text>
+                <Text>{viewingQualification.employeeId?.employeePositionGujarati || viewingQualification.employeePosition || "-"}</Text>
+                
+                <Text fontWeight="bold" color="gray.600">ઉપાડનો પ્રકાર:</Text>
+                <Text>{getWithdrawalTypeLabel(viewingQualification.withdrawalType)}</Text>
+                
+                <Text fontWeight="bold" color="gray.600">ઉપાડની રકમ:</Text>
+                <Text fontWeight="bold" color="green.600">₹{parseFloat(viewingQualification.amount || 0).toLocaleString()}</Text>
+                
+                <Text fontWeight="bold" color="gray.600">રીમાર્ક:</Text>
+                <Text>{viewingQualification.remarks || "-"}</Text>
+                
+                <Text fontWeight="bold" color="gray.600">સ્થિતિ:</Text>
+                <Badge 
+                  colorScheme={viewingQualification.status === "verified" ? "green" : viewingQualification.status === "rejected" ? "red" : "orange"}
+                  w="fit-content"
+                  px={3}
+                  py={1}
+                  rounded="full"
+                >
+                  {viewingQualification.status === "verified" ? "ચકાસાયેલ" : 
+                   viewingQualification.status === "rejected" ? "નામંજૂર" : "બાકી"}
+                </Badge>
+              </SimpleGrid>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="green" onClick={onViewClose} rounded="lg">
+              બંધ કરો
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal isOpen={isSuccessOpen} onClose={onSuccessClose} size="md" isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="2xl">
+          <ModalBody py={8} px={6}>
+            <Flex direction="column" align="center" textAlign="center">
+              <Box bg="green.100" p={3} rounded="full" mb={4}>
+                <FiCheck size={40} color="#1E4D2B" />
+              </Box>
+              <Heading size="md" color="green.700" mb={2}>
+                સફળતાપૂર્વક સેવ થયું!
+              </Heading>
+              <Text color="gray.600" mb={4}>
+                ઉપાડણી વિગત સફળતાપૂર્વક નોંધવામાં આવી છે.
+              </Text>
+              <Button colorScheme="green" onClick={onSuccessClose} px={8} rounded="lg">
+                બંધ કરો
+              </Button>
+            </Flex>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </Box>
+  );
 };
 
 export default QualificationDetails;

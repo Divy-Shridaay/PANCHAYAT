@@ -1,3 +1,4 @@
+//model/salary.js
 import mongoose from "mongoose";
 
 const SalarySchema = new mongoose.Schema({
@@ -18,13 +19,19 @@ const SalarySchema = new mongoose.Schema({
     },
     basicSalary: {
         type: Number,
-        required: true
+        required: true,
+        default: 0
+    },
+    gradePay: {
+        type: Number,
+        default: 0
     },
     allowances: {
         da: { type: Number, default: 0 },
         hra: { type: Number, default: 0 },
         ta: { type: Number, default: 0 },
         medical: { type: Number, default: 0 },
+        cleaning: { type: Number, default: 0 },
         special: { type: Number, default: 0 },
         other: { type: Number, default: 0 }
     },
@@ -32,6 +39,10 @@ const SalarySchema = new mongoose.Schema({
         pf: { type: Number, default: 0 },
         esi: { type: Number, default: 0 },
         professionalTax: { type: Number, default: 0 },
+        employeeContribution: { type: Number, default: 0 },
+        otherContribution: { type: Number, default: 0 },
+        pli: { type: Number, default: 0 },
+        cooperativeInstallment: { type: Number, default: 0 },
         tds: { type: Number, default: 0 },
         advance: { type: Number, default: 0 },
         other: { type: Number, default: 0 }
@@ -60,13 +71,15 @@ const SalarySchema = new mongoose.Schema({
         default: "pending"
     },
     generatedBy: {
-        type: String
+        type: String,
+        default: "System"
     },
     approvedBy: {
         type: String
     },
     remarks: {
-        type: String
+        type: String,
+        default: ""
     }
 }, {
     timestamps: true

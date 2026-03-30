@@ -26,7 +26,7 @@ const DailyRecordSchema = new mongoose.Schema({
     },
     workType: {
         type: String,
-        enum: ['field', 'office', 'survey', 'meeting', 'other'],
+        enum: ['field', 'office', 'survey', 'meeting', 'other','leave'],
         required: true
     },
     languageEvidence: {

@@ -1,3 +1,4 @@
+// models/Qualification.js
 import mongoose from "mongoose";
 
 const QualificationSchema = new mongoose.Schema({
@@ -7,40 +8,58 @@ const QualificationSchema = new mongoose.Schema({
         required: true
     },
     
-    // સમ્મેલિનુ નામ (Qualification Name)
-    qualificationName: {
-        type: String,
-        required: true
+    // Auto-filled from employee
+    employeeName: {
+        type: String
+    },
+    employeeGroup: {
+        type: String
+    },
+    employeePosition: {
+        type: String
     },
     
-    // સમ્મેલિનુ જ્વલ (Qualification Type / Details)
-    qualificationType: {
-        type: String,
-        enum: ["education", "training", "certification", "skill", "workshop"],
-        required: true
+    // Withdrawal fields
+    withdrawalDate: {
+        type: Date
     },
     
-    // સમ્મેલીના કાંઠી (Category/Level)
-    category: {
+    withdrawalType: {
         type: String,
-        enum: ["primary", "secondary", "higher_secondary", "graduate", "post_graduate", 
-               "diploma", "certificate", "professional", "vocational", "other"],
-        required: true
+        enum: ["festival_with_deduction", "festival_without_deduction", "advance_salary", "loan", "other"]
     },
     
-    // ગૃહીતની ફાર (Form/Institution Name)
-    institutionName: {
-        type: String,
-        required: true
-    },
-    
-    // ગૃહીતની રમ (Amount/Fees/Cost)
     amount: {
         type: Number,
         default: 0
     },
     
-    // વિશ્વો (Description/Details)
+    remarks: {
+        type: String
+    },
+    
+    // Original qualification fields (keeping for backward compatibility)
+    qualificationName: {
+        type: String
+    },
+    
+    qualificationType: {
+        type: String,
+        enum: ["education", "training", "certification", "skill", "workshop", "withdrawal"], // Added "withdrawal"
+        default: "education"
+    },
+    
+    category: {
+        type: String,
+        enum: ["primary", "secondary", "higher_secondary", "graduate", "post_graduate", 
+               "diploma", "certificate", "professional", "vocational", "other", "withdrawal"], // Added "withdrawal"
+        default: "other"
+    },
+    
+    institutionName: {
+        type: String
+    },
+    
     description: {
         type: String
     },
@@ -72,8 +91,7 @@ const QualificationSchema = new mongoose.Schema({
     },
     
     verifiedBy: String,
-    verifiedAt: Date,
-    remarks: String
+    verifiedAt: Date
 }, {
     timestamps: true
 });
