@@ -1184,7 +1184,6 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
   if (!villageId || !financialYear || !taluka || !district)
     throw new CustomError("Missing required fields", 400);
 
-  // Parallel fetching base data
   const [village, talukaData, districtData, financialYearData, master] =
     await Promise.all([
       Village.findById(villageId),
@@ -1195,15 +1194,14 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
     ]);
 
   const isLocal = ["માણસા", "વિજાપુર"].includes(talukaData.name.trim());
+  const isMansa = talukaData.name.trim() === "માણસા";
 
-  // Preload villagers
   const villagers = await Villager.find({ village: village._id })
     .sort({ createdAt: 1, accountNo: 1 })
     .lean();
 
   const villagerIds = villagers.map((v) => v._id);
 
-  // Preload all relevant data in parallel
   const [
     landMaangnus,
     landRevenues,
@@ -1219,20 +1217,13 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
     LocalFundMaangnu.find({ villager: { $in: villagerIds }, financialYear })
       .sort({ updatedAt: -1 })
       .lean(),
-    LocalFundRevenue.find({
-      villager: { $in: villagerIds },
-      financialYear,
-    }).lean(),
+    LocalFundRevenue.find({ villager: { $in: villagerIds }, financialYear }).lean(),
     EducationMaangnu.find({ villager: { $in: villagerIds }, financialYear })
       .sort({ updatedAt: -1 })
       .lean(),
-    EducationRevenue.find({
-      villager: { $in: villagerIds },
-      financialYear,
-    }).lean(),
+    EducationRevenue.find({ villager: { $in: villagerIds }, financialYear }).lean(),
   ]);
 
-  // Group by villagerId for fast lookup
   const groupBy = (arr, key) => {
     const map = new Map();
     for (const item of arr) {
@@ -1250,7 +1241,155 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
   const eduMaangnuMap = groupBy(eduMaangnus, "villager");
   const eduRevenueMap = groupBy(eduRevenues, "villager");
 
-  // Totals accumulator
+  // =========================================================
+  // *** MANSA-SPECIFIC BRANCH (13-column format) ***
+  // =========================================================
+  if (isMansa) {
+    const mansaTotals = {
+      "જમીન પાછલી બાકી": 0,
+      "ખેતી સિવાય + લોકલ ફંડ": 0,
+      "જમીન ફાજલ": 0,
+      "જમીન વસુલ કરવા પાત્ર રકમ": 0,
+      "જમીન જમા ફાજલ": 0,
+      "શિક્ષણ પાછલી બાકી": 0,
+      "શિક્ષણ ચાલુ": 0,
+      "શિક્ષણ ફાજલ": 0,
+      "શિક્ષણ વસુલ કરવા પાત્ર રકમ": 0,
+      "શિક્ષણ જમા ફાજલ": 0,
+      "એકંદર કુલ": 0,
+    };
+
+    const mansaRows = [];
+
+    for (const v of villagers) {
+      const id = v._id.toString();
+
+      const landM = landMaangnuMap.get(id)?.[0];
+      const eduM = eduMaangnuMap.get(id)?.[0];
+
+      const sivay = parseFloat(v.sivay || 0);
+      const sarkari = parseFloat(v.sarkari || 0);
+
+      // ✅ ROUNDED: Col C - જમીન પાછલી બાકી
+      const landLeft = Math.ceil(parseFloat(landM?.left || 0));
+      // Col E - ફાજલ (not rounded)
+      const landFajal = parseFloat(landM?.fajal || 0);
+
+      // ✅ ROUNDED: Col D - ખેતી સિવાય + લોકલ ફંડ
+      const localAmount = sarkari * 2 + sivay * 2;
+      const colD = Math.ceil(sivay + localAmount);
+
+      // Col F & G (derived from rounded values, no extra rounding needed)
+      const sumCD = landLeft + colD;
+      const colF = sumCD > landFajal ? sumCD - landFajal : 0;
+      const colG = sumCD < landFajal ? landFajal - sumCD : 0;
+
+      // ✅ ROUNDED: Col H - શિક્ષણ પાછલી બાકી
+      const eduLeft = Math.ceil(parseFloat(eduM?.left || 0));
+      // ✅ ROUNDED: Col I - શિક્ષણ ચાલુ
+      const eduPending = Math.ceil(
+        (sarkari * master.sSarkari) / 100 + (sivay * master.sSivay) / 100
+      );
+      const eduFajal = 0;                        // Col J (always 0)
+      const eduRecoverable = eduLeft + eduPending; // Col K
+      const eduDeposit = 0;                       // Col L (always 0)
+      const grandTotal = colF + eduRecoverable;   // Col M
+
+      const row = {
+        "ખાતા નંબર":                  v.accountNo || "",
+        "ખાતેદાર નું નામ":             v.name || "",
+        "જમીન પાછલી બાકી":            landLeft,
+        "ખેતી સિવાય + લોકલ ફંડ":     colD,
+        "જમીન ફાજલ":                  landFajal,
+        "જમીન વસુલ કરવા પાત્ર રકમ":  colF,
+        "જમીન જમા ફાજલ":              colG,
+        "શિક્ષણ પાછલી બાકી":          eduLeft,
+        "શિક્ષણ ચાલુ":                 eduPending,
+        "શિક્ષણ ફાજલ":                 eduFajal,
+        "શિક્ષણ વસુલ કરવા પાત્ર રકમ": eduRecoverable,
+        "શિક્ષણ જમા ફાજલ":            eduDeposit,
+        "એકંદર કુલ":                   grandTotal,
+      };
+
+      mansaRows.push(row);
+      for (const key in mansaTotals) mansaTotals[key] += row[key] || 0;
+    }
+
+    mansaRows.push({ "ખાતા નંબર": "કુલ", "ખાતેદાર નું નામ": "", ...mansaTotals });
+
+    // --- PDF format ---
+    if (format === "pdf") {
+      const fieldMap = {
+        "ખાતા નંબર":                  "accountNo",
+        "ખાતેદાર નું નામ":             "name",
+        "જમીન પાછલી બાકી":            "landLeft",
+        "ખેતી સિવાય + લોકલ ફંડ":     "landSivayPlusLocal",
+        "જમીન ફાજલ":                  "landFajal",
+        "જમીન વસુલ કરવા પાત્ર રકમ":  "landRecoverable",
+        "જમીન જમા ફાજલ":              "landDeposit",
+        "શિક્ષણ પાછલી બાકી":          "eduLeft",
+        "શિક્ષણ ચાલુ":                 "eduPending",
+        "શિક્ષણ ફાજલ":                 "eduFajal",
+        "શિક્ષણ વસુલ કરવા પાત્ર રકમ": "eduRecoverable",
+        "શિક્ષણ જમા ફાજલ":            "eduDeposit",
+        "એકંદર કુલ":                   "grandTotal",
+      };
+      const englishRows = mansaRows.map((row) => {
+        const converted = {};
+        for (const [gujKey, value] of Object.entries(row)) {
+          converted[fieldMap[gujKey] || gujKey] = value;
+        }
+        if (converted.accountNo === "કુલ") converted.isTotalRow = true;
+        return converted;
+      });
+      return res.status(200).json(
+        new SuccessResponse({ data: englishRows }, "Mansa vasulat patrak data")
+      );
+    }
+
+    // --- Excel Export (13-column Mansa format) ---
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("ExportData");
+
+    sheet.mergeCells("A1", "M1");
+    sheet.getCell("A1").value = `${village.name} ગ્રામ પંચાયત, તા. ${talukaData.name} જી. ${districtData.name}  વસુલાત પત્રક  સને ${convertEngToGujNumber(financialYearData.financialYear)}`;
+    sheet.getCell("A1").alignment = { horizontal: "center" };
+    sheet.getCell("A1").font = { bold: true, size: 14 };
+
+    sheet.mergeCells("A2", "A3");
+    sheet.getCell("A2").value = "ખાતા નંબર";
+    sheet.mergeCells("B2", "B3");
+    sheet.getCell("B2").value = "ખાતેદાર નું નામ";
+    sheet.mergeCells("C2", "G2");
+    sheet.getCell("C2").value = "જમીન મહેસુલ";
+    sheet.getCell("C3").value = "પાછલી બાકી";
+    sheet.getCell("D3").value = "ખેતી સિવાય + લોકલ ફંડ";
+    sheet.getCell("E3").value = "ફાજલ";
+    sheet.getCell("F3").value = "વસુલ કરવા પાત્ર રકમ";
+    sheet.getCell("G3").value = "જમા ફાજલ";
+    sheet.mergeCells("H2", "L2");
+    sheet.getCell("H2").value = "શિક્ષણ ઉપકર";
+    sheet.getCell("H3").value = "પાછલી બાકી";
+    sheet.getCell("I3").value = "ચાલુ";
+    sheet.getCell("J3").value = "ફાજલ";
+    sheet.getCell("K3").value = "વસુલ કરવા પાત્ર રકમ";
+    sheet.getCell("L3").value = "જમા ફાજલ";
+    sheet.mergeCells("M2", "M3");
+    sheet.getCell("M2").value = "એકંદર કુલ";
+
+    mansaRows.forEach((r) => sheet.addRow(Object.values(r)));
+    sheet.lastRow.font = { bold: true };
+
+    const safeFileName = `export_${village.name}_${convertEngToGujNumber(financialYearData.financialYear)}.xlsx`;
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(safeFileName)}`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    await workbook.xlsx.write(res);
+    return res.end();
+  }
+
+  // =========================================================
+  // ORIGINAL 18-COLUMN LOGIC — Vijapur + all other talukas
+  // =========================================================
   const totals = {
     "જમીન પાછલી બાકી": 0,
     "જમીન સરકારી/સિવાય": 0,
@@ -1275,37 +1414,28 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
   for (const v of villagers) {
     const id = v._id.toString();
 
-    // --- Land ---
     const landM = landMaangnuMap.get(id)?.[0];
     const landR = landRevenueMap.get(id) || [];
-    const landRotating = landR.reduce(
-      (s, x) => s + (parseFloat(x.rotating) || 0),
-      0
-    );
     const landTotal =
       landR.reduce((s, x) => s + (parseFloat(x.total) || 0), 0) +
       (parseFloat(landM?.fajal) || 0);
-    const landLeft = parseFloat(landM?.left || 0);
-    const landSivay = parseFloat(v.sivay || 0);
-    const landSarkari = parseFloat(v.sarkari || 0);
+
+    // ✅ ROUNDED: જમીન પાછલી બાકી and ખેતી સિવાય/ચાલુ
+    const landLeft = Math.ceil(parseFloat(landM?.left || 0));
+    const landSivay = Math.ceil(parseFloat(v.sivay || 0));
 
     const landRevenueTotal =
       landLeft + landSivay > landTotal ? landLeft + landSivay - landTotal : 0;
     const landDeposit =
       landLeft + landSivay < landTotal ? landTotal - (landLeft + landSivay) : 0;
 
-    // --- Local ---
     const localM = localMaangnuMap.get(id)?.[0];
-    const localR = localRevenueMap.get(id) || [];
-    const localRotating = localR.reduce(
-      (s, x) => s + (parseFloat(x.rotating) || 0),
-      0
-    );
-    const localLeft = parseFloat(localM?.left || 0);
+    // ✅ ROUNDED: લોકલ પાછલી બાકી and લોકલ ચાલુ
+    const localLeft = Math.ceil(parseFloat(localM?.left || 0));
     const localFajal = parseFloat(localM?.fajal || 0);
     const localSarkari = (v.sarkari * master.lSarkari) / 100;
     const localSivay = (v.sivay * master.lSivay) / 100;
-    const localPending = localSarkari + localSivay;
+    const localPending = Math.ceil(localSarkari + localSivay);
     const localRevenueTotal =
       localLeft + localPending > localFajal
         ? localLeft + localPending - localFajal
@@ -1315,18 +1445,13 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
         ? localFajal - (localLeft + localPending)
         : 0;
 
-    // --- Education ---
     const eduM = eduMaangnuMap.get(id)?.[0];
-    const eduR = eduRevenueMap.get(id) || [];
-    const eduRotating = eduR.reduce(
-      (s, x) => s + (parseFloat(x.rotating) || 0),
-      0
-    );
-    const eduLeft = parseFloat(eduM?.left || 0);
+    // ✅ ROUNDED: શિક્ષણ પાછલી બાકી and શિક્ષણ ચાલુ
+    const eduLeft = Math.ceil(parseFloat(eduM?.left || 0));
     const eduFajal = parseFloat(eduM?.fajal || 0);
     const eduSarkari = (v.sarkari * master.sSarkari) / 100;
     const eduSivay = (v.sivay * master.sSivay) / 100;
-    const eduPending = eduSarkari + eduSivay;
+    const eduPending = Math.ceil(eduSarkari + eduSivay);
     const eduRevenueTotal =
       eduLeft + eduPending > eduFajal ? eduLeft + eduPending - eduFajal : 0;
     const eduDeposit =
@@ -1359,80 +1484,53 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
 
   rows.push({ "ખાતા નંબર": "કુલ", "ખાતેદાર નું નામ": "", ...totals });
 
-if (format === "pdf") {
-  console.log("Returning PDF JSON data...");
+  if (format === "pdf") {
+    const fieldMap = {
+      "ખાતા નંબર": "accountNo",
+      "ખાતેદાર નું નામ": "name",
+      "જમીન પાછલી બાકી": "landLeft",
+      "જમીન સરકારી/સિવાય": "landPending",
+      "જમીન ફાજલ": "landFajal",
+      "જમીન વસુલ કરવા પાત્ર કરમ": "landRecoverable",
+      "જમીન જમા ફાજલ": "landDeposit",
+      "લોકલ પાછલી બાકી": "localLeft",
+      "લોકલ ચાલુ": "localPending",
+      "લોકલ ફાજલ": "localFajal",
+      "લોકલ વસુલ કરવા પાત્ર કરમ": "localRecoverable",
+      "લોકલ જમા ફાજલ": "localDeposit",
+      "શિક્ષણ પાછલી બાકી": "eduLeft",
+      "શિક્ષણ ચાલુ": "eduPending",
+      "શિક્ષણ ફાજલ": "eduFajal",
+      "શિક્ષણ વસુલ કરવા પાત્ર કરમ": "eduRecoverable",
+      "શિક્ષણ જમા ફાજલ": "eduDeposit",
+      "એકંદર કુલ ": "grandTotal",
+    };
+    const englishRows = rows.map((row) => {
+      const converted = {};
+      for (const [gujKey, value] of Object.entries(row)) {
+        converted[fieldMap[gujKey] || gujKey] = value;
+      }
+      if (converted.accountNo === "કુલ") converted.isTotalRow = true;
+      return converted;
+    });
+    return res.status(200).json(
+      new SuccessResponse({ data: englishRows }, "Fetched land report with totals (English keys)")
+    );
+  }
 
-  // Map Gujarati column names to English
-  const fieldMap = {
-    "ખાતા નંબર": "accountNo",
-    "ખાતેદાર નું નામ": "name",
-    "જમીન પાછલી બાકી": "landLeft",
-    "જમીન સરકારી/સિવાય": "landPending",
-    "જમીન ફાજલ": "landFajal",
-    "જમીન વસુલ કરવા પાત્ર કરમ": "landRecoverable",
-    "જમીન જમા ફાજલ": "landDeposit",
-    "લોકલ પાછલી બાકી": "localLeft",
-    "લોકલ ચાલુ": "localPending",
-    "લોકલ ફાજલ": "localFajal",
-    "લોકલ વસુલ કરવા પાત્ર કરમ": "localRecoverable",
-    "લોકલ જમા ફાજલ": "localDeposit",
-    "શિક્ષણ પાછલી બાકી": "eduLeft",
-    "શિક્ષણ ચાલુ": "eduPending",
-    "શિક્ષણ ફાજલ": "eduFajal",
-    "શિક્ષણ વસુલ કરવા પાત્ર કરમ": "eduRecoverable",
-    "શિક્ષણ જમા ફાજલ": "eduDeposit",
-    "એકંદર કુલ ": "grandTotal",
-  };
-
-  // Convert Gujarati keys → English keys
-  const englishRows = rows.map((row) => {
-    const converted = {};
-    for (const [gujKey, value] of Object.entries(row)) {
-      converted[fieldMap[gujKey] || gujKey] = value;
-    }
-    if (converted.accountNo === "કુલ") {
-      converted.isTotalRow = true;
-    }
-    return converted;
-  });
-
-  return res.status(200).json(
-    new SuccessResponse(
-      {
-        data: englishRows,
-      },
-      "Fetched land report with totals (English keys)"
-    )
-  );
-}
-
-
-  // --- Excel Export ---
+  // --- Excel Export (original 18-column format) ---
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("ExportData");
-  // ... reuse your existing Excel header and merge logic ...
 
-  // --- Create Excel workbook ---
-  //   const workbook = new ExcelJS.Workbook();
-  //   const sheet = workbook.addWorksheet("ExportData");
-
-  // Title Row
   sheet.mergeCells("A1", "R1");
-  sheet.getCell("A1").value = `${village.name} ગ્રામ પંચાયત, તા. ${
-    talukaData.name
-  } જી. ${districtData.name}  વસુલાત પત્રક  સને ${convertEngToGujNumber(
-    financialYearData.financialYear
-  )}`;
+  sheet.getCell("A1").value = `${village.name} ગ્રામ પંચાયત, તા. ${talukaData.name} જી. ${districtData.name}  વસુલાત પત્રક  સને ${convertEngToGujNumber(financialYearData.financialYear)}`;
   sheet.getCell("A1").alignment = { horizontal: "center" };
   sheet.getCell("A1").font = { bold: true, size: 14 };
 
-  // Header Rows
   sheet.mergeCells("A2", "A3");
   sheet.getCell("A2").value = "ખાતા નંબર";
-
   sheet.mergeCells("B2", "B3");
   sheet.getCell("B2").value = "ખાતેદાર નું નામ";
-
   sheet.mergeCells("C2", "G2");
   sheet.getCell("C2").value = "જમીન મહેસુલ";
   sheet.getCell("C3").value = "પાછલી બાકી";
@@ -1440,15 +1538,13 @@ if (format === "pdf") {
   sheet.getCell("E3").value = "ફાજલ";
   sheet.getCell("F3").value = "વસુલ કરવા પાત્ર રકમ";
   sheet.getCell("G3").value = "જમા ફાજલ";
-
   sheet.mergeCells("H2", "L2");
   sheet.getCell("H2").value = "લોકલ ફંડ ";
   sheet.getCell("H3").value = "પાછલી બાકી";
   sheet.getCell("I3").value = "ચાલુ";
   sheet.getCell("J3").value = "ફાજલ";
   sheet.getCell("K3").value = "વસુલ કરવા પાત્ર રકમ";
-  sheet.getCell("L3").value = "જમા ફાજલ"; 
-
+  sheet.getCell("L3").value = "જમા ફાજલ";
   sheet.mergeCells("M2", "Q2");
   sheet.getCell("M2").value = "શિક્ષણ ઉપકર";
   sheet.getCell("M3").value = "પાછલી બાકી";
@@ -1456,43 +1552,15 @@ if (format === "pdf") {
   sheet.getCell("O3").value = "ફાજલ";
   sheet.getCell("P3").value = "વસુલ કરવા પાત્ર રકમ";
   sheet.getCell("Q3").value = "જમા ફાજલ";
-
   sheet.mergeCells("R2", "R3");
   sheet.getCell("R2").value = "એકંદર કુલ";
 
-  // Insert Rows
-  rows.forEach((r) => {
-    sheet.addRow(Object.values(r));
-  });
+  rows.forEach((r) => sheet.addRow(Object.values(r)));
+  sheet.lastRow.font = { bold: true };
 
-  // Bold Last Row (Totals)
-  const lastRow = sheet.lastRow;
-  lastRow.font = { bold: true };
-
-  // Auto column width
-  // sheet.columns.forEach((col) => {
-  //   let maxLength = 0;
-  //   col.eachCell({ includeEmpty: true }, (cell) => {
-  //     maxLength = Math.max(maxLength, (cell.value ? cell.value.toString().length : 0));
-  //   });
-  //   col.width = maxLength + 2;
-  // });
-
-  // rows.forEach(r => sheet.addRow(Object.values(r)));
-  // sheet.lastRow.font = { bold: true };
-
-  const safeFileName = `export_${village.name}_${convertEngToGujNumber(
-    financialYearData.financialYear
-  )}.xlsx`;
-
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename*=UTF-8''${encodeURIComponent(safeFileName)}`
-  );
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
+  const safeFileName = `export_${village.name}_${convertEngToGujNumber(financialYearData.financialYear)}.xlsx`;
+  res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(safeFileName)}`);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   await workbook.xlsx.write(res);
   res.end();
 });

@@ -9,6 +9,7 @@ const EducationMaangnu = require("../../db/EducationMaangnuModel");
 const villagerRouter = generateCrudRoutes({
   model: Villager,
   modelName: "Villagers",
+  defaultSort: { importOrder: 1 }, // Ensure order matches Excel import
   preHooksOptions: {
     create: async (req, _) => {
       req.body.createdBy = req.user;
@@ -17,6 +18,9 @@ const villagerRouter = generateCrudRoutes({
     update: async (req, _) => {
       req.body.updatedBy = req.user;
     },
+    getAll: async (req, res, response) => {
+      console.log(req.query.filter);
+    },
   },
   middlewareOptions: {
     beforeGetAll: checkPermission("VILLAGERS_READ"),
@@ -24,11 +28,6 @@ const villagerRouter = generateCrudRoutes({
     beforeCreate: checkPermission("VILLAGERS_CREATE"),
     beforeUpdate: checkPermission("VILLAGERS_UPDATE"),
     beforeSoftDelete: checkPermission("VILLAGERS_DELETE"),
-  },
-  preHooksOptions: {
-    getAll: async (req, res, response) => {
-      console.log(req.query.filter);
-    },
   },
   postHooksOptions: {
     create: async (req, res, response) => {

@@ -80,7 +80,7 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     },
     
     // Sort
-    { $sort: { accountNo: 1, createdAt: 1 } },
+    { $sort: { importOrder: 1 } },
     
     // Pagination
     { $skip: (parseInt(page) - 1) * parseInt(limit) },

@@ -90,23 +90,28 @@ export default function LandRevenueCollectionModal({
     if (id) return;
 
     if (type === "Land") {
-      setLeftBehind(response.landMaangnu.left);
-      setPending(response.landMaangnu.pending);
-      setRotating(response.landMaangnu.rotating);
+      setLeftBehind(ceilNumber(response.landMaangnu.left));
+      setPending(ceilNumber(response.landMaangnu.pending));
+      setRotating(ceilNumber(response.landMaangnu.rotating));
     } else if (type === "Local Fund") {
-      setLeftBehind(response.localFundMaangnu.left);
-      setPending(response.localFundMaangnu.pending );
-      setRotating(response.localFundMaangnu.rotating);
+      setLeftBehind(ceilNumber(response.localFundMaangnu.left));
+      setPending(ceilNumber(response.localFundMaangnu.pending));
+      setRotating(ceilNumber(response.localFundMaangnu.rotating));
     } else {
-      setLeftBehind(response.educationCessMaangnu.left);
-      setPending(response.educationCessMaangnu.pending);
-      setRotating(response.educationCessMaangnu.rotating);
+      setLeftBehind(ceilNumber(response.educationCessMaangnu.left));
+      setPending(ceilNumber(response.educationCessMaangnu.pending));
+      setRotating(ceilNumber(response.educationCessMaangnu.rotating));
     }
   };
 
   const parseSafeFloat = (val) => {
     const num = parseFloat(val);
     return isNaN(num) ? 0 : num;
+  };
+
+  const ceilNumber = (val) => {
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : Math.ceil(num);
   };
 
   const total =
@@ -188,9 +193,9 @@ export default function LandRevenueCollectionModal({
           response.data.data.villager
         );
         setCurrentVillager(villagerResponse?.data);
-        setLeftBehind(response.data.data.left);
-        setPending(response.data.data.pending);
-        setRotating(response.data.data.rotating);
+        setLeftBehind(ceilNumber(response.data.data.left));
+        setPending(ceilNumber(response.data.data.pending));
+        setRotating(ceilNumber(response.data.data.rotating));
         const date = new Date(response.data.data.billDate);
         setBillDate(date.toISOString().split("T")[0]);
         setBillNo(response.data.data.billNo);

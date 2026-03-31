@@ -58,7 +58,8 @@ exports.importData = asyncHandler(async (req, res) => {
   const localFundMaangnuBatch = [];
   const educationMaangnuBatch = [];
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
     const accountNo = row["ખાતા નંબર"]?.toString().trim();
     const name = row["નામ"]?.toString().trim();
     if (!accountNo) continue;
@@ -74,6 +75,7 @@ exports.importData = asyncHandler(async (req, res) => {
       villager.sarkari = sarkari;
       villager.sivay = sivay;
       villager.status = 1;
+      villager.importOrder = i; // ✅ update order
       updatedVillagerPromises.push(villager.save());
     } else {
       // Create new villager
@@ -84,12 +86,13 @@ exports.importData = asyncHandler(async (req, res) => {
         sarkari,
         sivay,
         status: 1,
+        importOrder: i, // ✅ save order
       });
     }
   }
 
   // Insert new villagers and map their IDs
-  const createdVillagers = await Villager.insertMany(newVillagers);
+  const createdVillagers = await Villager.insertMany(newVillagers, { ordered: true });
   createdVillagers.forEach((v) => {
     existingVillagersMap.set(v.accountNo, v);
   });

@@ -14,7 +14,7 @@ exports.getLocalFundReport = asyncHandler(async (req, res) => {
 
   const totalDocs = await Villager.countDocuments({ village });
   const villagers = await Villager.find({ village })
-    .sort({ createdAt: 1, accountNo: 1 })
+    .sort({ importOrder: 1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit))
     .lean();
@@ -153,15 +153,7 @@ exports.getLocalFundReport = asyncHandler(async (req, res) => {
       totalCalculated > totalCalc ? parseFloat(totalCalculated - totalCalc) : 0;
   }
 
-  villagers.sort((a, b) => {
-  const na = parseInt(a.accountNo, 10);
-  const nb = parseInt(b.accountNo, 10);
 
-  // push NaN/non-numeric to the end
-  const va = Number.isNaN(na) ? Number.POSITIVE_INFINITY : na;
-  const vb = Number.isNaN(nb) ? Number.POSITIVE_INFINITY : nb;
-  return va - vb;
-});
 
 
   villagers.push({

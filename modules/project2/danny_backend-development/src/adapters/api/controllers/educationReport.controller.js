@@ -19,7 +19,7 @@ exports.getEducationReport = asyncHandler(async (req, res) => {
   const totalDocs = await Villager.countDocuments({ village });
 
   const villagers = await Villager.find({ village })
-    .sort({ createdAt: 1, accountNo: 1 })
+    .sort({ importOrder: 1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
@@ -162,11 +162,7 @@ exports.getEducationReport = asyncHandler(async (req, res) => {
   totals.collumnFourteen = fix2(totals.collumnFourteen);
   totals.collumnFifteen = fix2(totals.collumnFifteen);
 
-  villagers.sort((a, b) => {
-    const na = parseInt(a.accountNo);
-    const nb = parseInt(b.accountNo);
-    return (isNaN(na) ? Infinity : na) - (isNaN(nb) ? Infinity : nb);
-  });
+  // No manual sort needed, already sorted by importOrder
 
   villagers.push({
     isTotalRow: true,

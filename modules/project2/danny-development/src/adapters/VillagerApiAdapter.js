@@ -47,7 +47,7 @@ export const fetchVillagersPage = async (
   const response = await callApi({
     url: `${BASE_URL}/villagers?page=${page}&limit=${limit}&join=${join}&search=${search}&filter=${encodeURIComponent(
       JSON.stringify(newFilter)
-    )}&status=${status}&sort=accountNo`,
+    )}&status=${status}&sort=importOrder`,
     method: "GET",
     Token: localStorage.getItem("accessToken"),
     showSuccessToast: false,

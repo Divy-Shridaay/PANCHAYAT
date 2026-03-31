@@ -22,6 +22,10 @@ const VillagerSchema = new mongoose.Schema(
       enum: [0, 1, 2],
       default: 1,
     },
+    importOrder: {
+      type: Number,
+      default: 0,
+    },
     // financialYear: {
     //   type: mongoose.Schema.Types.ObjectId,
     //   ref: "FinancialYear",
