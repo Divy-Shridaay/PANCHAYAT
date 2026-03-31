@@ -1284,8 +1284,8 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
       const colF = sumCD > landFajal ? sumCD - landFajal : 0;
       const colG = sumCD < landFajal ? landFajal - sumCD : 0;
 
-      // ✅ ROUNDED: Col H - શિક્ષણ પાછલી બાકી
-      const eduLeft = Math.ceil(parseFloat(eduM?.left || 0));
+      // ✅ ROUNDED: Col H - શિક્ષણ પાછલી બાકી = 25% of landLeft (rounded up)
+      const eduLeft = Math.ceil(landLeft * 0.25);  // <-- CHANGED: Now calculated from landLeft
       // ✅ ROUNDED: Col I - શિક્ષણ ચાલુ
       const eduPending = Math.ceil(
         (sarkari * master.sSarkari) / 100 + (sivay * master.sSivay) / 100
@@ -1447,7 +1447,7 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
 
     const eduM = eduMaangnuMap.get(id)?.[0];
     // ✅ ROUNDED: શિક્ષણ પાછલી બાકી and શિક્ષણ ચાલુ
-    const eduLeft = Math.ceil(parseFloat(eduM?.left || 0));
+    const eduLeft = Math.ceil(landLeft * 0.25);
     const eduFajal = parseFloat(eduM?.fajal || 0);
     const eduSarkari = (v.sarkari * master.sSarkari) / 100;
     const eduSivay = (v.sivay * master.sSivay) / 100;
