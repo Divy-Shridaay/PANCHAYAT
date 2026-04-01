@@ -20,10 +20,9 @@ const CategorySettings = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-   const API_BASE = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
+  const API_BASE = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
     ? "http://localhost:5000/api"
     : "https://panchayat.shridaay.com/api";
-Gram-Panchayat
  
   const [categories, setCategories] = useState({ aavak: [], javak: [] });
   const [type, setType] = useState("aavak");
