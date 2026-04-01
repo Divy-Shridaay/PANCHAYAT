@@ -234,7 +234,7 @@ const LandRequisitionNotice = ({ villager, accountNumber }) => {
       Object.entries(data).forEach(([key, value]) => {
         const regex = new RegExp(`{{\\s*${key}\\s*}}`, "g");
         htmlTemplate = htmlTemplate.replace(regex, value);
-      });
+      }); 
       // 3. Open a new window and write the processed HTML
       const printWindow = window.open("", "_blank", "width=800,height=600");
       if (printWindow) {

@@ -93,3 +93,15 @@ export const deleteAllEducationRevenue = async (financialYear, village) => {
   });
   return response;
 };
+
+export const fetchEducationRevenueByRange = async (from, to, village, financialYear) => {
+  const callApi = getGlobalApiCaller();
+  if (!callApi) return { data: null, status: false };
+  const response = await callApi({
+    url: `${BASE_URL}/range?from=${from}&to=${to}&village=${village}&financialYear=${financialYear}`,
+    method: "GET",
+    Token: localStorage.getItem("accessToken"),
+    showSuccessToast: false,
+  });
+  return response?.data;
+};

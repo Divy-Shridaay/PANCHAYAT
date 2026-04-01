@@ -11,6 +11,7 @@ import {
   Table,
   Tbody,
   Td,
+  Text,
   Th,
   Thead,
   Tr,
@@ -28,6 +29,9 @@ import {
   fetchChallanById,
   updateChallan,
 } from "../../adapters/ChallanApiAdapter";
+import { fetchLandRevenueByRange } from "../../adapters/LandRevenueApiAdapter";
+import { fetchLocalFundRevenueByRange } from "../../adapters/LocalFundRevenueApiAdapter";
+import { fetchEducationRevenueByRange } from "../../adapters/EducationRevenueApiAdapter";
 import { useFinancialYear } from "../../ports/context/FinancialYearContext";
 import { useVillage } from "../../ports/context/VillageContext";
 
@@ -48,6 +52,7 @@ export default function ChallanCreateModal({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [challanNo, setChallanNo] = useState("");
+  const [isFetching, setIsFetching] = useState(false);
 
   // Helper to parse numbers safely
   const parseSafeFloat = (val) => {
@@ -120,6 +125,43 @@ export default function ChallanCreateModal({
     }, 0);
   }, [mode, id]);
 
+  // Auto-fetch revenue records when from/to change
+  useEffect(() => {
+    const autoFetchFromReceipts = async () => {
+      const fromNo = parseInt(from);
+      const toNo = parseInt(to);
+
+      // Only fetch if both from and to are valid numbers and from <= to
+      if (!from || !to || isNaN(fromNo) || isNaN(toNo) || fromNo > toNo) return;
+
+      setIsFetching(true);
+      try {
+        let response;
+
+        // Choose the appropriate API based on challan type
+        if (type === "Land") {
+          response = await fetchLandRevenueByRange(fromNo, toNo, village, financialYear);
+        } else if (type === "Local Fund") {
+          response = await fetchLocalFundRevenueByRange(fromNo, toNo, village, financialYear);
+        } else if (type === "Education") {
+          response = await fetchEducationRevenueByRange(fromNo, toNo, village, financialYear);
+        }
+
+        if (response?.status && response?.data) {
+          setLeftBehind(response.data.left.toFixed(2));
+          setPending(response.data.pending.toFixed(2));
+          setRotating(response.data.rotating.toFixed(2));
+        }
+      } catch (err) {
+        console.error("Auto-fetch failed:", err);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    autoFetchFromReceipts();
+  }, [from, to, village, financialYear, type]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={"4xl"}>
       <ModalOverlay />
@@ -169,16 +211,21 @@ export default function ChallanCreateModal({
                   onChange={(e) => setFrom(e.target.value)}
                 />
               </FormControl>
-              {/* <FormControl>
+              <FormControl>
                 <CustomFormLabel>{t("challan.to")}</CustomFormLabel>
                 <CustomInput
                   type="text"
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
                 />
-              </FormControl> */}
+              </FormControl>
             </SimpleGrid>
           </VStack>
+          {isFetching && (
+            <Text fontSize="sm" color="teal.500" mb={2}>
+              રેકોર્ડ્સ શોધી રહ્યા છે...
+            </Text>
+          )}
           <Table>
             <Thead>
               <Tr>

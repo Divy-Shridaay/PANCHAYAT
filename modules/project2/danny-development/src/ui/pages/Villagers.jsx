@@ -177,6 +177,9 @@ export default function Villagers() {
         return wrapGujaratiName(name).split("<br/>").length;
       }
 
+      // 🧾 Detect Mansa format (13 columns) vs regular format (18 columns)
+      const isMansaFormat = data.length > 0 && data[0].hasOwnProperty('landSivayPlusLocal');
+
       // 🧾 Build paginated chunks based on name line count
       const rowsPerPage = 22;
       const paginatedChunks = [];
@@ -203,7 +206,9 @@ export default function Villagers() {
           .map((item) => {
             const wrappedName = wrapGujaratiName(item.name);
 
-            return `
+            if (isMansaFormat) {
+              // 🟢 MANSA FORMAT: 13 columns with combined "ખેતી સિવાય + લોકલ ફંડ"
+              return `
       <tr>
         <td ${
           item.isTotalRow
@@ -215,7 +220,99 @@ export default function Villagers() {
         <td style="text-align: left; width:700px; max-width: 700px;  white-space: nowrap;">
           ${wrappedName}
         </td>
-
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.landLeft || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.landSivayPlusLocal || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.landFajal || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.landRecoverable || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.landDeposit || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.eduLeft || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.eduPending || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.eduFajal || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.eduRecoverable || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.eduDeposit || 0).toFixed(2))}
+        </td>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(parseFloat(item.grandTotal || 0).toFixed(2))}
+        </td>
+      </tr>
+    `;
+            } else {
+              // 🔴 REGULAR FORMAT: 18 columns with separate local fund section
+              return `
+      <tr>
+        <td ${
+          item.isTotalRow
+            ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
+            : ""
+        }>
+          ${convertEngToGujNumber(item.accountNo || "")}
+        </td>
+        <td style="text-align: left; width:700px; max-width: 700px;  white-space: nowrap;">
+          ${wrappedName}
+        </td>
         <td ${
           item.isTotalRow
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
@@ -242,9 +339,7 @@ export default function Villagers() {
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
             : ""
         }>
-             ${convertEngToGujNumber(
-               parseFloat(item.landRecoverable || 0).toFixed(2)
-             )}
+          ${convertEngToGujNumber(parseFloat(item.landRecoverable || 0).toFixed(2))}
         </td>
         <td ${
           item.isTotalRow
@@ -258,16 +353,14 @@ export default function Villagers() {
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
             : ""
         }>
-           ${convertEngToGujNumber(parseFloat(item.localLeft || 0).toFixed(2))}
+          ${convertEngToGujNumber(parseFloat(item.localLeft || 0).toFixed(2))}
         </td>
         <td ${
           item.isTotalRow
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
             : ""
         }>
-          ${convertEngToGujNumber(
-            parseFloat(item.localPending || 0).toFixed(2)
-          )}
+          ${convertEngToGujNumber(parseFloat(item.localPending || 0).toFixed(2))}
         </td>
         <td ${
           item.isTotalRow
@@ -281,18 +374,14 @@ export default function Villagers() {
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
             : ""
         }>
-           ${convertEngToGujNumber(
-             parseFloat(item?.localRecoverable || 0).toFixed(2)
-           )}
+          ${convertEngToGujNumber(parseFloat(item?.localRecoverable || 0).toFixed(2))}
         </td>
         <td ${
           item.isTotalRow
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
             : ""
         }>
-         ${convertEngToGujNumber(
-           parseFloat(item?.localDeposit || 0).toFixed(2)
-         )}
+          ${convertEngToGujNumber(parseFloat(item?.localDeposit || 0).toFixed(2))}
         </td>
         <td ${
           item.isTotalRow
@@ -320,9 +409,7 @@ export default function Villagers() {
             ? `style="writing-mode: vertical-rl; transform: rotate(180deg);"`
             : ""
         }>
-          ${convertEngToGujNumber(
-            parseFloat(item.eduRecoverable || 0).toFixed(2)
-          )}
+          ${convertEngToGujNumber(parseFloat(item.eduRecoverable || 0).toFixed(2))}
         </td>
         <td ${
           item.isTotalRow
@@ -338,16 +425,43 @@ export default function Villagers() {
         }>
           ${convertEngToGujNumber(parseFloat(item.grandTotal || 0).toFixed(2))}
         </td>
-      
       </tr>
     `;
+            }
           })
           .join("");
 
-        pagesHtml += `
-    <section class="print-page">
-      <table>
-        <thead>
+        const tableHeaders = isMansaFormat
+          ? `
+        <tr>
+          <th colspan="13" style="font-size:20px;" class="text-center">
+           ${villageName}  ગ્રામ પંચાયત, તા. ${talukaName} જી. ${districtName}  વસુલાત પત્રક  સને ${convertEngToGujNumber(
+          financialYearName
+        )}
+          </th>
+        </tr>
+          <tr>
+      <th rowspan="2">ખાતા નંબર</th>
+      <th rowspan="2">ખાતેદાર નું નામ</th>
+      <th colspan="5">જમીન મહેસૂલ</th>
+      <th colspan="5">શિક્ષણ ઉપકર</th>
+      <th rowspan="2">એકંદર કુલ</th>
+    </tr>
+    <tr>
+      <th>પાછલી બાકી</th>
+      <th>ખેતી સિવાય + લોકલ ફંડ</th>
+      <th>ફાજલ</th>
+      <th>વસૂલ કરવા પાત્ર રકમ</th>
+      <th>જમા ફાજલ</th>
+
+         <th>પાછલી બાકી</th>
+      <th>ચાલુ</th>
+      <th>ફાજલ</th>
+      <th>વસૂલ કરવા પાત્ર રકમ</th>
+      <th>જમા ફાજલ</th>
+    </tr>
+        `
+          : `
         <tr>
           <th colspan="18" style="font-size:20px;" class="text-center">
            ${villageName}  ગ્રામ પંચાયત, તા. ${talukaName} જી. ${districtName}  વસુલાત પત્રક  સને ${convertEngToGujNumber(
@@ -382,8 +496,13 @@ export default function Villagers() {
       <th>વસૂલ કરવા પાત્ર રકમ</th>
       <th>જમા ફાજલ</th>
     </tr>
-        <!-- Full Gujarati table header -->
-    
+        `;
+
+        pagesHtml += `
+    <section class="print-page">
+      <table>
+        <thead>
+        ${tableHeaders}
         </thead>
         <tbody>${rowsHtml}</tbody>
       </table>
@@ -398,6 +517,7 @@ export default function Villagers() {
       </div>
     </section>
   `;
+
       });
 
       // 🖨️ Final output to print window

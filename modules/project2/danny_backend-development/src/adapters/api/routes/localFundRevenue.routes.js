@@ -86,4 +86,44 @@ const localFundRevenueRouter = generateCrudRoutes({
   },
 });
 
+// Custom route for fetching local fund revenue by receipt number range
+localFundRevenueRouter.get('/range', checkPermission("LOCAL_FUND_REVENUE_READ"), async (req, res) => {
+  try {
+    const { from, to, village, financialYear } = req.query;
+    
+    if (!from || !to || !village || !financialYear) {
+      return res.status(400).json({ 
+        status: false, 
+        message: "from, to, village, and financialYear are required" 
+      });
+    }
+
+    const records = await LocalFundRevenue.find({
+      village,
+      financialYear,
+      billNo: { $gte: Number(from), $lte: Number(to) }
+    }).lean();
+    
+    const left = records.reduce((sum, record) => sum + (record.left || 0), 0);
+    const pending = records.reduce((sum, record) => sum + (record.pending || 0), 0);
+    const rotating = records.reduce((sum, record) => sum + (record.rotating || 0), 0);
+    
+    res.json({ 
+      status: true, 
+      data: { 
+        left, 
+        pending, 
+        rotating, 
+        count: records.length 
+      } 
+    });
+  } catch (error) {
+    console.error("Error fetching local fund revenue range:", error);
+    res.status(500).json({ 
+      status: false, 
+      message: "Internal server error" 
+    });
+  }
+});
+
 module.exports = localFundRevenueRouter;
