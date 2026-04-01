@@ -6,65 +6,65 @@
     <title>જમીન મહેસૂલ ન આપનારને નોટીસ</title>
     <style>
         body {
-              font-family: "Noto Sans Gujarati", "Arial Unicode MS", "Noto Sans", sans-serif;
+            font-family: "Noto Sans Gujarati", "Arial Unicode MS", "Noto Sans", sans-serif;
             margin: 50px;
             font-size: 18px;
             line-height: 1.8;
         }
-
-        .right {
-            text-align: right;
-        }
-
         .center {
             text-align: center;
             font-weight: bold;
             font-size: 22px;
             margin: 30px 0 20px;
         }
-
         .section {
             margin-bottom: 20px;
             text-align: justify;
-  text-justify: inter-word;
+            text-justify: inter-word;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-
-        table,
-        th,
-        td {
+        table, th, td {
             border: 1px solid black;
         }
-
-        th,
-        td {
+        th, td {
             text-align: center;
             padding: 8px;
         }
-
-        .signature {
-            margin-top: 50px;
-            text-align: right;
-        }
-
         .footer {
             display: flex;
             justify-content: space-between;
             width: 100%;
             margin-top: 50px;
         }
+
+        /* ✅ Account number column CSS rowspan trick */
+        td.account-no {
+            border-bottom: none;
+            border-top: none;
+        }
+        td.account-no-first {
+            border-bottom: none;
+        }
+        td.account-no-last {
+            border-top: none;
+        }
+        td.account-no-empty {
+            border-top: none;
+            border-bottom: none;
+            color: transparent;
+            font-size: 0;
+        }
     </style>
 </head>
 
 <body>
 
-    <div class="" style="display: flex; justify-content: end;">
-        <div >
+    <div style="display: flex; justify-content: end;">
+        <div>
             જા.નં.તા.પં./આરઈવી/વશી/<br>
             તાલુકા પંચાયત કચેરી, {{ taluka }}<br>
             તા. {{ date }}
@@ -104,21 +104,23 @@
         </thead>
         <tbody>
             <tr>
-                <td rowspan="5">{{ accountNo }}</td>
-                <td>જમીન મહેસુલ</td>
+                <td style="border-bottom:none; vertical-align:middle;">{{ accountNo }}</td>
+                <td>જમીન મહેસૂલ</td>
                 <td>{{ landLeft }}</td>
                 <td>{{ landPending }}</td>
                 <td>{{ landRotating }}</td>
                 <td>{{ landTotal }}</td>
             </tr>
-            <!-- <tr>
+            <tr class="local-fund-row">
+                <td style="border-top:none; border-bottom:none;"></td>
                 <td>લોકલ ફંડ</td>
                 <td>{{ localLeft }}</td>
                 <td>{{ localPending }}</td>
                 <td>{{ localRotating }}</td>
                 <td>{{ localTotal }}</td>
-            </tr> -->
+            </tr>
             <tr>
+                <td style="border-top:none; border-bottom:none;"></td>
                 <td>શિક્ષણ ઉપકર</td>
                 <td>{{ educationLeft }}</td>
                 <td>{{ educationPending }}</td>
@@ -126,13 +128,15 @@
                 <td>{{ educationTotal }}</td>
             </tr>
             <tr>
+                <td style="border-top:none; border-bottom:none;"></td>
                 <td>નોટીસ ફી</td>
-                <td>૦.૦૦</td>
+                <td>૦</td>
                 <td>{{ noticeTotal }}</td>
-                <td>૦.૦૦</td>
+                <td>૦</td>
                 <td>{{ noticeTotal }}</td>
             </tr>
             <tr>
+                <td style="border-top:none;"></td>
                 <td><strong>કુલ</strong></td>
                 <td>{{ totalLeft }}</td>
                 <td>{{ totalPending }}</td>
@@ -142,17 +146,15 @@
         </tbody>
     </table>
 
-
     <div class="footer">
-        <div class="left">
+        <div>
             તા:- {{ date }}<br>
         </div>
-        <div class="">
+        <div>
             તાલુકા વિકાસ અધિકારી<br>
             તા. પં. {{ taluka }}<br>
         </div>
     </div>
 
 </body>
-
 </html>
