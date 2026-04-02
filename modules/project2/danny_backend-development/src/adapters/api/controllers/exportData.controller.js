@@ -1195,6 +1195,7 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
 
   const isLocal = ["માણસા", "વિજાપુર"].includes(talukaData.name.trim());
   const isMansa = talukaData.name.trim() === "માણસા";
+  const isVijapur = talukaData.name.trim() === "વિજાપુર";
 
   const villagers = await Villager.find({ village: village._id })
     .sort({ createdAt: 1, accountNo: 1 })
@@ -1388,7 +1389,153 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
   }
 
   // =========================================================
-  // ORIGINAL 18-COLUMN LOGIC — Vijapur + all other talukas
+  // *** VIJAPUR-SPECIFIC BRANCH (13-column format) ***
+  // =========================================================
+  if (isVijapur) {
+    const vijapurTotals = {
+      "જમીન પાછલી બાકી": 0,
+      "ખેતી સિવાય + લોકલ ફંડ": 0,
+      "જમીન ફાજલ": 0,
+      "જમીન વસુલ કરવા પાત્ર રકમ": 0,
+      "જમીન જમા ફાજલ": 0,
+      "શિક્ષણ પાછલી બાકી": 0,
+      "શિક્ષણ ચાલુ": 0,
+      "શિક્ષણ ફાજલ": 0,
+      "શિક્ષણ વસુલ કરવા પાત્ર રકમ": 0,
+      "શિક્ષણ જમા ફાજલ": 0,
+      "એકંદર કુલ": 0,
+    };
+
+    const vijapurRows = [];
+
+    for (const v of villagers) {
+      const id = v._id.toString();
+
+      const landM = landMaangnuMap.get(id)?.[0];
+      const eduM = eduMaangnuMap.get(id)?.[0];
+
+      const sivay = parseFloat(v.sivay || 0);
+      const sarkari = parseFloat(v.sarkari || 0);
+
+      // ✅ ROUNDED: Col C - જમીન પાછલી બાકી
+      const landLeft = Math.ceil(parseFloat(landM?.left || 0));
+      // Col E - ફાજલ (not rounded)
+      const landFajal = parseFloat(landM?.fajal || 0);
+
+      // ✅ ROUNDED: Col D - ખેતી સિવાય + લોકલ ફંડ (Vijapur specific: sarkari/2 + sivay/2)
+      const localAmount = sarkari / 2 + sivay / 2;
+      const colD = Math.ceil(sivay + localAmount);
+
+      // Col F & G (derived from rounded values, no extra rounding needed)
+      const sumCD = landLeft + colD;
+      const colF = sumCD > landFajal ? Math.ceil(sumCD - landFajal) : 0;
+      const colG = sumCD < landFajal ? Math.ceil(landFajal - sumCD) : 0;
+
+      // ✅ ROUNDED: Col H - શિક્ષણ પાછલી બાકી = 25% of landLeft (rounded up)
+      const eduLeft = Math.ceil(landLeft * 0.25);
+      // ✅ ROUNDED: Col I - શિક્ષણ ચાલુ
+      const eduPending = Math.ceil(
+        (sarkari * master.sSarkari) / 100 + (sivay * master.sSivay) / 100
+      );
+      const eduFajal = 0;                        // Col J (always 0)
+      const eduRecoverable = eduLeft + eduPending; // Col K
+      const eduDeposit = 0;                       // Col L (always 0)
+      const grandTotal = colF + eduRecoverable;   // Col M
+
+      const row = {
+        "ખાતા નંબર":                  v.accountNo || "",
+        "ખાતેદાર નું નામ":             v.name || "",
+        "જમીન પાછલી બાકી":            landLeft,
+        "ખેતી સિવાય + લોકલ ફંડ":     colD,
+        "જમીન ફાજલ":                  landFajal,
+        "જમીન વસુલ કરવા પાત્ર રકમ":  colF,
+        "જમીન જમા ફાજલ":              colG,
+        "શિક્ષણ પાછલી બાકી":          eduLeft,
+        "શિક્ષણ ચાલુ":                 eduPending,
+        "શિક્ષણ ફાજલ":                 eduFajal,
+        "શિક્ષણ વસુલ કરવા પાત્ર રકમ": eduRecoverable,
+        "શિક્ષણ જમા ફાજલ":            eduDeposit,
+        "એકંદર કુલ":                   grandTotal,
+      };
+
+      vijapurRows.push(row);
+      for (const key in vijapurTotals) vijapurTotals[key] += row[key] || 0;
+    }
+
+    vijapurRows.push({ "ખાતા નંબર": "કુલ", "ખાતેદાર નું નામ": "", ...vijapurTotals });
+
+    // --- PDF format ---
+    if (format === "pdf") {
+      const fieldMap = {
+        "ખાતા નંબર":                  "accountNo",
+        "ખાતેદાર નું નામ":             "name",
+        "જમીન પાછલી બાકી":            "landLeft",
+        "ખેતી સિવાય + લોકલ ફંડ":     "landSivayPlusLocal",
+        "જમીન ફાજલ":                  "landFajal",
+        "જમીન વસુલ કરવા પાત્ર રકમ":  "landRecoverable",
+        "જમીન જમા ફાજલ":              "landDeposit",
+        "શિક્ષણ પાછલી બાકી":          "eduLeft",
+        "શિક્ષણ ચાલુ":                 "eduPending",
+        "શિક્ષણ ફાજલ":                 "eduFajal",
+        "શિક્ષણ વસુલ કરવા પાત્ર રકમ": "eduRecoverable",
+        "શિક્ષણ જમા ફાજલ":            "eduDeposit",
+        "એકંદર કુલ":                   "grandTotal",
+      };
+      const englishRows = vijapurRows.map((row) => {
+        const converted = {};
+        for (const [gujKey, value] of Object.entries(row)) {
+          converted[fieldMap[gujKey] || gujKey] = value;
+        }
+        if (converted.accountNo === "કુલ") converted.isTotalRow = true;
+        return converted;
+      });
+      return res.status(200).json(
+        new SuccessResponse({ data: englishRows }, "Vijapur vasulat patrak data")
+      );
+    }
+
+    // --- Excel Export (13-column Vijapur format) ---
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("ExportData");
+
+    sheet.mergeCells("A1", "M1");
+    sheet.getCell("A1").value = `${village.name} ગ્રામ પંચાયત, તા. ${talukaData.name} જી. ${districtData.name}  વસુલાત પત્રક  સને ${convertEngToGujNumber(financialYearData.financialYear)}`;
+    sheet.getCell("A1").alignment = { horizontal: "center" };
+    sheet.getCell("A1").font = { bold: true, size: 14 };
+
+    sheet.mergeCells("A2", "A3");
+    sheet.getCell("A2").value = "ખાતા નંબર";
+    sheet.mergeCells("B2", "B3");
+    sheet.getCell("B2").value = "ખાતેદાર નું નામ";
+    sheet.mergeCells("C2", "G2");
+    sheet.getCell("C2").value = "જમીન મહેસુલ";
+    sheet.getCell("C3").value = "પાછલી બાકી";
+    sheet.getCell("D3").value = "ખેતી સિવાય + લોકલ ફંડ";
+    sheet.getCell("E3").value = "ફાજલ";
+    sheet.getCell("F3").value = "વસુલ કરવા પાત્ર રકમ";
+    sheet.getCell("G3").value = "જમા ફાજલ";
+    sheet.mergeCells("H2", "L2");
+    sheet.getCell("H2").value = "શિક્ષણ ઉપકર";
+    sheet.getCell("H3").value = "પાછલી બાકી";
+    sheet.getCell("I3").value = "ચાલુ";
+    sheet.getCell("J3").value = "ફાજલ";
+    sheet.getCell("K3").value = "વસુલ કરવા પાત્ર રકમ";
+    sheet.getCell("L3").value = "જમા ફાજલ";
+    sheet.mergeCells("M2", "M3");
+    sheet.getCell("M2").value = "એકંદર કુલ";
+
+    vijapurRows.forEach((r) => sheet.addRow(Object.values(r)));
+    sheet.lastRow.font = { bold: true };
+
+    const safeFileName = `export_${village.name}_${convertEngToGujNumber(financialYearData.financialYear)}.xlsx`;
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(safeFileName)}`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    await workbook.xlsx.write(res);
+    return res.end();
+  }
+
+  // =========================================================
+  // ORIGINAL 18-COLUMN LOGIC — all other talukas
   // =========================================================
   const totals = {
     "જમીન પાછલી બાકી": 0,

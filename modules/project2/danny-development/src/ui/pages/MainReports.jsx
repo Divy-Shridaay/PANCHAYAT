@@ -227,7 +227,7 @@ const handlePrint = async (notice, total) => {
             const sourceLandPachhliBaki = Number(result.left || 0);
             const sourceLandSivay = Number(result.landData?.sivay || 0);
             const sourceLandRotating = Number(result.landData?.rotating || 0);
-            const sourceLocalPending = Number(result.localFundData?.localFourFivePanding || 0);
+            const sourceLocalPending = Math.ceil(Number(result.localFundData?.localFourFivePanding || 0));
             const computedEducationLeft = Number((sourceLandPachhliBaki * 0.25).toFixed(2));
 
             let data = {
@@ -243,12 +243,12 @@ const handlePrint = async (notice, total) => {
                 district: districtName,
 
                 landLeft:    isMansa ? sourceLandPachhliBaki : (result.landData?.collumnTwentyOne || 0),
-                landPending: isMansa ? sourceLandSivay + sourceLocalPending : (result.landData?.sivay || 0),
+               landPending: isMansa ? sourceLandSivay + sourceLocalPending : (result.landData?.sivay || 0),
                 landRotating: isMansa ? sourceLandRotating : (result.landData?.rotating || 0),
 
-                localLeft:    result.localFundData?.collumnFourteenlocal || 0,
-                localPending: result.localFundData?.localFourFivePanding || 0,
-                localRotating: result.localFundData?.localRotating || 0,
+                localLeft:    isMansa ? 0 : (result.localFundData?.collumnFourteenlocal || 0),
+                localPending: isMansa ? 0 : (result.localFundData?.localFourFivePanding || 0),
+                localRotating: isMansa ? 0 : (result.localFundData?.localRotating || 0),
 
                 educationLeft:    isMansa ? computedEducationLeft : (result.educationData?.collumnFourteenEducation || 0),
                 educationPending: result.educationData?.educationFourFivePanding || 0,
