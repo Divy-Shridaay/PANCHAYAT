@@ -8,57 +8,38 @@ const Master = require("../../db/MasterModel");
 exports.getMainReport = asyncHandler(async (req, res, next) => {
   const { village, financialYear, noticeFees = 0, total = 0 } = req.query;
 
-  if (!village) {
-    throw new CustomError("Please Select Village.", 400);
-  }
-
-  if (!financialYear) {
-    throw new CustomError("Please Select Financial Year.", 400);
-  }
+  if (!village) throw new CustomError("Please Select Village.", 400);
+  if (!financialYear) throw new CustomError("Please Select Financial Year.", 400);
 
   const parsednoticeFees = parseFloat(noticeFees);
   const parsedTotal = parseFloat(total);
-if (!mongoose.Types.ObjectId.isValid(village)) {
-  throw new CustomError("Invalid village id", 400);
-}
 
-if (!mongoose.Types.ObjectId.isValid(financialYear)) {
-  throw new CustomError("Invalid financial year id", 400);
-}
+  if (!mongoose.Types.ObjectId.isValid(village)) throw new CustomError("Invalid village id", 400);
+  if (!mongoose.Types.ObjectId.isValid(financialYear)) throw new CustomError("Invalid financial year id", 400);
 
-const villageId = new mongoose.Types.ObjectId(village);
-const financialYearId = new mongoose.Types.ObjectId(financialYear);
-
+  const villageId = new mongoose.Types.ObjectId(village);
+  const financialYearId = new mongoose.Types.ObjectId(financialYear);
 
   const master = await Master.findOne({ status: 1 });
 
-  let master_lSarkari = 0;
-  let master_lSivay = 0;
-  let master_sSarkari = 0;
-  let master_sSivay = 0;
+  let master_lSarkari = 0, master_lSivay = 0, master_sSarkari = 0, master_sSivay = 0;
   if (master) {
     master_lSarkari = parseFloat(master.lSarkari) || 0;
-    master_lSivay = parseFloat(master.lSivay) || 0;
-    master_sSarkari = parseFloat(master.sSarkari) || 0;
-    master_sSivay = parseFloat(master.sSivay) || 0;
+    master_lSivay   = parseFloat(master.lSivay)   || 0;
+    master_sSarkari = parseFloat(master.sSarkari)  || 0;
+    master_sSivay   = parseFloat(master.sSivay)    || 0;
   }
 
   const pipeline = [
-    {
-      $match: {
-        village: villageId,
-        // accountNo: "150",
-        // financialYear: financialYearId,
-      },
-    },
+    { $match: { village: villageId } },
     {
       $addFields: {
         sarkari: { $toDouble: "$sarkari" },
-        sivay: { $toDouble: "$sivay" },
+        sivay:   { $toDouble: "$sivay"   },
       },
     },
 
-    // // 👉 Lookup latest LandMaangnu
+    // ── LandMaangnu (first pass) ──────────────────────────────────────────────
     {
       $lookup: {
         from: "LandMaangnu",
@@ -78,23 +59,24 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              // stored values are in paisa -> divide by 100 to get rupees
               fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
-              left: { $divide: [{ $toDouble: "$left" }, 100] },
-              // sarkari: { $toDouble: "$sarkari" },
-              // sivay: { $toDouble: "$sivay" },
+              left:  { $divide: [{ $toDouble: "$left"  }, 100] },
             },
           },
         ],
         as: "landMaangnu",
       },
     },
+    { $addFields: { landMaangnu: { $arrayElemAt: ["$landMaangnu", 0] } } },
+
+    // ✅ KEY FIX: Save actual પાછલી બાકી NOW before second lookup overwrites landMaangnu
     {
       $addFields: {
-        landMaangnu: { $arrayElemAt: ["$landMaangnu", 0] },
+        savedLandMaangnuLeft:      { $ifNull: ["$landMaangnu.left", 0] },
       },
     },
-    // // 👉 Lookup LandRevenue
+
+    // ── LandRevenue (first pass) ──────────────────────────────────────────────
     {
       $lookup: {
         from: "LandRevenue",
@@ -113,43 +95,35 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           {
             $project: {
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
-              total: { $divide: [{ $toDouble: "$total" }, 100] },
+              total:    { $divide: [{ $toDouble: "$total"    }, 100] },
             },
           },
         ],
         as: "landRevenue",
       },
     },
-
-    // // 👉 Sum LandRevenue
     {
       $addFields: {
-        rotating: { $sum: "$landRevenue.rotating" },
-        revenueTotal: { $sum: "$landRevenue.total" },
+        rotating:     { $sum: "$landRevenue.rotating" },
+        revenueTotal: { $sum: "$landRevenue.total"    },
       },
     },
-
-    // // 👉 Set basic land values
     {
       $addFields: {
-        sivay: { $ifNull: ["$sivay", 0] },
-        sarkari: { $ifNull: ["$sarkari", 0] },
-        left: { $ifNull: ["$landMaangnu.left", 0] },
-        fajal: { $ifNull: ["$landMaangnu.fajal", 0] },
-        total: {
-          $add: [{ $ifNull: ["$landMaangnu.fajal", 0] }, "$revenueTotal"],
-        },
+        sivay:   { $ifNull: ["$sivay",             0] },
+        sarkari: { $ifNull: ["$sarkari",           0] },
+        left:    { $ifNull: ["$landMaangnu.left",  0] },
+        fajal:   { $ifNull: ["$landMaangnu.fajal", 0] },
+        total:   { $add: [{ $ifNull: ["$landMaangnu.fajal", 0] }, "$revenueTotal"] },
       },
     },
-
-    // // 👉 Compute difference and collumnTwentyOne
     {
       $addFields: {
         totalCalculated: {
           $add: [
-            { $ifNull: ["$left", 0] },
-            { $ifNull: ["$sivay", 0] },
-            { $ifNull: ["$sarkari", 0] },
+            { $ifNull: ["$left",     0] },
+            { $ifNull: ["$sivay",    0] },
+            { $ifNull: ["$sarkari",  0] },
             { $ifNull: ["$rotating", 0] },
           ],
         },
@@ -159,9 +133,9 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
               $subtract: [
                 {
                   $add: [
-                    { $ifNull: ["$left", 0] },
-                    { $ifNull: ["$sivay", 0] },
-                    { $ifNull: ["$sarkari", 0] },
+                    { $ifNull: ["$left",     0] },
+                    { $ifNull: ["$sivay",    0] },
+                    { $ifNull: ["$sarkari",  0] },
                     { $ifNull: ["$rotating", 0] },
                   ],
                 },
@@ -173,33 +147,26 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         },
       },
     },
-
     {
       $addFields: {
         collumnTwentyOne: {
-          $cond: [
-            { $gt: ["$difference", 0] },
-            { $round: ["$difference", 2] },
-            0,
-          ],
+          $cond: [{ $gt: ["$difference", 0] }, { $round: ["$difference", 2] }, 0],
         },
       },
     },
-
-    // // 👉 Compute landTotal = collumnTwentyOne + rotating + sivay
     {
       $addFields: {
         landTotal: {
           $add: [
             { $ifNull: ["$collumnTwentyOne", 0] },
-            { $ifNull: ["$rotating", 0] },
-            { $ifNull: ["$sivay", 0] },
+            { $ifNull: ["$rotating",         0] },
+            { $ifNull: ["$sivay",            0] },
           ],
         },
       },
     },
 
-    // // Lookup latest LandMaangnu
+    // ── LandMaangnu (second pass: full fields) ────────────────────────────────
     {
       $lookup: {
         from: "LandMaangnu",
@@ -219,11 +186,10 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              // stored values are in paisa -> divide by 100 to get rupees
-              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
-              left: { $divide: [{ $toDouble: "$left" }, 100] },
+              fajal:   { $divide: [{ $toDouble: "$fajal"   }, 100] },
+              left:    { $divide: [{ $toDouble: "$left"    }, 100] },
               sarkari: { $divide: [{ $toDouble: "$sarkari" }, 100] },
-              sivay: { $divide: [{ $toDouble: "$sivay" }, 100] },
+              sivay:   { $divide: [{ $toDouble: "$sivay"   }, 100] },
             },
           },
         ],
@@ -231,7 +197,8 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
       },
     },
     { $addFields: { landMaangnu: { $arrayElemAt: ["$landMaangnu", 0] } } },
-    // // Lookup all LandRevenue
+
+    // ── LandRevenue (second pass) ─────────────────────────────────────────────
     {
       $lookup: {
         from: "LandRevenue",
@@ -250,27 +217,23 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           {
             $project: {
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
-              total: { $divide: [{ $toDouble: "$total" }, 100] },
+              total:    { $divide: [{ $toDouble: "$total"    }, 100] },
             },
           },
         ],
         as: "landRevenue",
       },
     },
-    // // Sum LandRevenue
     {
       $addFields: {
-        rotating: { $sum: "$landRevenue.rotating" },
-        revenueTotal: { $sum: "$landRevenue.total" },
+        rotating:     { $sum: "$landRevenue.rotating" },
+        revenueTotal: { $sum: "$landRevenue.total"    },
       },
     },
-    // // Merge LandMaangnu values
     {
       $addFields: {
         fajal: { $ifNull: ["$landMaangnu.fajal", 0] },
-        left: { $ifNull: ["$landMaangnu.left", 0] },
-        // sivay: { $ifNull: ["$landMaangnu.sivay", 0] },
-        // sarkari: { $ifNull: ["$landMaangnu.sarkari", 0] },
+        left:  { $ifNull: ["$landMaangnu.left",  0] },
         total: {
           $add: [
             { $ifNull: ["$landMaangnu.fajal", 0] },
@@ -279,20 +242,18 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         },
       },
     },
-    // // Calculate totalCalculated
     {
       $addFields: {
         totalCalculated: {
           $add: [
-            { $ifNull: ["$left", 0] },
-            { $ifNull: ["$sivay", 0] },
-            { $ifNull: ["$sarkari", 0] },
+            { $ifNull: ["$left",     0] },
+            { $ifNull: ["$sivay",    0] },
+            { $ifNull: ["$sarkari",  0] },
             { $ifNull: ["$rotating", 0] },
           ],
         },
       },
     },
-    // // Calculate difference
     {
       $addFields: {
         difference: {
@@ -303,33 +264,25 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         },
       },
     },
-    // // Assign to columns
     {
       $addFields: {
         collumnTwentyOne: {
-          $cond: [
-            { $gt: ["$difference", 0] },
-            { $round: ["$difference", 2] },
-            0,
-          ],
+          $cond: [{ $gt: ["$difference", 0] }, { $round: ["$difference", 2] }, 0],
         },
         collumnTwentyTwo: {
-          $cond: [
-            { $lt: ["$difference", 0] },
-            { $round: ["$difference", 2] },
-            0,
-          ],
+          $cond: [{ $lt: ["$difference", 0] }, { $round: ["$difference", 2] }, 0],
         },
         landTotal: {
           $add: [
             { $ifNull: ["$collumnTwentyOne", 0] },
-            { $ifNull: ["$rotating", 0] },
-            { $ifNull: ["$sivay", 0] },
+            { $ifNull: ["$rotating",         0] },
+            { $ifNull: ["$sivay",            0] },
           ],
         },
       },
     },
-    // // Lookup LocalFundMaangnu
+
+    // ── LocalFundMaangnu ──────────────────────────────────────────────────────
     {
       $lookup: {
         from: "LocalFundMaangnu",
@@ -349,10 +302,9 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              // stored values are in paisa -> divide by 100 to get rupees
-              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
-              left: { $divide: [{ $toDouble: "$left" }, 100] },
-              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
+              fajal:    { $divide: [{ $toDouble: "$fajal"    }, 100] },
+              left:     { $divide: [{ $toDouble: "$left"     }, 100] },
+              pending:  { $divide: [{ $toDouble: "$pending"  }, 100] },
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
             },
           },
@@ -362,7 +314,14 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
     },
     { $addFields: { localMaangnu: { $arrayElemAt: ["$localMaangnu", 0] } } },
 
-    // // Lookup LocalFundRevenue
+    // ✅ Save local પાછ્લી બાકી before any overwrite
+    {
+      $addFields: {
+        savedLocalMaangnuLeft: { $ifNull: ["$localMaangnu.left", 0] },
+      },
+    },
+
+    // ── LocalFundRevenue ──────────────────────────────────────────────────────
     {
       $lookup: {
         from: "LocalFundRevenue",
@@ -381,32 +340,29 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           {
             $project: {
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
-              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
-              left: { $divide: [{ $toDouble: "$left" }, 100] },
+              pending:  { $divide: [{ $toDouble: "$pending"  }, 100] },
+              left:     { $divide: [{ $toDouble: "$left"     }, 100] },
             },
           },
         ],
         as: "localRevenue",
       },
     },
-    // // Sum LocalRevenue
     {
       $addFields: {
         localRotating: { $sum: "$localRevenue.rotating" },
-        localPending: { $sum: "$localRevenue.pending" },
-        localLeft: { $sum: "$localRevenue.left" },
+        localPending:  { $sum: "$localRevenue.pending"  },
+        localLeft:     { $sum: "$localRevenue.left"     },
       },
     },
-    // // Clean nulls from Maangnu
     {
       $addFields: {
-        localFajal: { $ifNull: ["$localMaangnu.fajal", 0] },
-        localMaangnuLeft: { $ifNull: ["$localMaangnu.left", 0] },
-        localMaangnuPending: { $ifNull: ["$localMaangnu.pending", 0] },
+        localFajal:           { $ifNull: ["$localMaangnu.fajal",    0] },
+        localMaangnuLeft:     { $ifNull: ["$localMaangnu.left",     0] },
+        localMaangnuPending:  { $ifNull: ["$localMaangnu.pending",  0] },
         localMaangnuRotating: { $ifNull: ["$localMaangnu.rotating", 0] },
       },
     },
-    // // Calculate totals
     {
       $addFields: {
         totalCalculatedLocal: {
@@ -416,13 +372,12 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           $add: [
             "$localMaangnuLeft",
             { $divide: [{ $multiply: ["$sarkari", master_lSarkari] }, 100] },
-            { $divide: [{ $multiply: ["$sivay", master_lSivay] }, 100] },
+            { $divide: [{ $multiply: ["$sivay",   master_lSivay  ] }, 100] },
             "$localRotating",
           ],
         },
       },
     },
-    // // Final columns
     {
       $addFields: {
         collumnFourteenlocal: {
@@ -437,18 +392,6 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
             0,
           ],
         },
-        // collumnFifteen: {
-        //   $cond: [
-        //     { $gt: ["$totalCalculatedLocal", "$totalCalcLocal"] },
-        //     {
-        //       $round: [
-        //         { $subtract: ["$totalCalculatedLocal", "$totalCalcLocal"] },
-        //         2,
-        //       ],
-        //     },
-        //     0,
-        //   ],
-        // },
       },
     },
     {
@@ -456,7 +399,7 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         localFourFivePanding: {
           $add: [
             { $divide: [{ $multiply: ["$sarkari", master_lSarkari] }, 100] },
-            { $divide: [{ $multiply: ["$sivay", master_lSivay] }, 100] },
+            { $divide: [{ $multiply: ["$sivay",   master_lSivay  ] }, 100] },
           ],
         },
       },
@@ -473,6 +416,7 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
       },
     },
 
+    // ── EducationMaangnu ──────────────────────────────────────────────────────
     {
       $lookup: {
         from: "EducationMaangnu",
@@ -492,10 +436,9 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           { $limit: 1 },
           {
             $project: {
-              // stored values are in paisa -> divide by 100 to get rupees
-              fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
-              left: { $divide: [{ $toDouble: "$left" }, 100] },
-              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
+              fajal:    { $divide: [{ $toDouble: "$fajal"    }, 100] },
+              left:     { $divide: [{ $toDouble: "$left"     }, 100] },
+              pending:  { $divide: [{ $toDouble: "$pending"  }, 100] },
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
             },
           },
@@ -503,12 +446,16 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         as: "educationMaangnu",
       },
     },
+    { $addFields: { educationMaangnu: { $arrayElemAt: ["$educationMaangnu", 0] } } },
+
+    // ✅ Save education પાછ્લી બાકી before any overwrite
     {
       $addFields: {
-        educationMaangnu: { $arrayElemAt: ["$educationMaangnu", 0] },
+        savedEducationMaangnuLeft: { $ifNull: ["$educationMaangnu.left", 0] },
       },
     },
 
+    // ── EducationRevenue ──────────────────────────────────────────────────────
     {
       $lookup: {
         from: "EducationRevenue",
@@ -527,34 +474,29 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           {
             $project: {
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
-              pending: { $divide: [{ $toDouble: "$pending" }, 100] },
-              left: { $divide: [{ $toDouble: "$left" }, 100] },
+              pending:  { $divide: [{ $toDouble: "$pending"  }, 100] },
+              left:     { $divide: [{ $toDouble: "$left"     }, 100] },
             },
           },
         ],
         as: "educationRevenue",
       },
     },
-    // // Sum LocalRevenue
     {
       $addFields: {
         educationRotating: { $sum: "$educationRevenue.rotating" },
-        educationPending: { $sum: "$educationRevenue.pending" },
-        educationLeft: { $sum: "$educationRevenue.left" },
+        educationPending:  { $sum: "$educationRevenue.pending"  },
+        educationLeft:     { $sum: "$educationRevenue.left"     },
       },
     },
     {
       $addFields: {
-        educationFajal: { $ifNull: ["$educationMaangnu.fajal", 0] },
-        educationMaangnuLeft: { $ifNull: ["$educationMaangnu.left", 0] },
-        educationMaangnuPending: { $ifNull: ["$educationMaangnu.pending", 0] },
-        educationMaangnuRotating: {
-          $ifNull: ["$educationMaangnu.rotating", 0],
-        },
+        educationFajal:           { $ifNull: ["$educationMaangnu.fajal",    0] },
+        educationMaangnuLeft:     { $ifNull: ["$educationMaangnu.left",     0] },
+        educationMaangnuPending:  { $ifNull: ["$educationMaangnu.pending",  0] },
+        educationMaangnuRotating: { $ifNull: ["$educationMaangnu.rotating", 0] },
       },
     },
-
-    // // Calculate totals
     {
       $addFields: {
         totalCalculatedEducation: {
@@ -564,13 +506,12 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
           $add: [
             "$educationMaangnuLeft",
             { $divide: [{ $multiply: ["$sarkari", master_sSarkari] }, 100] },
-            { $divide: [{ $multiply: ["$sivay", master_sSivay] }, 100] },
+            { $divide: [{ $multiply: ["$sivay",   master_sSivay  ] }, 100] },
             "$educationRotating",
           ],
         },
       },
     },
-    // // Final columns
     {
       $addFields: {
         collumnFourteenEducation: {
@@ -578,30 +519,13 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
             { $lt: ["$totalCalculatedEducation", "$totalCalcEducation"] },
             {
               $round: [
-                {
-                  $subtract: [
-                    "$totalCalcEducation",
-                    "$totalCalculatedEducation",
-                  ],
-                },
+                { $subtract: ["$totalCalcEducation", "$totalCalculatedEducation"] },
                 2,
               ],
             },
             0,
           ],
         },
-        // collumnFifteen: {
-        //   $cond: [
-        //     { $gt: ["$totalCalculatedLocal", "$totalCalcLocal"] },
-        //     {
-        //       $round: [
-        //         { $subtract: ["$totalCalculatedLocal", "$totalCalcLocal"] },
-        //         2,
-        //       ],
-        //     },
-        //     0,
-        //   ],
-        // },
       },
     },
     {
@@ -609,7 +533,7 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         educationFourFivePanding: {
           $add: [
             { $divide: [{ $multiply: ["$sarkari", master_sSarkari] }, 100] },
-            { $divide: [{ $multiply: ["$sivay", master_sSivay] }, 100] },
+            { $divide: [{ $multiply: ["$sivay",   master_sSivay  ] }, 100] },
           ],
         },
       },
@@ -625,51 +549,69 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
         },
       },
     },
+
+    // ── allTotals filter ──────────────────────────────────────────────────────
     {
       $addFields: {
         allTotals: {
           $add: [
-            { $ifNull: ["$landTotal", 0] },
-            { $ifNull: ["$localTotal", 0] },
+            { $ifNull: ["$landTotal",      0] },
+            { $ifNull: ["$localTotal",     0] },
             { $ifNull: ["$educationTotal", 0] },
             1,
           ],
         },
       },
     },
+    { $match: { allTotals: { $gt: parsedTotal } } },
+
+    // ✅ NUMERIC SORT: accountNo string → number, then sort ascending
     {
-      $match: {
-        allTotals: { $gt: parsedTotal }, // 👉 Convert query param to number
-      },
+      $addFields: {
+        accountNoInt: { $toInt: "$accountNo" }  // string → number
+      }
     },
+    { $sort: { accountNoInt: 1 } },  // ✅ numeric sort: 149, 167, 429
+
+    // ── Final projection ──────────────────────────────────────────────────────
     {
       $project: {
-        name: 1,
-        accountNo: 1,
-        village: 1,
+        name:          1,
+        accountNo:     1,
+        village:       1,
         financialYear: 1,
-        sarkari: 1,
-        sivay: 1,
-        left: { $multiply: ["$left", 100] },  // ✅ backend fix: convert 17.4057 to 1740.57
+        sarkari:       1,
+        sivay:         1,
+        left: { $multiply: ["$left", 100] }, // Mansa uses this (raw paisa-units)
+
         landData: {
           collumnTwentyOne: "$collumnTwentyOne",
-          rotating: "$rotating",
-          sivay: "$sivay",
-          landTotal: "$landTotal",
+          rotating:         "$rotating",
+          sivay:            "$sivay",
+          landTotal:        "$landTotal",
+          // ✅ FIXED: *100 to convert to paisa-units
+          maangnuLeft: { $multiply: ["$savedLandMaangnuLeft", 100] },
         },
+
         localFundData: {
           localFourFivePanding: "$localFourFivePanding",
-          localRotating: "$localRotating",
+          localRotating:        "$localRotating",
           collumnFourteenlocal: "$collumnFourteenlocal",
-          localTotal: "$localTotal",
+          localTotal:           "$localTotal",
+          // ✅ FIXED: *100 to convert to paisa-units
+          maangnuLeft: { $multiply: ["$savedLocalMaangnuLeft", 100] },
         },
+
         educationData: {
           collumnFourteenEducation: "$collumnFourteenEducation",
           educationFourFivePanding: "$educationFourFivePanding",
-          educationRotating: "$educationRotating",
-          educationTotal: "$educationTotal",
+          educationRotating:        "$educationRotating",
+          educationTotal:           "$educationTotal",
+          // ✅ FIXED: *100 to convert to paisa-units
+          maangnuLeft: { $multiply: ["$savedEducationMaangnuLeft", 100] },
         },
-        allTotals: 1, // Optional: include in output for debugging
+
+        allTotals: 1,
       },
     },
   ];
@@ -678,10 +620,7 @@ const financialYearId = new mongoose.Types.ObjectId(financialYear);
 
   res.status(200).json(
     new SuccessResponse(
-      {
-        data: villagers,
-        totalDocs: villagers.length,
-      },
+      { data: villagers, totalDocs: villagers.length },
       "Fetched main report with totals"
     )
   );

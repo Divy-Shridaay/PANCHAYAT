@@ -1570,7 +1570,6 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
     // ✅ ROUNDED: જમીન પાછલી બાકી and ખેતી સિવાય/ચાલુ
     const landLeft = Math.ceil(parseFloat(landM?.left || 0));
     const landSivay = Math.ceil(parseFloat(v.sivay || 0));
-
     const landRevenueTotal =
       landLeft + landSivay > landTotal ? landLeft + landSivay - landTotal : 0;
     const landDeposit =
@@ -1594,7 +1593,7 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
 
     const eduM = eduMaangnuMap.get(id)?.[0];
     // ✅ ROUNDED: શિક્ષણ પાછલી બાકી and શિક્ષણ ચાલુ
-    const eduLeft = Math.ceil(landLeft * 0.25);
+    const eduLeft = Math.ceil(parseFloat(eduM?.left || 0));
     const eduFajal = parseFloat(eduM?.fajal || 0);
     const eduSarkari = (v.sarkari * master.sSarkari) / 100;
     const eduSivay = (v.sivay * master.sSivay) / 100;
