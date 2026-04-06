@@ -296,8 +296,9 @@ function MainReports() {
             // AFTER - localLeft aur educationLeft ke liye Math.ceil, baki Math.round
 // AFTER - ceil wale keys badh gaye
 individualKeys.forEach(key => {
-    if (key === 'localLeft' || key === 'educationLeft' || 
-        key === 'localPending' || key === 'educationPending') {
+  if (key === 'localLeft' || key === 'educationLeft' || 
+    key === 'localPending' || key === 'educationPending' ||
+    key === 'landLeft') {
         data[key] = Math.ceil(Number(data[key]) || 0);  // ✅ ceil
     } else {
         data[key] = Math.round(Number(data[key]) || 0); // baki Math.round
