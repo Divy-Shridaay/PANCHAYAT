@@ -21,7 +21,7 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
   // Define taluka IDs for local fund logic
   const MANSA_TALUKA_ID = "685bcc702ce99c46af25d53a";
   // TODO: Find and replace with actual Vijapur taluka ID
-  const VIJAPUR_TALUKA_ID = "find_vijapur_taluka_id_in_database";
+  const VIJAPUR_TALUKA_ID = "685bccec2ce99c46af25d55e";
 
   let isLocal = false;
   // Check by taluka ID for more reliability
