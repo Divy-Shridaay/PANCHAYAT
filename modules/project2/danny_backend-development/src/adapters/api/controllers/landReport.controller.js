@@ -23,6 +23,10 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     isLocal = true;
   }
 
+  // DEBUG: Check MongoDB collection names
+  const collections = await mongoose.connection.db.listCollections().toArray();
+  console.log("🔍 Available collections:", collections.map(c => c.name));
+
   // Get total count
   const totalDocs = await Villager.countDocuments({ village });
 
@@ -38,7 +42,7 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     // Join with LandMaangnu
     {
       $lookup: {
-        from: "landmaangnus",
+        from: "LandMaangnu",
         let: { villager_id: "$_id" },
         pipeline: [
           {
@@ -61,7 +65,7 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
     // Join with LandRevenue
     {
       $lookup: {
-        from: "landrevenues",
+        from: "LandRevenue",
         let: { villager_id: "$_id" },
         pipeline: [
           {
@@ -144,21 +148,24 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
 
       villager.rotating = landMaangnu ? parseFloat(landMaangnu.rotating || 0) : 0;
       villager.total = totalSum + fajal;
+
+      // Get left from LandRevenue, but fallback to LandMaangnu if 0
+      villager.left = villager.landRevenue.reduce(
+        (sum, x) => sum + parseFloat(x.left || 0), 0
+      );
+      if (villager.left === 0) {
+        villager.left = landMaangnu ? parseFloat(landMaangnu.left || 0) : 0;
+      }
     } else {
       villager.rotating = landMaangnu ? parseFloat(landMaangnu.rotating || 0) : 0;
       villager.total = landMaangnu ? parseFloat(landMaangnu.fajal || 0) : 0;
+      // Get left from LandMaangnu when no LandRevenue records
+      villager.left = landMaangnu ? parseFloat(landMaangnu.left || 0) : 0;
     }
 
-    // Set maangnu values
-    if (landMaangnu) {
-      villager.pending = landMaangnu.pending || 0;
-      villager.left = landMaangnu.left || 0;
-      villager.fajal = landMaangnu.fajal || 0;
-    } else {
-      villager.pending = 0;
-      villager.left = 0;
-      villager.fajal = 0;
-    }
+    // Set pending and fajal from LandMaangnu
+    villager.pending = landMaangnu ? parseFloat(landMaangnu.pending || 0) : 0;
+    villager.fajal = landMaangnu ? parseFloat(landMaangnu.fajal || 0) : 0;
 
     // Calculate totals for aggregation
     const left = parseFloat(villager.left || 0);
