@@ -9,7 +9,7 @@ import { convertToCurrencyWords } from '../../utils/convertToCurrencyWords'
 import { convertEngToGujNumber } from '../../utils/convertEngToGujNumber'
 import { convertSlashesToDashes } from '../../utils/dateFunction'
 
-const MANSA_VILLAGE_ID = "68c7d18f1282f7ea1caf1cb4";
+const MANSA_VILLAGE_ID = "68c7d1a71282f7ea1caf1cd5";
 
 function MainReports() {
     const { village, talukaName, villageName, districtName } = useVillage();
