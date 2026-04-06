@@ -1283,7 +1283,7 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
       // Col F & G (derived from rounded values, no extra rounding needed)
       const sumCD = landLeft + colD;
       const colF = sumCD > landFajal ? Math.ceil(sumCD - landFajal) : 0;
-     const colG = sumCD < landFajal ? Math.ceil(landFajal - sumCD) : 0;
+    const colG = sumCD < landFajal ? parseFloat((landFajal - sumCD).toFixed(2)) : 0;
 
       // ✅ ROUNDED: Col H - શિક્ષણ પાછલી બાકી = 25% of landLeft (rounded up)
       const eduLeft = Math.ceil(landLeft * 0.25);  // <-- CHANGED: Now calculated from landLeft
@@ -1429,7 +1429,7 @@ exports.exportVasulatPatrakData = asyncHandler(async (req, res) => {
       // Col F & G (derived from rounded values, no extra rounding needed)
       const sumCD = landLeft + colD;
       const colF = sumCD > landFajal ? Math.ceil(sumCD - landFajal) : 0;
-      const colG = sumCD < landFajal ? Math.ceil(landFajal - sumCD) : 0;
+     const colG = sumCD < landFajal ? parseFloat((landFajal - sumCD).toFixed(2)) : 0;
 
       // ✅ ROUNDED: Col H - શિક્ષણ પાછલી બાકી = 25% of landLeft (rounded up)
       const eduLeft = Math.ceil(landLeft * 0.25);
