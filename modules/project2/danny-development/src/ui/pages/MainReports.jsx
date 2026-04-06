@@ -9,7 +9,7 @@ import { convertToCurrencyWords } from '../../utils/convertToCurrencyWords'
 import { convertEngToGujNumber } from '../../utils/convertEngToGujNumber'
 import { convertSlashesToDashes } from '../../utils/dateFunction'
 
-const MANSA_VILLAGE_ID = "68c7d1981282f7ea1caf1cbe";
+const MANSA_VILLAGE_ID = "68c7d18f1282f7ea1caf1cb4";
 
 function MainReports() {
     const { village, talukaName, villageName, districtName } = useVillage();
@@ -33,19 +33,22 @@ function MainReports() {
         return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) => data[key] ?? "");
     };
 
-    const processTemplate = (htmlTemplate, record) => {
-        let filledTemplate = htmlTemplate;
+  const processTemplate = (htmlTemplate, record) => {
+    let filledTemplate = htmlTemplate;
 
-        if (record.hideLocalFund === "true") {
-            filledTemplate = filledTemplate.replace(
-                /<tr class="local-fund-row">[\s\S]*?<\/tr>/,
-                ""
-            );
+    if (record.hideLocalFund === "true") {
+        const startMarker = '<tr class="local-fund-row">';
+        const endMarker = '</tr>';
+        const startIdx = filledTemplate.indexOf(startMarker);
+        if (startIdx !== -1) {
+            const endIdx = filledTemplate.indexOf(endMarker, startIdx) + endMarker.length;
+            filledTemplate = filledTemplate.slice(0, startIdx) + filledTemplate.slice(endIdx);
         }
+    }
 
-        filledTemplate = fillTemplate(filledTemplate, record);
-        return filledTemplate;
-    };
+    filledTemplate = fillTemplate(filledTemplate, record);
+    return filledTemplate;
+};
 
     const handlePreview152 = async (finalReports) => {
         try {
@@ -209,6 +212,7 @@ function MainReports() {
     };
 
     const handlePrint = async (notice, total) => {
+        
         if (!notice) return;
 
         const noticeFee = 1;
@@ -298,6 +302,9 @@ individualKeys.forEach(key => {
     } else {
         data[key] = Math.round(Number(data[key]) || 0); // baki Math.round
     }
+    console.log("village value:", village);
+console.log("isMansa:", isMansa);
+console.log("hideLocalFund:", isMansa ? "true" : "false");
 });
 
           
