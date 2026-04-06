@@ -43,7 +43,7 @@ const VillageTable = ({
   totalDocs,
   lastPage,
 }) => {
-  const { villageName, village, districtName, talukaName } = useVillage();
+  const { villageName, village, districtName, talukaName, taluka } = useVillage();
   const { user } = useUser();
   const { financialYear, financialYearName } = useFinancialYear();
   const printRef = useRef();
@@ -55,9 +55,15 @@ const VillageTable = ({
   };
 
   const handlePrint = async () => {
+    // Define taluka IDs for local fund logic
+    const MANSA_TALUKA_ID = "685bcc702ce99c46af25d53a";
+    // TODO: Find and replace with actual Vijapur taluka ID
+    const VIJAPUR_TALUKA_ID = "find_vijapur_taluka_id_in_database";
+
     let isLocal = false;
 
-    if (["માણસા", "વિજાપુર"].includes(talukaName?.trim())) {
+    // Check by taluka ID for more reliability
+    if ([MANSA_TALUKA_ID, VIJAPUR_TALUKA_ID].includes(taluka)) {
       isLocal = true;
     }
 

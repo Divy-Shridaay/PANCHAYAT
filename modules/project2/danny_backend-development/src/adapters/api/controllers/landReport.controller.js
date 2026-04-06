@@ -18,8 +18,14 @@ exports.getLandReport = asyncHandler(async (req, res, next) => {
   const villageData = await Village.findById(village);
   const taluka = await Taluka.findById(villageData.taluka);
 
+  // Define taluka IDs for local fund logic
+  const MANSA_TALUKA_ID = "685bcc702ce99c46af25d53a";
+  // TODO: Find and replace with actual Vijapur taluka ID
+  const VIJAPUR_TALUKA_ID = "find_vijapur_taluka_id_in_database";
+
   let isLocal = false;
-  if (["માણસા", "વિજાપુર"].includes(taluka.name.trim())) {
+  // Check by taluka ID for more reliability
+  if ([MANSA_TALUKA_ID, VIJAPUR_TALUKA_ID].includes(villageData.taluka.toString())) {
     isLocal = true;
   }
 

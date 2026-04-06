@@ -9,7 +9,7 @@ import { convertToCurrencyWords } from '../../utils/convertToCurrencyWords'
 import { convertEngToGujNumber } from '../../utils/convertEngToGujNumber'
 import { convertSlashesToDashes } from '../../utils/dateFunction'
 
-const MANSA_VILLAGE_ID = "68c7d1a71282f7ea1caf1cd5";
+const MANSA_VILLAGE_ID = "685bcc702ce99c46af25d53a";
 
 function MainReports() {
     const { village, talukaName, villageName, districtName } = useVillage();
@@ -216,7 +216,7 @@ function MainReports() {
         if (!notice) return;
 
         const noticeFee = 1;
-        const isMansa = village === MANSA_VILLAGE_ID;
+       const isMansa = talukaName === "માણસા";
         const response = await getMainReport(village, financialYear, total);
 
         if (response && response.data && Array.isArray(response.data.data)) {
