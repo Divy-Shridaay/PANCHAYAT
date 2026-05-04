@@ -520,6 +520,7 @@ setOpeningForm({
         setEditingDepositId(deposit._id);
     };
 
+    
     const deleteBankDeposit = async (depositId) => {
         if (!window.confirm("શું તમે આ બેંક જમા રદ કરવા માંગો છો?")) return;
         
