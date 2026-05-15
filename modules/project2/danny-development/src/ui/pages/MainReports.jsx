@@ -303,13 +303,24 @@ individualKeys.forEach(key => {
     } else {
         data[key] = Math.round(Number(data[key]) || 0); // baki Math.round
     }
-    console.log("village value:", village);
-console.log("isMansa:", isMansa);
-console.log("hideLocalFund:", isMansa ? "true" : "false");
+//     console.log("village value:", village);
+// console.log("isMansa:", isMansa);
+// console.log("hideLocalFund:", isMansa ? "true" : "false");
 });
 
           
-                // STEP 2: Row totals
+                // STEP 2: Row totals - CEIL karo pehle individual fields
+                data.landLeft     = Math.ceil(Number(data.landLeft)     || 0);
+                data.landPending  = Math.ceil(Number(data.landPending)  || 0);
+                data.landRotating = Math.ceil(Number(data.landRotating) || 0);
+                data.localLeft     = Math.ceil(Number(data.localLeft)     || 0);
+                data.localPending  = Math.ceil(Number(data.localPending)  || 0);
+                data.localRotating = Math.ceil(Number(data.localRotating) || 0);
+                data.educationLeft     = Math.ceil(Number(data.educationLeft)     || 0);
+                data.educationPending  = Math.ceil(Number(data.educationPending)  || 0);
+                data.educationRotating = Math.ceil(Number(data.educationRotating) || 0);
+
+                // Row totals from ceiled individual values
                 data.landTotal      = data.landLeft      + data.landPending      + data.landRotating;
                 data.localTotal     = data.localLeft     + data.localPending     + data.localRotating;
                 data.educationTotal = data.educationLeft + data.educationPending + data.educationRotating;
@@ -327,7 +338,8 @@ console.log("hideLocalFund:", isMansa ? "true" : "false");
                 data.quarterWord = convertToCurrencyWords(data.quarter);
                 data.total2      = data.total + data.quarter;
 
-          
+                // ✅ Use backend allTotals (already ceiled) for consistent filtering
+                data._rawTotal = result.allTotals;
 
                 // STEP 5: Gujarati conversion
                 const gujaratiData = {};
@@ -345,8 +357,28 @@ console.log("hideLocalFund:", isMansa ? "true" : "false");
                     }
                 }
 
+                gujaratiData._rawTotal = data._rawTotal;
                 return gujaratiData;
+            })
+            .filter((rep) => {
+                const keep = rep._rawTotal > Number(total);
+                
+                // ✅ ADD THIS - kaun skip ho raha hai dekho
+                if (!keep) {
+                    console.log("❌ SKIPPED accountNo:", rep.accountNo, 
+                        "rawTotal:", rep._rawTotal, 
+                        "filter threshold:", total);
+                } else {
+                    console.log("✅ KEPT accountNo:", rep.accountNo, 
+                        "rawTotal:", rep._rawTotal);
+                }
+                
+                delete rep._rawTotal;
+                return keep;
             });
+
+            console.log("=== FINAL COUNT:", finalReports.length, 
+                "from backend:", resultArray.length);
 
             if (notice == 152)      handlePreview152(finalReports);
             else if (notice == 148) handlePreview148(finalReports);

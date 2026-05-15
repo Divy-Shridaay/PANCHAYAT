@@ -60,7 +60,7 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
           {
             $project: {
               fajal: { $divide: [{ $toDouble: "$fajal" }, 100] },
-              left:  { $divide: [{ $toDouble: "$left"  }, 100] },
+              left:  { $toDouble: "$left" },
             },
           },
         ],
@@ -187,7 +187,7 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
           {
             $project: {
               fajal:   { $divide: [{ $toDouble: "$fajal"   }, 100] },
-              left:    { $divide: [{ $toDouble: "$left"    }, 100] },
+              left:    { $toDouble: "$left" },
               sarkari: { $divide: [{ $toDouble: "$sarkari" }, 100] },
               sivay:   { $divide: [{ $toDouble: "$sivay"   }, 100] },
             },
@@ -303,7 +303,7 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
           {
             $project: {
               fajal:    { $divide: [{ $toDouble: "$fajal"    }, 100] },
-              left:     { $divide: [{ $toDouble: "$left"     }, 100] },
+              left:     { $toDouble: "$left" },
               pending:  { $divide: [{ $toDouble: "$pending"  }, 100] },
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
             },
@@ -437,7 +437,7 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
           {
             $project: {
               fajal:    { $divide: [{ $toDouble: "$fajal"    }, 100] },
-              left:     { $divide: [{ $toDouble: "$left"     }, 100] },
+              left:     { $toDouble: "$left" },
               pending:  { $divide: [{ $toDouble: "$pending"  }, 100] },
               rotating: { $divide: [{ $toDouble: "$rotating" }, 100] },
             },
@@ -554,12 +554,13 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
     {
       $addFields: {
         allTotals: {
-          $add: [
-            { $ifNull: ["$landTotal",      0] },
-            { $ifNull: ["$localTotal",     0] },
-            { $ifNull: ["$educationTotal", 0] },
-            1,
-          ],
+          $ceil: {
+            $add: [
+              { $ifNull: ["$landTotal",      0] },
+              { $ifNull: ["$localTotal",     0] },
+              { $ifNull: ["$educationTotal", 0] },
+            ],
+          },
         },
       },
     },
@@ -582,15 +583,14 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
         financialYear: 1,
         sarkari:       1,
         sivay:         1,
-        left: { $multiply: ["$left", 100] }, // Mansa uses this (raw paisa-units)
+        left: "$left",
 
         landData: {
           collumnTwentyOne: "$collumnTwentyOne",
           rotating:         "$rotating",
           sivay:            "$sivay",
           landTotal:        "$landTotal",
-          // ✅ FIXED: *100 to convert to paisa-units
-          maangnuLeft: { $multiply: ["$savedLandMaangnuLeft", 100] },
+          maangnuLeft: "$savedLandMaangnuLeft",
         },
 
         localFundData: {
@@ -598,8 +598,7 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
           localRotating:        "$localRotating",
           collumnFourteenlocal: "$collumnFourteenlocal",
           localTotal:           "$localTotal",
-          // ✅ FIXED: *100 to convert to paisa-units
-          maangnuLeft: { $multiply: ["$savedLocalMaangnuLeft", 100] },
+          maangnuLeft: "$savedLocalMaangnuLeft",
         },
 
         educationData: {
@@ -607,8 +606,7 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
           educationFourFivePanding: "$educationFourFivePanding",
           educationRotating:        "$educationRotating",
           educationTotal:           "$educationTotal",
-          // ✅ FIXED: *100 to convert to paisa-units
-          maangnuLeft: { $multiply: ["$savedEducationMaangnuLeft", 100] },
+          maangnuLeft: "$savedEducationMaangnuLeft",
         },
 
         allTotals: 1,
@@ -617,6 +615,24 @@ exports.getMainReport = asyncHandler(async (req, res, next) => {
   ];
 
   const villagers = await Villager.aggregate(pipeline);
+
+  // ✅ DEBUG: Check account 101
+  const debug101 = villagers.find(v => v.accountNo === "101");
+  if (debug101) {
+    console.log("✅ 101 found in pipeline - allTotals:", debug101.allTotals);
+    console.log("landData:", debug101.landData);
+    console.log("localFundData:", debug101.localFundData);
+    console.log("educationData:", debug101.educationData);
+  } else {
+    console.log("❌ 101 NOT in pipeline result");
+    
+    // Check if villager exists in DB
+    const raw101 = await Villager.findOne({ 
+      village: villageId, 
+      accountNo: "101" 
+    });
+    console.log("Raw 101 villager exists:", !!raw101, "accountNo:", raw101?.accountNo);
+  }
 
   res.status(200).json(
     new SuccessResponse(
